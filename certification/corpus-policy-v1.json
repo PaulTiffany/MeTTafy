@@ -1,0 +1,58 @@
+{
+  "policy": "MeTTafy Certification Corpus Policy",
+  "version": "1.0.0",
+  "strategy_recovery_v1": {
+    "test_partition": {
+      "minimum_cases": 200,
+      "minimum_positive_cases_per_certified_strategy": 50,
+      "minimum_independent_source_families_per_certified_strategy": 5,
+      "minimum_ambiguous_cases": 40,
+      "source_family_overlap_across_train_dev_test": 0
+    },
+    "annotation": {
+      "independent_annotation_passes": 2,
+      "disagreements_must_be_recorded": true,
+      "disagreements_must_be_adjudicated_before_test_freeze": true,
+      "test_labels_hidden_from_evaluated_system": true
+    }
+  },
+  "negative_controls_v1": {
+    "minimum_test_cases": 100,
+    "minimum_lexically_misleading_cases": 40,
+    "minimum_structurally_ambiguous_cases": 20
+  },
+  "strategy_perturbations_v1": {
+    "minimum_parent_cases": 50,
+    "required_variants_per_parent": [
+      "identifier_rename",
+      "comment_change",
+      "whitespace_change",
+      "helper_extraction"
+    ],
+    "minimum_total_variants": 200,
+    "variant_must_preserve_held_out_strategy_labels": true,
+    "variant_must_have_distinct_sha256": true
+  },
+  "four_color_v1": {
+    "upstream_repository": "https://github.com/rocq-community/fourcolor",
+    "upstream_commit": "f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2",
+    "minimum_source_files": 5,
+    "required_source_files": [
+      "theories/proof/fourcolor.v",
+      "theories/proof/combinatorial4ct.v",
+      "theories/proof/unavoidability.v",
+      "theories/proof/reducibility.v",
+      "theories/proof/discharge.v"
+    ],
+    "formal_checker_required": true,
+    "held_out_semantic_labels_required": true,
+    "machine_recovery_must_not_read_held_out_labels": true
+  },
+  "freeze_policy": {
+    "test_partition_content_addressed": true,
+    "all_source_artifacts_require_sha256": true,
+    "test_case_removal_requires_documented_reason": true,
+    "threshold_or_test_composition_changes_require_review": true,
+    "benchmark_semantics_change_requires_version_bump": true
+  }
+}
