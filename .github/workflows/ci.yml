@@ -50,6 +50,21 @@ jobs:
       - name: Unit and deterministic build tests
         run: pytest
 
+      - name: Audience witnesses for integrators, operators, and reviewers
+        if: matrix.python-version == '3.14'
+        run: |
+          python tests/integrator_contract_witness.py
+          python tests/operator_resilience_witness.py
+          python tests/reviewer_traceability_witness.py
+
+      - name: Upload Python audience witness evidence
+        if: always() && matrix.python-version == '3.14'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: python-audience-witness-evidence
+          path: artifacts/witnesses/
+          if-no-files-found: warn
+
       - name: Build distributions
         run: python -m build
 
