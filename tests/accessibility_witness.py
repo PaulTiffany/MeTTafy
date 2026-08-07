@@ -47,6 +47,17 @@ def scan_page(page: Page, relative: str) -> dict:
     return result
 
 
+def compact_node(node: dict) -> dict:
+    return {
+        "target": node["target"],
+        "html": node["html"],
+        "failureSummary": node.get("failureSummary"),
+        "any": node.get("any", []),
+        "all": node.get("all", []),
+        "none": node.get("none", []),
+    }
+
+
 def main() -> int:
     if not AXE_PATH.is_file():
         raise SystemExit(
@@ -68,14 +79,7 @@ def main() -> int:
             "help": violation["help"],
             "helpUrl": violation["helpUrl"],
             "tags": violation["tags"],
-            "nodes": [
-                {
-                    "target": node["target"],
-                    "html": node["html"],
-                    "failureSummary": node.get("failureSummary"),
-                }
-                for node in violation["nodes"]
-            ],
+            "nodes": [compact_node(node) for node in violation["nodes"]],
         }
         for item in pages
         for violation in item["violations"]
@@ -89,6 +93,7 @@ def main() -> int:
             "helpUrl": finding["helpUrl"],
             "tags": finding["tags"],
             "node_count": len(finding["nodes"]),
+            "nodes": [compact_node(node) for node in finding["nodes"]],
         }
         for item in pages
         for finding in item["incomplete"]
@@ -119,6 +124,9 @@ def main() -> int:
         "metrics": {
             "automated_violations": len(violations),
             "incomplete_manual_review_items": len(incomplete),
+            "incomplete_manual_review_nodes": sum(
+                finding["node_count"] for finding in incomplete
+            ),
             "pages_scanned": len(pages),
         },
         "result": "pass" if not violations else "fail",
@@ -128,7 +136,9 @@ def main() -> int:
     print(
         "Accessibility witness: "
         f"{len(violations)} automated violations; "
-        f"{len(incomplete)} incomplete/manual-review findings across {len(pages)} pages."
+        f"{len(incomplete)} incomplete/manual-review findings "
+        f"({payload['metrics']['incomplete_manual_review_nodes']} nodes) "
+        f"across {len(pages)} pages."
     )
     if violations:
         for violation in violations:
