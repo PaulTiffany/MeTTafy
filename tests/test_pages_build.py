@@ -54,7 +54,7 @@ def test_pages_build_contains_reducible_pedagogical_demo() -> None:
     run_build()
     page = (OUT / "four-color.html").read_text(encoding="utf-8")
     demo = (OUT / "four-color-demo.metta").read_text(encoding="utf-8")
-    assert "pedagogical projection" in page
+    assert "toy MeTTa rewrite program" in page
     assert "(= (pipeline finite-map) (pipeline discretized-hypermap))" in demo
     assert "(pipeline finite-map)" in demo
 
