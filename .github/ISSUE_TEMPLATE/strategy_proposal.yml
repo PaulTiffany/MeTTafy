@@ -1,0 +1,52 @@
+name: Strategy recognizer proposal
+description: Propose a new computational strategy or recognizer
+title: "[Strategy]: "
+labels: []
+body:
+  - type: textarea
+    id: strategy
+    attributes:
+      label: Strategy
+      description: Name and define the computational strategy as precisely as possible.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Structural evidence
+      description: What observable source-level evidence should support this classification?
+    validations:
+      required: true
+  - type: textarea
+    id: counterexamples
+    attributes:
+      label: Near-misses / counterexamples
+      description: What code might look similar but should not receive this classification?
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: How could we test the semantic claim or behavioral preservation?
+    validations:
+      required: true
+  - type: textarea
+    id: priorart
+    attributes:
+      label: Prior art / upstream work
+      description: Link relevant papers, implementations, MeTTa/Hyperon work, or other tools. Say "None found" if you searched and found none.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal example
+      description: Provide or link a small source program illustrating the strategy.
+  - type: checkboxes
+    id: provenance
+    attributes:
+      label: Provenance check
+      options:
+        - label: I have identified any third-party code or ideas this proposal materially depends on and will preserve applicable attribution/licensing.
+          required: true
