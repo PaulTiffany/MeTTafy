@@ -18,11 +18,7 @@ def snapshot() -> dict[str, str]:
 
 
 def run_build() -> None:
-    subprocess.run(
-        [sys.executable, "scripts/build_pages.py"],
-        cwd=ROOT,
-        check=True,
-    )
+    subprocess.run([sys.executable, "scripts/build_pages.py"], cwd=ROOT, check=True)
 
 
 def test_pages_build_is_deterministic() -> None:
@@ -30,7 +26,6 @@ def test_pages_build_is_deterministic() -> None:
     first = snapshot()
     run_build()
     second = snapshot()
-
     assert first == second
     assert "index.html" in first
     assert "four-color.html" in first
@@ -41,26 +36,32 @@ def test_pages_build_is_deterministic() -> None:
 def test_pages_build_contains_auditable_fallback() -> None:
     run_build()
     page = (OUT / "four-color.html").read_text(encoding="utf-8")
-
-    assert "@mettascript/grapher@3.4.0" in page
     assert "Show raw MeTTa" in page
     assert "CheckerAuthority" in page
+
+
+def test_pages_build_contains_local_strategy_player() -> None:
+    run_build()
+    page = (OUT / "four-color.html").read_text(encoding="utf-8")
+    script = (OUT / "assets" / "strategy-player.js").read_text(encoding="utf-8")
+    assert 'data-action="play"' in page
+    assert "Play" in page
+    assert "strategy-player.js" in page
+    assert "setInterval" in script
+    assert "@mettascript/grapher@3.4.0" not in page
 
 
 def test_pages_build_contains_reducible_pedagogical_demo() -> None:
     run_build()
     page = (OUT / "four-color.html").read_text(encoding="utf-8")
     demo = (OUT / "four-color-demo.metta").read_text(encoding="utf-8")
-
-    assert "Press <strong>Play</strong>" in page
-    assert "pedagogical toy" in page
+    assert "pedagogical projection" in page
     assert "(= (pipeline finite-map) (pipeline discretized-hypermap))" in demo
     assert "(pipeline finite-map)" in demo
 
 
 def test_legacy_docs_urls_redirect_to_generated_pages() -> None:
     run_build()
-
     expected = {
         "docs/index.html": "../index.html",
         "docs/four-color.html": "../four-color.html",

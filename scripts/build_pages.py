@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Build the MeTTafy teaching site using only the Python standard library.
-
-The site is intentionally small and deterministic. Authoritative exemplar data
-comes from checked-in repository artifacts; this script renders a static site
-and emits a build manifest containing SHA-256 hashes of those inputs.
-"""
+"""Build the MeTTafy teaching site using only the Python standard library."""
 
 from __future__ import annotations
 
@@ -22,15 +17,20 @@ MANIFEST_PATH = EXEMPLAR / "manifest.json"
 METTA_PATH = EXEMPLAR / "high_level_strategy.metta"
 AUTHORITATIVE_INPUTS = [MANIFEST_PATH, METTA_PATH]
 
-# Pedagogical animation only. This deliberately small rewrite chain demonstrates
-# how a strategy can be made executable/step-able in MeTTa without pretending
-# to be the Four Color proof itself.
 FOUR_COLOR_DEMO = """(= (pipeline finite-map) (pipeline discretized-hypermap))
 (= (pipeline discretized-hypermap) (pipeline combinatorial-core))
 (= (pipeline combinatorial-core) (pipeline transported-coloring))
 (= (pipeline transported-coloring) (pipeline compactness-extension))
 (pipeline finite-map)
 """
+
+STRATEGY_STEPS = [
+    ("Finite map", "Start with a finite planar map"),
+    ("Discretize", "Convert geometry into a combinatorial hypermap"),
+    ("Combinatorial core", "Apply the finite Four Color machinery"),
+    ("Transport back", "Carry the coloring back to the original map"),
+    ("Compactness", "Extend the finite result to the general case"),
+]
 
 
 def digest(path: Path) -> str:
@@ -74,19 +74,7 @@ def page(title: str, body: str, *, current: str = "") -> str:
 
 def redirect_page(target: str, label: str) -> str:
     target = html.escape(target, quote=True)
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url={target}">
-  <meta name="robots" content="noindex">
-  <title>Moved · MeTTafy</title>
-</head>
-<body>
-  <p>This page moved to <a href="{target}">{html.escape(label)}</a>.</p>
-</body>
-</html>
-"""
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={target}"><meta name="robots" content="noindex"><title>Moved · MeTTafy</title></head><body><p>This page moved to <a href="{target}">{html.escape(label)}</a>.</p></body></html>"""
 
 
 def build_index() -> str:
@@ -95,10 +83,7 @@ def build_index() -> str:
   <p class="eyebrow">Computational proof, made inspectable</p>
   <h1>Learn MeTTa through the history of mathematics becoming executable.</h1>
   <p class="lede">MeTTafy recovers reusable reasoning strategies from programs and formal proofs, then represents those strategies in MeTTa. Each historical exemplar is both a teaching lesson and a machine-interpretability benchmark.</p>
-  <div class="actions">
-    <a class="button" href="four-color.html">Start Sprint 01: Four Color</a>
-    <a class="button secondary" href="audit.html">How to challenge MeTTafy</a>
-  </div>
+  <div class="actions"><a class="button" href="four-color.html">Start Sprint 01: Four Color</a><a class="button secondary" href="audit.html">How to challenge MeTTafy</a></div>
 </section>
 <section class="cards" aria-label="Learning path">
   <article><span>1</span><h2>See the problem</h2><p>Begin with the mathematical intuition and historical stakes.</p></article>
@@ -111,16 +96,26 @@ def build_index() -> str:
     return page("Learn", body, current="learn")
 
 
+def strategy_player() -> str:
+    parts = []
+    for i, (label, description) in enumerate(STRATEGY_STEPS):
+        if i:
+            parts.append('<span class="strategy-arrow" data-arrow aria-hidden="true">→</span>')
+        parts.append(
+            f'<div class="strategy-step" data-step data-label="{html.escape(label, quote=True)}" title="{html.escape(description, quote=True)}"><strong>{html.escape(label)}</strong><br><small>{html.escape(description)}</small></div>'
+        )
+    return "".join(parts)
+
+
 def build_four_color(manifest: dict, metta: str) -> str:
     commit = html.escape(manifest["upstream"]["commit"])
-    layers = manifest["proof_layers"]
     layer_html = "".join(
-        "<article class=\"strategy-card\"><h3>"
+        '<article class="strategy-card"><h3>'
         + html.escape(layer["id"].replace("-", " ").title())
         + "</h3><p>"
         + " → ".join(f"<code>{html.escape(s)}</code>" for s in layer["strategies"])
         + "</p></article>"
-        for layer in layers
+        for layer in manifest["proof_layers"]
     )
     body = f"""
 <section class="lesson-head">
@@ -130,9 +125,7 @@ def build_four_color(manifest: dict, metta: str) -> str:
 </section>
 <section>
   <h2>First: the move in plain English</h2>
-  <div class="flow" role="img" aria-label="Finite map is discretized to a hypermap, solved there, transported back, then extended by compactness">
-    <span>finite map</span><b>→</b><span>discretize</span><b>→</b><span>hypermap</span><b>→</b><span>solve</span><b>→</b><span>transport back</span><b>→</b><span>compactness</span>
-  </div>
+  <div class="flow" role="img" aria-label="Finite map is discretized to a hypermap, solved there, transported back, then extended by compactness"><span>finite map</span><b>→</b><span>discretize</span><b>→</b><span>hypermap</span><b>→</b><span>solve</span><b>→</b><span>transport back</span><b>→</b><span>compactness</span></div>
   <p>This is the high-level architecture exposed by the maintained Rocq formalization. The point of MeTTafy is to make moves like these first-class and comparable across very different proofs.</p>
 </section>
 <section>
@@ -141,24 +134,35 @@ def build_four_color(manifest: dict, metta: str) -> str:
   <p class="status"><strong>Status:</strong> these are held-out exemplar annotations derived from the pinned formal proof. Sprint 01 is not complete until MeTTafy can recover them from proof structure without theorem-name leakage.</p>
 </section>
 <section>
-  <h2>Authoritative strategy graph</h2>
-  <p>The graph below is the current semantic target. It is an interpretation of the proof architecture, not a replacement proof. Because these atoms mostly describe relations, this view is primarily inspectable rather than animated.</p>
-  <div class="viewer-note"><strong>Interactive view:</strong> MesTTo's MIT-licensed <code>@mettascript/grapher</code> 3.4.0. The raw artifact remains visible and auditable even if the optional viewer cannot load.</div>
-  <metta-grapher height="520px">{html.escape(metta)}</metta-grapher>
-  <details><summary>Show raw MeTTa</summary><pre><code>{html.escape(metta)}</code></pre></details>
+  <h2>Authoritative strategy artifact</h2>
+  <p>This is the current hand-annotated semantic target. It is an interpretation of the proof architecture, not a replacement proof.</p>
+  <details open><summary>Show raw MeTTa</summary><pre><code>{html.escape(metta)}</code></pre></details>
 </section>
 <section>
-  <h2>Watch the strategy reduce</h2>
-  <p>This second graph is deliberately a <strong>pedagogical toy</strong>, not the Four Color proof. It turns the high-level pipeline into a tiny rewrite chain so you can see what MeTTa reduction looks like. Press <strong>Play</strong> in the grapher.</p>
-  <metta-grapher height="420px">{html.escape(FOUR_COLOR_DEMO)}</metta-grapher>
-  <details><summary>Show the toy rewrite program</summary><pre><code>{html.escape(FOUR_COLOR_DEMO)}</code></pre></details>
+  <h2>Watch the strategy move</h2>
+  <p>This player is a <strong>pedagogical projection</strong> of the high-level strategy, not the Four Color proof. It is generated locally with the site and has no CDN or package dependency.</p>
+  <div class="strategy-player" data-strategy-player>
+    <div class="strategy-track">{strategy_player()}</div>
+    <div class="player-controls" aria-label="Strategy animation controls">
+      <button type="button" data-action="prev">Prev</button>
+      <button type="button" class="primary" data-action="play" aria-pressed="false">Play</button>
+      <button type="button" data-action="next">Next</button>
+      <button type="button" data-action="reset">Reset</button>
+    </div>
+    <p class="player-status" data-status aria-live="polite"></p>
+  </div>
+  <details><summary>Show the corresponding toy MeTTa rewrite program</summary><pre><code>{html.escape(FOUR_COLOR_DEMO)}</code></pre></details>
+</section>
+<section>
+  <h2>MeTTaScript Grapher integration status</h2>
+  <div class="viewer-note"><strong>Not currently required for this site.</strong> MesTTo's source repository contains an excellent Grapher implementation and documentation, but MeTTafy no longer depends on a CDN bundle whose public availability we cannot verify. We will integrate it only through a reproducible, pinned browser artifact.</div>
 </section>
 <section>
   <h2>Show me the source boundary</h2>
   <p>Canonical formal artifact: <a href="https://github.com/rocq-community/fourcolor/tree/{commit}"><code>rocq-community/fourcolor@{commit[:12]}</code></a>. MeTTafy does not vendor that proof wholesale.</p>
   <p><a href="provenance.html">Inspect exact hashes and authority boundaries →</a></p>
 </section>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@mettascript/grapher@3.4.0/dist/embed.js"></script>
+<script src="assets/strategy-player.js" defer></script>
 """
     return page("Four Color", body, current="four-color")
 
@@ -178,20 +182,12 @@ def build_audit() -> str:
 
 
 def build_provenance(manifest: dict, hashes: dict[str, str]) -> str:
-    rows = "".join(
-        f"<tr><td><code>{html.escape(path)}</code></td><td><code>{value}</code></td></tr>"
-        for path, value in hashes.items()
-    )
+    rows = "".join(f"<tr><td><code>{html.escape(path)}</code></td><td><code>{value}</code></td></tr>" for path, value in hashes.items())
     upstream = manifest["upstream"]
     body = f"""
 <section class="lesson-head"><p class="eyebrow">Provenance</p><h1>What this page was built from.</h1><p class="lede">The site records cryptographic hashes of its authoritative local exemplar inputs so presentation can be checked against source.</p></section>
 <section><table><thead><tr><th>Input</th><th>SHA-256</th></tr></thead><tbody>{rows}</tbody></table></section>
-<section><h2>Upstream authority</h2><dl>
-<dt>Formal proof repository</dt><dd><a href="{html.escape(upstream['repository'])}">{html.escape(upstream['repository'])}</a></dd>
-<dt>Pinned commit</dt><dd><code>{html.escape(upstream['commit'])}</code></dd>
-<dt>License</dt><dd>{html.escape(upstream['license'])}</dd>
-<dt>Checker</dt><dd>{html.escape(upstream['checker'])}</dd>
-</dl></section>
+<section><h2>Upstream authority</h2><dl><dt>Formal proof repository</dt><dd><a href="{html.escape(upstream['repository'])}">{html.escape(upstream['repository'])}</a></dd><dt>Pinned commit</dt><dd><code>{html.escape(upstream['commit'])}</code></dd><dt>License</dt><dd>{html.escape(upstream['license'])}</dd><dt>Checker</dt><dd>{html.escape(upstream['checker'])}</dd></dl></section>
 <section class="callout"><h2>What hashes do not prove</h2><p>A matching hash proves which bytes were used to build the lesson. It does not prove that MeTTafy's semantic interpretation is correct. That claim remains separately challengeable.</p></section>
 """
     return page("Provenance", body, current="provenance")
@@ -206,19 +202,13 @@ def main() -> None:
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     metta = METTA_PATH.read_text(encoding="utf-8")
-
-    hashes = {
-        str(path.relative_to(ROOT)): digest(path)
-        for path in AUTHORITATIVE_INPUTS
-    }
+    hashes = {str(path.relative_to(ROOT)): digest(path) for path in AUTHORITATIVE_INPUTS}
 
     (OUT / "index.html").write_text(build_index(), encoding="utf-8")
     (OUT / "four-color.html").write_text(build_four_color(manifest, metta), encoding="utf-8")
     (OUT / "audit.html").write_text(build_audit(), encoding="utf-8")
     (OUT / "provenance.html").write_text(build_provenance(manifest, hashes), encoding="utf-8")
 
-    # Backward-compatible browser paths for links created before the deterministic
-    # Pages layout moved generated lessons to the site root.
     aliases = {
         "docs/index.html": "../index.html",
         "docs/four-color.html": "../four-color.html",
@@ -230,6 +220,7 @@ def main() -> None:
         (OUT / alias).write_text(redirect_page(target, target), encoding="utf-8")
 
     shutil.copyfile(SITE / "site.css", OUT / "assets" / "site.css")
+    shutil.copyfile(SITE / "strategy-player.js", OUT / "assets" / "strategy-player.js")
     shutil.copyfile(METTA_PATH, OUT / "four-color.metta")
     shutil.copyfile(MANIFEST_PATH, OUT / "four-color-manifest.json")
     (OUT / "four-color-demo.metta").write_text(FOUR_COLOR_DEMO, encoding="utf-8")
@@ -239,16 +230,12 @@ def main() -> None:
         "builder": "scripts/build_pages.py",
         "authoritative_inputs": hashes,
         "derived_pedagogical_assets": {
-            "four-color-demo.metta": "toy rewrite chain; not proof authority"
+            "four-color-demo.metta": "toy rewrite chain; not proof authority",
+            "assets/strategy-player.js": "local deterministic strategy animation",
         },
-        "optional_browser_dependencies": {
-            "@mettascript/grapher": "3.4.0"
-        },
+        "optional_browser_dependencies": {},
     }
-    (OUT / "build-manifest.json").write_text(
-        json.dumps(build_manifest, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    (OUT / "build-manifest.json").write_text(json.dumps(build_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
