@@ -18,7 +18,7 @@ CASES = [
     "for x in:\n    pass\n",
     "try:\n    pass\n",
     "match x:\n    case:\n        pass\n",
-    "def f():\n    return '\udcff'\n",
+    "def f():\n    return '\\xZZ'\n",
 ]
 
 
