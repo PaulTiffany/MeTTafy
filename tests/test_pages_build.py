@@ -45,3 +45,29 @@ def test_pages_build_contains_auditable_fallback() -> None:
     assert "@mettascript/grapher@3.4.0" in page
     assert "Show raw MeTTa" in page
     assert "CheckerAuthority" in page
+
+
+def test_pages_build_contains_reducible_pedagogical_demo() -> None:
+    run_build()
+    page = (OUT / "four-color.html").read_text(encoding="utf-8")
+    demo = (OUT / "four-color-demo.metta").read_text(encoding="utf-8")
+
+    assert "Press <strong>Play</strong>" in page
+    assert "pedagogical toy" in page
+    assert "(= (pipeline finite-map) (pipeline discretized-hypermap))" in demo
+    assert "(pipeline finite-map)" in demo
+
+
+def test_legacy_docs_urls_redirect_to_generated_pages() -> None:
+    run_build()
+
+    expected = {
+        "docs/index.html": "../index.html",
+        "docs/four-color.html": "../four-color.html",
+        "docs/auditability.html": "../audit.html",
+        "docs/provenance.html": "../provenance.html",
+    }
+    for relative, target in expected.items():
+        redirect = (OUT / relative).read_text(encoding="utf-8")
+        assert f"url={target}" in redirect
+        assert f'href="{target}"' in redirect
