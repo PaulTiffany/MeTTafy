@@ -18,11 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "_site"
 SITE = ROOT / "site"
 EXEMPLAR = ROOT / "exemplars" / "four_color"
-
-AUTHORITATIVE_INPUTS = [
-    EXAMPLAR_PATH := EXEMPLAR / "manifest.json",
-    EXEMPLAR / "high_level_strategy.metta",
-]
+MANIFEST_PATH = EXEMPLAR / "manifest.json"
+METTA_PATH = EXEMPLAR / "high_level_strategy.metta"
+AUTHORITATIVE_INPUTS = [MANIFEST_PATH, METTA_PATH]
 
 
 def digest(path: Path) -> str:
@@ -172,9 +170,8 @@ def main() -> None:
     OUT.mkdir(parents=True)
     (OUT / "assets").mkdir()
 
-    manifest = json.loads(EXAMPLAR_PATH.read_text(encoding="utf-8"))
-    metta_path = EXEMPLAR / "high_level_strategy.metta"
-    metta = metta_path.read_text(encoding="utf-8")
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    metta = METTA_PATH.read_text(encoding="utf-8")
 
     hashes = {
         str(path.relative_to(ROOT)): digest(path)
@@ -186,8 +183,8 @@ def main() -> None:
     (OUT / "audit.html").write_text(build_audit(), encoding="utf-8")
     (OUT / "provenance.html").write_text(build_provenance(manifest, hashes), encoding="utf-8")
     shutil.copyfile(SITE / "site.css", OUT / "assets" / "site.css")
-    shutil.copyfile(metta_path, OUT / "four-color.metta")
-    shutil.copyfile(EXAMPLAR_PATH, OUT / "four-color-manifest.json")
+    shutil.copyfile(METTA_PATH, OUT / "four-color.metta")
+    shutil.copyfile(MANIFEST_PATH, OUT / "four-color-manifest.json")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
 
     build_manifest = {
