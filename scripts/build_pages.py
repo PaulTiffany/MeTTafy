@@ -22,6 +22,16 @@ MANIFEST_PATH = EXEMPLAR / "manifest.json"
 METTA_PATH = EXEMPLAR / "high_level_strategy.metta"
 AUTHORITATIVE_INPUTS = [MANIFEST_PATH, METTA_PATH]
 
+# Pedagogical animation only. This deliberately small rewrite chain demonstrates
+# how a strategy can be made executable/step-able in MeTTa without pretending
+# to be the Four Color proof itself.
+FOUR_COLOR_DEMO = """(= (pipeline finite-map) (pipeline discretized-hypermap))
+(= (pipeline discretized-hypermap) (pipeline combinatorial-core))
+(= (pipeline combinatorial-core) (pipeline transported-coloring))
+(= (pipeline transported-coloring) (pipeline compactness-extension))
+(pipeline finite-map)
+"""
+
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -57,6 +67,23 @@ def page(title: str, body: str, *, current: str = "") -> str:
     <p>Open-source teaching and research project. Human-auditable interpretation is the design target.</p>
     <p><a href="https://github.com/PaulTiffany/MeTTafy">Source on GitHub</a></p>
   </footer>
+</body>
+</html>
+"""
+
+
+def redirect_page(target: str, label: str) -> str:
+    target = html.escape(target, quote=True)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url={target}">
+  <meta name="robots" content="noindex">
+  <title>Moved · MeTTafy</title>
+</head>
+<body>
+  <p>This page moved to <a href="{target}">{html.escape(label)}</a>.</p>
 </body>
 </html>
 """
@@ -114,11 +141,17 @@ def build_four_color(manifest: dict, metta: str) -> str:
   <p class="status"><strong>Status:</strong> these are held-out exemplar annotations derived from the pinned formal proof. Sprint 01 is not complete until MeTTafy can recover them from proof structure without theorem-name leakage.</p>
 </section>
 <section>
-  <h2>The MeTTa strategy artifact</h2>
-  <p>The graph below is the current semantic target. It is an interpretation of the proof architecture, not a replacement proof.</p>
-  <div class="viewer-note"><strong>Interactive view:</strong> this page attempts to load MesTTo's MIT-licensed <code>@mettascript/grapher</code> 3.4.0. The raw artifact remains visible and auditable even if the optional viewer cannot load.</div>
+  <h2>Authoritative strategy graph</h2>
+  <p>The graph below is the current semantic target. It is an interpretation of the proof architecture, not a replacement proof. Because these atoms mostly describe relations, this view is primarily inspectable rather than animated.</p>
+  <div class="viewer-note"><strong>Interactive view:</strong> MesTTo's MIT-licensed <code>@mettascript/grapher</code> 3.4.0. The raw artifact remains visible and auditable even if the optional viewer cannot load.</div>
   <metta-grapher height="520px">{html.escape(metta)}</metta-grapher>
   <details><summary>Show raw MeTTa</summary><pre><code>{html.escape(metta)}</code></pre></details>
+</section>
+<section>
+  <h2>Watch the strategy reduce</h2>
+  <p>This second graph is deliberately a <strong>pedagogical toy</strong>, not the Four Color proof. It turns the high-level pipeline into a tiny rewrite chain so you can see what MeTTa reduction looks like. Press <strong>Play</strong> in the grapher.</p>
+  <metta-grapher height="420px">{html.escape(FOUR_COLOR_DEMO)}</metta-grapher>
+  <details><summary>Show the toy rewrite program</summary><pre><code>{html.escape(FOUR_COLOR_DEMO)}</code></pre></details>
 </section>
 <section>
   <h2>Show me the source boundary</h2>
@@ -169,6 +202,7 @@ def main() -> None:
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
     (OUT / "assets").mkdir()
+    (OUT / "docs").mkdir()
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     metta = METTA_PATH.read_text(encoding="utf-8")
@@ -182,14 +216,31 @@ def main() -> None:
     (OUT / "four-color.html").write_text(build_four_color(manifest, metta), encoding="utf-8")
     (OUT / "audit.html").write_text(build_audit(), encoding="utf-8")
     (OUT / "provenance.html").write_text(build_provenance(manifest, hashes), encoding="utf-8")
+
+    # Backward-compatible browser paths for links created before the deterministic
+    # Pages layout moved generated lessons to the site root.
+    aliases = {
+        "docs/index.html": "../index.html",
+        "docs/four-color.html": "../four-color.html",
+        "docs/auditability.html": "../audit.html",
+        "docs/audit.html": "../audit.html",
+        "docs/provenance.html": "../provenance.html",
+    }
+    for alias, target in aliases.items():
+        (OUT / alias).write_text(redirect_page(target, target), encoding="utf-8")
+
     shutil.copyfile(SITE / "site.css", OUT / "assets" / "site.css")
     shutil.copyfile(METTA_PATH, OUT / "four-color.metta")
     shutil.copyfile(MANIFEST_PATH, OUT / "four-color-manifest.json")
+    (OUT / "four-color-demo.metta").write_text(FOUR_COLOR_DEMO, encoding="utf-8")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
 
     build_manifest = {
         "builder": "scripts/build_pages.py",
         "authoritative_inputs": hashes,
+        "derived_pedagogical_assets": {
+            "four-color-demo.metta": "toy rewrite chain; not proof authority"
+        },
         "optional_browser_dependencies": {
             "@mettascript/grapher": "3.4.0"
         },
