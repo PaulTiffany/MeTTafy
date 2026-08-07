@@ -7,8 +7,8 @@ readonly EXPECTED_COMMIT="abe13439196bccdb48b6636773a46ec9772a7aaf"
 readonly EXPECTED_PNPM="11.2.2"
 readonly DIST="${VENDOR}/packages/grapher/dist"
 readonly ESM_BUNDLE="${DIST}/embed.js"
+readonly ESM_PRESERVED="${DIST}/embed.esm.js"
 readonly GLOBAL_BUNDLE="${DIST}/embed.global.js"
-readonly STAGED_BUNDLE="${DIST}/embed.standalone.js"
 readonly LICENSE="${VENDOR}/LICENSE"
 
 fail() {
@@ -37,14 +37,17 @@ pnpm --dir "${VENDOR}" --filter '@mettascript/grapher...' build
 [[ -s "${LICENSE}" ]] || fail "upstream MIT license is missing"
 
 # MesTTo intentionally emits both a small ESM entrypoint (which imports a generated
-# sibling chunk) and a self-contained browser IIFE. MeTTafy's static Pages artifact
-# deploys the self-contained form so a single attributed file is sufficient at runtime.
-cp "${GLOBAL_BUNDLE}" "${STAGED_BUNDLE}"
+# sibling chunk) and a self-contained browser IIFE. The existing MeTTafy site builder
+# consumes dist/embed.js, so preserve the upstream ESM entry and stage the self-contained
+# upstream browser artifact at that integration boundary. No upstream source is changed.
+cp "${ESM_BUNDLE}" "${ESM_PRESERVED}"
+cp "${GLOBAL_BUNDLE}" "${ESM_BUNDLE}"
 
-[[ -s "${STAGED_BUNDLE}" ]] || fail "failed to stage standalone Grapher bundle"
+[[ -s "${ESM_PRESERVED}" ]] || fail "failed to preserve upstream ESM entrypoint"
+[[ -s "${ESM_BUNDLE}" ]] || fail "failed to stage standalone Grapher bundle"
 
 echo "MeTTaScript Grapher verified"
-echo "  commit:     ${actual_commit}"
-echo "  pnpm:       ${actual_pnpm}"
-echo "  esm entry:  $(sha256sum "${ESM_BUNDLE}" | cut -d' ' -f1)"
-echo "  standalone: $(sha256sum "${STAGED_BUNDLE}" | cut -d' ' -f1)"
+echo "  commit:       ${actual_commit}"
+echo "  pnpm:         ${actual_pnpm}"
+echo "  esm entry:    $(sha256sum "${ESM_PRESERVED}" | cut -d' ' -f1)"
+echo "  pages bundle: $(sha256sum "${ESM_BUNDLE}" | cut -d' ' -f1)"
