@@ -31,12 +31,13 @@ def write_program(tmp_path: Path, program: dict) -> Path:
     return path
 
 
-def test_program_v1_validates_and_reports_only_engineering_ready() -> None:
+def test_program_v1_validates_and_reports_current_readiness() -> None:
     result = run_validator(PROGRAM, "--status")
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["program_version"] == "1.0.0"
+    assert payload["program_version"] == "1.1.0"
     assert payload["grade_ready"] == {
+        "accessibility_green": False,
         "engineering_green": True,
         "exemplar_green": False,
         "product_green": False,
@@ -60,6 +61,17 @@ def test_planned_gate_cannot_make_grade_ready(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["grade_ready"]["engineering_green"] is False
+    assert payload["grade_ready"]["product_green"] is False
+
+
+def test_manual_accessibility_gate_blocks_accessibility_and_product_green(
+    tmp_path: Path,
+) -> None:
+    program = load_program()
+    result = run_validator(write_program(tmp_path, program), "--status")
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["grade_ready"]["accessibility_green"] is False
     assert payload["grade_ready"]["product_green"] is False
 
 
