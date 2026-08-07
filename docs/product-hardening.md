@@ -6,6 +6,8 @@ The product rule is simple:
 
 > A green build must mean that the artifact a user receives is reproducible, attributable, installable, and usable at the boundary we claim to support.
 
+This document defines engineering hardening. The stricter definition of **certified green**—including exact unit-test families, semantic benchmarks, thresholds, and certificate evidence—is maintained in [`production-certification.md`](production-certification.md) and [`certification/program-v1.json`](../certification/program-v1.json). CI success is evidence; it is not by itself a production certificate.
+
 ## Release gates
 
 ### Python product
@@ -39,9 +41,9 @@ Before deployment, CI must:
 8. serve the generated `_site` artifact locally;
 9. open the real site in Chromium;
 10. require every primary page and internal link to resolve;
-11. fail on browser console errors and failed product requests;
+11. fail on browser console, page, and request errors;
 12. require both `<metta-grapher>` elements to upgrade and mount real SVG canvases;
-13. exercise the upstream Grapher `play()` API on the reduction example;
+13. call the mounted Grapher's supported `playTrace()` reduction API, require at least two states, call `traceForward()`, and verify that the trace index advances;
 14. verify legacy public URLs continue to resolve.
 
 A successful static build with a broken browser integration is a failed release.
