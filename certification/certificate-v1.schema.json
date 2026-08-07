@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paultiffany.github.io/MeTTafy/schemas/certificate-v1.schema.json",
+  "title": "MeTTafy production certificate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "program_version",
+    "repository_commit",
+    "generated_at_utc",
+    "grade",
+    "gate_results",
+    "benchmark_hashes",
+    "artifact_hashes",
+    "tool_versions",
+    "result"
+  ],
+  "properties": {
+    "program_version": {"type": "string", "minLength": 1},
+    "repository_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "generated_at_utc": {"type": "string", "format": "date-time"},
+    "grade": {"enum": ["engineering_green", "exemplar_green", "product_green"]},
+    "gate_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "measurements"],
+        "properties": {
+          "gate_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["pass", "fail", "skip", "planned"]},
+          "measurements": {"type": "object"},
+          "evidence": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "default": []
+          }
+        }
+      }
+    },
+    "benchmark_hashes": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "artifact_hashes": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "tool_versions": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "result": {"enum": ["certified", "not_certified"]}
+  }
+}
