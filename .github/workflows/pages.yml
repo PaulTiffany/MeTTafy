@@ -29,10 +29,31 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout MeTTafy
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - name: Checkout MeTTaScript 3.4.0
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: MesTTo/MeTTaScript
+          ref: abe13439196bccdb48b6636773a46ec9772a7aaf
+          path: _vendor/MeTTaScript
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
+        with:
+          node-version: 22
+
+      - name: Build MeTTaScript Grapher
+        working-directory: _vendor/MeTTaScript
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.2.2 --activate
+          pnpm install --frozen-lockfile
+          pnpm --filter @mettascript/grapher build
 
       - name: Build static site
         run: python3 scripts/build_pages.py
