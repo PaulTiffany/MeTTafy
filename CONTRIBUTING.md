@@ -11,6 +11,26 @@ MeTTafy welcomes contributions from the MeTTa/Hyperon, program-analysis, compile
 5. **Carry provenance.** New semantic recognizers should identify the source evidence supporting their classifications.
 6. **Test semantic claims.** When a transformation claims behavioral preservation, include differential, property-based, solver-backed, or otherwise appropriate verification.
 7. **Unknown is acceptable.** A recognizer should abstain rather than confidently misclassify unfamiliar code.
+8. **Keep changes reviewable.** Prefer focused pull requests over large mixed changes, especially while the Strategy IR is stabilizing.
+
+## Contribution license
+
+By submitting a contribution for inclusion in MeTTafy, you agree that your contribution may be distributed under the repository's MIT License. You must have the right to submit the material. If a contribution contains or derives from third-party material, identify it explicitly and preserve all required notices and license terms.
+
+No contributor license agreement (CLA) is currently required.
+
+## Pull-request workflow
+
+For substantive changes:
+
+1. open or reference an issue when the design space or intended behavior is non-obvious;
+2. work on a focused branch;
+3. include tests or explain why a test is not applicable;
+4. document relevant prior art and third-party dependencies;
+5. open a pull request and complete the repository checklist;
+6. keep architecture or semantic decisions in the PR/issue record rather than only in private discussion.
+
+Trivial typo and documentation fixes do not need a prior issue.
 
 ## Adding a strategy recognizer
 
@@ -23,9 +43,18 @@ A new recognizer should document:
 - at least one positive fixture;
 - preferably at least one near-miss or negative fixture.
 
+Recognizers should expose why a classification was made. A higher confidence value is not a substitute for inspectable evidence.
+
 ## Third-party integrations
 
 Before adding a dependency, git submodule, derived component, or vendored source, update `ACKNOWLEDGMENTS.md` with the canonical upstream URL and applicable license. Preserve required notices in the form required by the upstream license.
+
+Prefer, in order when technically appropriate:
+
+1. a normal package/dependency on the canonical upstream release;
+2. a small adapter around the upstream project;
+3. a pinned git submodule when source-level integration is genuinely needed;
+4. vendoring only with a documented reason and preserved upstream history/license information.
 
 ## Development
 
@@ -36,4 +65,8 @@ pip install -e '.[dev]'
 pytest
 ```
 
-The project is pre-alpha. Small, reviewable changes with explicit tests are preferred over large framework additions while the Strategy IR is stabilizing.
+The project is pre-alpha. Public interfaces may change. Small, evidence-backed changes are preferred over premature framework commitments.
+
+## Community and security
+
+Participation is governed by `CODE_OF_CONDUCT.md`. Security-sensitive reports should follow `SECURITY.md` rather than being posted publicly.
