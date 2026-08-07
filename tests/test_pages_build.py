@@ -48,7 +48,6 @@ def test_pages_build_contains_local_strategy_player() -> None:
     assert "Play" in page
     assert "strategy-player.js" in page
     assert "setInterval" in script
-    assert "@mettascript/grapher@3.4.0" not in page
 
 
 def test_pages_build_contains_reducible_pedagogical_demo() -> None:
@@ -58,6 +57,19 @@ def test_pages_build_contains_reducible_pedagogical_demo() -> None:
     assert "pedagogical projection" in page
     assert "(= (pipeline finite-map) (pipeline discretized-hypermap))" in demo
     assert "(pipeline finite-map)" in demo
+
+
+def test_mettascript_is_credited_as_upstream_visualization_work() -> None:
+    run_build()
+    provenance = (OUT / "provenance.html").read_text(encoding="utf-8")
+    page = (OUT / "four-color.html").read_text(encoding="utf-8")
+
+    assert "MesTTo/MeTTaScript" in provenance
+    assert "3.4.0" in provenance
+    assert "abe13439196bccdb48b6636773a46ec9772a7aaf" in provenance
+    assert "MeTTafy does not claim this implementation as its own" in provenance
+    assert "Not currently required for this site" not in page
+    assert "public availability we cannot verify" not in page
 
 
 def test_legacy_docs_urls_redirect_to_generated_pages() -> None:
