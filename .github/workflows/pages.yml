@@ -12,6 +12,8 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/human_interface_witness.py"
+      - "tests/metta_runtime_witness.mjs"
       - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
@@ -27,6 +29,8 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/human_interface_witness.py"
+      - "tests/metta_runtime_witness.mjs"
       - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
@@ -96,13 +100,17 @@ jobs:
       - name: Static site resource witness
         run: python tests/site_size_witness.py
 
-      - name: Browser product and accessibility witnesses
+      - name: MeTTa ecosystem runtime witness
+        run: node tests/metta_runtime_witness.mjs
+
+      - name: Browser, accessibility, and human operability witnesses
         run: |
           python -m http.server 8000 --bind 127.0.0.1 --directory _site >/tmp/mettafy-http.log 2>&1 &
           server_pid=$!
           trap 'kill ${server_pid}' EXIT
           python tests/browser_smoke.py
           python tests/accessibility_witness.py
+          python tests/human_interface_witness.py
 
       - name: Upload witness evidence
         if: always()
