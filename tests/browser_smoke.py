@@ -13,8 +13,9 @@ def fail(message: str) -> None:
     raise AssertionError(message)
 
 
-def attach_runtime_guards(page: Page) -> tuple[list[str], list[str]]:
+def attach_runtime_guards(page: Page) -> tuple[list[str], list[str], list[str]]:
     console_errors: list[str] = []
+    page_errors: list[str] = []
     failed_requests: list[str] = []
 
     def on_console(message: ConsoleMessage) -> None:
@@ -25,8 +26,9 @@ def attach_runtime_guards(page: Page) -> tuple[list[str], list[str]]:
         failed_requests.append(f"{request.method} {request.url}: {request.failure}")
 
     page.on("console", on_console)
+    page.on("pageerror", lambda error: page_errors.append(str(error)))
     page.on("requestfailed", on_request_failed)
-    return console_errors, failed_requests
+    return console_errors, page_errors, failed_requests
 
 
 def assert_internal_links(page: Page) -> None:
@@ -38,7 +40,7 @@ def assert_internal_links(page: Page) -> None:
     for href in hrefs:
         target = urljoin(page.url, href)
         parsed = urlparse(target)
-        if (parsed.scheme not in ("http", "https") or parsed.netloc != origin.netloc):
+        if parsed.scheme not in ("http", "https") or parsed.netloc != origin.netloc:
             continue
         clean = parsed._replace(fragment="").geturl()
         if clean in checked:
@@ -68,8 +70,7 @@ def assert_grapher_product(page: Page) -> None:
         () => [...document.querySelectorAll('metta-grapher')].map(el => ({
           src: el.getAttribute('src'),
           hasGrapher: el.grapher !== null,
-          hasSvg: Boolean(el.shadowRoot?.querySelector('svg.mg-svg')),
-          shadowText: el.shadowRoot?.textContent ?? ''
+          hasSvg: Boolean(el.shadowRoot?.querySelector('svg.mg-svg'))
         }))
         """
     )
@@ -80,7 +81,6 @@ def assert_grapher_product(page: Page) -> None:
     if not all(item["hasGrapher"] and item["hasSvg"] for item in state):
         fail("MeTTaScript Grapher custom element mounted without a usable SVG canvas")
 
-    # Exercise the real upstream reduction API. This catches a mounted-but-inert viewer.
     playable = page.evaluate(
         """
         () => {
@@ -95,31 +95,54 @@ def assert_grapher_product(page: Page) -> None:
         fail("reduction Grapher mounted but did not expose its Play API")
 
 
+def runtime_diagnostics(
+    console_errors: list[str], page_errors: list[str], failed_requests: list[str]
+) -> str:
+    sections: list[str] = []
+    if console_errors:
+        sections.append("console errors:\n" + "\n".join(console_errors))
+    if page_errors:
+        sections.append("uncaught page errors:\n" + "\n".join(page_errors))
+    if failed_requests:
+        sections.append("failed requests:\n" + "\n".join(failed_requests))
+    return "\n\n".join(sections)
+
+
 def main() -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
-        console_errors, failed_requests = attach_runtime_guards(page)
+        console_errors, page_errors, failed_requests = attach_runtime_guards(page)
 
-        for relative in PAGES:
-            response = page.goto(urljoin(BASE_URL, relative), wait_until="networkidle")
+        try:
+            for relative in PAGES:
+                response = page.goto(urljoin(BASE_URL, relative), wait_until="networkidle")
+                if response is None or not response.ok:
+                    fail(
+                        f"page failed: {relative} -> "
+                        f"{None if response is None else response.status}"
+                    )
+                assert_internal_links(page)
+                if relative == "four-color.html":
+                    assert_grapher_product(page)
+
+            response = page.goto(
+                urljoin(BASE_URL, "docs/auditability.html"), wait_until="networkidle"
+            )
             if response is None or not response.ok:
-                fail(f"page failed: {relative} -> {None if response is None else response.status}")
-            assert_internal_links(page)
-            if relative == "four-color.html":
-                assert_grapher_product(page)
+                fail("legacy auditability URL did not resolve")
+            page.wait_for_url("**/audit.html")
 
-        response = page.goto(urljoin(BASE_URL, "docs/auditability.html"), wait_until="networkidle")
-        if response is None or not response.ok:
-            fail("legacy auditability URL did not resolve")
-        page.wait_for_url("**/audit.html")
-
-        browser.close()
-
-    if console_errors:
-        fail("browser console errors:\n" + "\n".join(console_errors))
-    if failed_requests:
-        fail("browser request failures:\n" + "\n".join(failed_requests))
+            diagnostics = runtime_diagnostics(console_errors, page_errors, failed_requests)
+            if diagnostics:
+                fail("browser runtime was not clean:\n" + diagnostics)
+        except Exception as exc:
+            diagnostics = runtime_diagnostics(console_errors, page_errors, failed_requests)
+            if diagnostics:
+                print("Browser runtime diagnostics:\n" + diagnostics, file=sys.stderr)
+            raise exc
+        finally:
+            browser.close()
 
     print("Browser product smoke passed: pages, links, Grapher mount, and Play API are usable.")
     return 0
