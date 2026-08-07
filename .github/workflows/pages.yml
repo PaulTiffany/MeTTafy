@@ -12,6 +12,7 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
   push:
@@ -26,6 +27,7 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -90,6 +92,9 @@ jobs:
           python scripts/stamp_site_integrity.py
           find _site -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/site-second.sha256
           diff -u /tmp/site-first.sha256 /tmp/site-second.sha256
+
+      - name: Static site resource witness
+        run: python tests/site_size_witness.py
 
       - name: Browser product and accessibility witnesses
         run: |
