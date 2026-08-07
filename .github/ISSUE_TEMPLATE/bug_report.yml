@@ -1,0 +1,68 @@
+name: Bug report
+description: Report reproducible incorrect behavior in MeTTafy
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make semantic claims reproducible. Please use a minimal public fixture whenever possible.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: Include source, command, or fixture sufficient to reproduce the problem. Do not include secrets or private code.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: MeTTafy version or commit
+      placeholder: 0.0.1 or commit SHA
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Python front end / structural analysis
+        - Strategy classification
+        - Strategy IR / provenance
+        - MeTTa emission
+        - Verification
+        - Packaging / CLI
+        - Documentation / attribution
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, OS, MeTTa runtime, and other relevant versions.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Known false-positive/false-negative pattern, logs, or related upstream behavior.
+  - type: checkboxes
+    id: conduct
+    attributes:
+      label: Community check
+      options:
+        - label: I have removed secrets/private data and checked for an existing issue covering this behavior.
+          required: true
