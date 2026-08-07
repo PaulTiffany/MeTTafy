@@ -1,0 +1,73 @@
+{
+  "id": "four-color-rocq-f2fcc837",
+  "title": "Four Color Theorem",
+  "field": "planar graph theory / topology-adjacent computational mathematics",
+  "upstream": {
+    "repository": "https://github.com/rocq-community/fourcolor",
+    "commit": "f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2",
+    "license": "CeCILL-B",
+    "checker": "Rocq/Coq",
+    "paths": [
+      "theories/proof/fourcolor.v",
+      "theories/proof/combinatorial4ct.v",
+      "theories/proof/unavoidability.v",
+      "theories/proof/reducibility.v",
+      "theories/proof/discharge.v"
+    ]
+  },
+  "proof_layers": [
+    {
+      "id": "high-level-finite",
+      "source": "theories/proof/fourcolor.v",
+      "theorem": "four_color_finite",
+      "strategies": [
+        "Discretization",
+        "RepresentationChange",
+        "ProofByTransport"
+      ]
+    },
+    {
+      "id": "high-level-general",
+      "source": "theories/proof/fourcolor.v",
+      "theorem": "four_color",
+      "strategies": [
+        "CompactnessExtension",
+        "FiniteReduction"
+      ]
+    },
+    {
+      "id": "finite-combinatorial-core",
+      "source": "theories/proof/combinatorial4ct.v",
+      "theorem": "four_color_hypermap",
+      "strategies": [
+        "StructuralReduction",
+        "Induction",
+        "MinimalCounterexample",
+        "DecisionProcedure",
+        "Unavoidability",
+        "Reducibility"
+      ]
+    }
+  ],
+  "history": {
+    "origin": "Francis Guthrie's four-colour conjecture (1852)",
+    "milestones": [
+      "Kempe attempted proof (1879), later found flawed",
+      "Appel-Haken computer-assisted proof (1976; published 1977)",
+      "Robertson-Sanders-Seymour-Thomas simplified computer proof (1997)",
+      "Georges Gonthier computer-checked Coq proof (2005)"
+    ]
+  },
+  "benchmark_policy": {
+    "blind_fields_removed": [
+      "title",
+      "field",
+      "history",
+      "upstream.repository",
+      "proof_layers[].source",
+      "proof_layers[].theorem"
+    ],
+    "checker_authority": true,
+    "learned_predictions_are_authoritative": false
+  }
+}
