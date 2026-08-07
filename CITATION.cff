@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use MeTTafy in research, please cite the software using this metadata."
+title: "MeTTafy"
+type: software
+authors:
+  - family-names: "Tiffany"
+    given-names: "Paul Carver"
+    name-suffix: "III"
+repository-code: "https://github.com/PaulTiffany/MeTTafy"
+url: "https://github.com/PaulTiffany/MeTTafy"
+license: MIT
+version: 0.0.1
+date-released: 2026-08-07
+abstract: "Semantic decompilation of conventional programs into explicit computational strategies and executable MeTTa representations."
+keywords:
+  - MeTTa
+  - Hyperon
+  - program analysis
+  - semantic decompilation
+  - neuro-symbolic AI
