@@ -52,10 +52,13 @@ jobs:
 
       - name: Audience witnesses for integrators, operators, and reviewers
         if: matrix.python-version == '3.14'
+        shell: bash
         run: |
-          python tests/integrator_contract_witness.py
-          python tests/operator_resilience_witness.py
-          python tests/reviewer_traceability_witness.py
+          status=0
+          python tests/integrator_contract_witness.py || status=1
+          python tests/operator_resilience_witness.py || status=1
+          python tests/reviewer_traceability_witness.py || status=1
+          exit "${status}"
 
       - name: Upload Python audience witness evidence
         if: always() && matrix.python-version == '3.14'
