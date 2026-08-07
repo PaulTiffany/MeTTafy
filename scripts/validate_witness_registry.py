@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +10,7 @@ REGISTRY = ROOT / "certification" / "witness-registry-v1.json"
 ALLOWED_STATUS = {"implemented", "planned", "retired"}
 ALLOWED_STRENGTH = {"diagnostic", "bounded", "behavioral", "artifact", "formal"}
 REQUIRED = {"id", "name", "status", "kind", "strength", "claim", "non_claims", "authority", "replayable"}
+VERSION = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$")
 
 
 def fail(message: str) -> None:
@@ -17,8 +19,13 @@ def fail(message: str) -> None:
 
 def main() -> int:
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    if data.get("version") != "1.0.0":
-        fail("unexpected registry version")
+    version = data.get("version")
+    if not isinstance(version, str):
+        fail("registry version is required")
+    match = VERSION.fullmatch(version)
+    if match is None or match.group("major") != "1":
+        fail(f"unsupported registry version {version!r}; expected semantic version 1.x.y")
+
     witnesses = data.get("witnesses")
     if not isinstance(witnesses, list) or not witnesses:
         fail("witnesses must be a non-empty list")
@@ -58,7 +65,7 @@ def main() -> int:
     if not composition.get("conflict_policy"):
         fail("composition conflict policy is required")
 
-    print(f"Mechanical witness registry v{data['version']} valid: {len(witnesses)} witnesses")
+    print(f"Mechanical witness registry v{version} valid: {len(witnesses)} witnesses")
     return 0
 
 
