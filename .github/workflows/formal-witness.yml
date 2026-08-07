@@ -1,0 +1,53 @@
+name: Four Color Formal Witness
+
+on:
+  pull_request:
+    paths:
+      - "certification/**"
+      - "scripts/bootstrap_four_color_replay.sh"
+      - "scripts/replay_four_color_proof.sh"
+      - ".github/workflows/formal-witness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "certification/**"
+      - "scripts/bootstrap_four_color_replay.sh"
+      - "scripts/replay_four_color_proof.sh"
+      - ".github/workflows/formal-witness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: four-color-formal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  replay-bootstrap:
+    name: Four Color replay bootstrap
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout MeTTafy
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Checkout pinned Four Color artifact
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: rocq-community/fourcolor
+          ref: f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2
+          path: _vendor/fourcolor
+          persist-credentials: false
+
+      - name: Exercise upstream package build and discover immutable toolchain
+        run: bash scripts/bootstrap_four_color_replay.sh
+
+      - name: Upload bootstrap evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: four-color-replay-bootstrap
+          path: artifacts/witnesses/rocq-four-color-bootstrap.*
+          if-no-files-found: error
