@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import sys
+from urllib.parse import urljoin, urlparse
+
+from playwright.sync_api import ConsoleMessage, Page, Request, sync_playwright
+
+BASE_URL = "http://127.0.0.1:8000/"
+PAGES = ("index.html", "four-color.html", "audit.html", "provenance.html")
+
+
+def fail(message: str) -> None:
+    raise AssertionError(message)
+
+
+def attach_runtime_guards(page: Page) -> tuple[list[str], list[str]]:
+    console_errors: list[str] = []
+    failed_requests: list[str] = []
+
+    def on_console(message: ConsoleMessage) -> None:
+        if message.type == "error":
+            console_errors.append(message.text)
+
+    def on_request_failed(request: Request) -> None:
+        failed_requests.append(f"{request.method} {request.url}: {request.failure}")
+
+    page.on("console", on_console)
+    page.on("requestfailed", on_request_failed)
+    return console_errors, failed_requests
+
+
+def assert_internal_links(page: Page) -> None:
+    hrefs = page.locator("a[href]").evaluate_all(
+        "els => els.map(el => el.getAttribute('href')).filter(Boolean)"
+    )
+    origin = urlparse(BASE_URL)
+    checked: set[str] = set()
+    for href in hrefs:
+        target = urljoin(page.url, href)
+        parsed = urlparse(target)
+        if (parsed.scheme not in ("http", "https") or parsed.netloc != origin.netloc):
+            continue
+        clean = parsed._replace(fragment="").geturl()
+        if clean in checked:
+            continue
+        checked.add(clean)
+        response = page.request.get(clean)
+        if not response.ok:
+            fail(f"broken internal link from {page.url}: {clean} -> {response.status}")
+
+
+def assert_grapher_product(page: Page) -> None:
+    page.wait_for_function("customElements.get('metta-grapher') !== undefined")
+    grapher = page.locator("metta-grapher")
+    if grapher.count() != 2:
+        fail(f"expected two MeTTaScript Grapher embeds, found {grapher.count()}")
+
+    page.wait_for_function(
+        """
+        () => [...document.querySelectorAll('metta-grapher')].every(
+          el => el.grapher !== null && el.shadowRoot?.querySelector('svg.mg-svg')
+        )
+        """
+    )
+
+    state = page.evaluate(
+        """
+        () => [...document.querySelectorAll('metta-grapher')].map(el => ({
+          src: el.getAttribute('src'),
+          hasGrapher: el.grapher !== null,
+          hasSvg: Boolean(el.shadowRoot?.querySelector('svg.mg-svg')),
+          shadowText: el.shadowRoot?.textContent ?? ''
+        }))
+        """
+    )
+    if state[0]["src"] != "four-color.metta":
+        fail(f"unexpected authoritative Grapher source: {state[0]['src']}")
+    if state[1]["src"] != "four-color-demo.metta":
+        fail(f"unexpected reduction Grapher source: {state[1]['src']}")
+    if not all(item["hasGrapher"] and item["hasSvg"] for item in state):
+        fail("MeTTaScript Grapher custom element mounted without a usable SVG canvas")
+
+    # Exercise the real upstream reduction API. This catches a mounted-but-inert viewer.
+    playable = page.evaluate(
+        """
+        () => {
+          const g = document.querySelectorAll('metta-grapher')[1].grapher;
+          if (!g || typeof g.play !== 'function') return false;
+          g.play();
+          return true;
+        }
+        """
+    )
+    if not playable:
+        fail("reduction Grapher mounted but did not expose its Play API")
+
+
+def main() -> int:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        console_errors, failed_requests = attach_runtime_guards(page)
+
+        for relative in PAGES:
+            response = page.goto(urljoin(BASE_URL, relative), wait_until="networkidle")
+            if response is None or not response.ok:
+                fail(f"page failed: {relative} -> {None if response is None else response.status}")
+            assert_internal_links(page)
+            if relative == "four-color.html":
+                assert_grapher_product(page)
+
+        response = page.goto(urljoin(BASE_URL, "docs/auditability.html"), wait_until="networkidle")
+        if response is None or not response.ok:
+            fail("legacy auditability URL did not resolve")
+        page.wait_for_url("**/audit.html")
+
+        browser.close()
+
+    if console_errors:
+        fail("browser console errors:\n" + "\n".join(console_errors))
+    if failed_requests:
+        fail("browser request failures:\n" + "\n".join(failed_requests))
+
+    print("Browser product smoke passed: pages, links, Grapher mount, and Play API are usable.")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(f"browser smoke failed: {exc}", file=sys.stderr)
+        raise
