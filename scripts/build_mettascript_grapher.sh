@@ -25,7 +25,9 @@ actual_pnpm="$(pnpm --version)"
   fail "expected pnpm ${EXPECTED_PNPM}, got ${actual_pnpm}"
 
 pnpm --dir "${VENDOR}" install --frozen-lockfile
-pnpm --dir "${VENDOR}" --filter @mettascript/grapher build
+# Grapher's declaration build imports workspace packages such as @mettascript/hyperon.
+# The trailing ellipsis asks pnpm to build Grapher and its dependency closure in order.
+pnpm --dir "${VENDOR}" --filter '@mettascript/grapher...' build
 
 [[ -s "${BUNDLE}" ]] || fail "Grapher build did not produce ${BUNDLE}"
 [[ -s "${LICENSE}" ]] || fail "upstream MIT license is missing"
