@@ -1,6 +1,6 @@
 name: Strategy recognizer proposal
 description: Propose a new computational strategy or recognizer
- title: "[Strategy]: "
+title: "[Strategy]: "
 labels: []
 body:
   - type: textarea
