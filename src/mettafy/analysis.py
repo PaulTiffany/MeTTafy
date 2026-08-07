@@ -54,7 +54,7 @@ def _collect_function_facts(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> _Func
     seen: dict[str, ast.AST] = {}
     restores: list[ast.Assign | ast.AnnAssign | ast.AugAssign] = []
     for assignment in assignments:
-        targets: list[ast.AST] = []
+        targets: list[ast.expr] = []
         if isinstance(assignment, ast.Assign):
             targets = assignment.targets
         elif isinstance(assignment, ast.AnnAssign):
