@@ -1,6 +1,8 @@
 # Security Policy
 
-MeTTafy is pre-alpha research software. It should not yet be treated as a security boundary or trusted execution environment.
+MeTTafy is a pre-alpha research project at the scientific and public-API layers. Published product surfaces are nevertheless expected to satisfy the engineering gates in `docs/product-hardening.md`.
+
+Production engineering controls do **not** make MeTTafy a security boundary, sandbox, or trusted execution environment.
 
 ## Supported versions
 
@@ -18,11 +20,27 @@ A useful report includes:
 - affected component;
 - impact and realistic threat model;
 - reproduction conditions;
-- whether untrusted source programs, generated MeTTa, subprocesses, filesystem access, network access, or third-party runtimes are involved;
+- whether untrusted source programs, generated MeTTa, subprocesses, filesystem access, network access, browser execution, or third-party runtimes are involved;
 - a proposed mitigation if known.
 
 ## Security boundaries
 
-MeTTafy analyzes and may eventually execute or transform programs. Treat all submitted source code and generated artifacts as potentially untrusted. Future runtime integrations must document sandbox assumptions explicitly; semantic equivalence or successful verification does not imply safety.
+MeTTafy analyzes and may eventually execute or transform programs. Treat all submitted source code and generated artifacts as potentially untrusted.
 
-Dependency and workflow changes should use pinned or reviewable versions where practical and preserve the principle of least privilege for automation tokens.
+Current browser assets are static and client-side, but a successful build or browser smoke test is not a sandbox guarantee. Future runtime integrations must document trust, isolation, resource, filesystem, and network assumptions explicitly before untrusted execution is advertised as supported.
+
+Semantic equivalence, successful differential verification, a formal checker result, and operational safety are distinct claims. None should silently stand in for another.
+
+## Supply chain
+
+Product workflows should:
+
+- use least-privilege automation permissions;
+- pin GitHub Actions and source-built third-party integrations to exact commits;
+- honor upstream lockfiles/toolchains;
+- preserve third-party licenses and attribution;
+- record integrity metadata for deployed third-party bytes;
+- audit dependency graphs for known vulnerabilities;
+- make dependency updates explicit and reviewable.
+
+Pinning and hashing establish provenance and change control; they do not by themselves establish that code is safe.

@@ -12,6 +12,7 @@ MeTTafy welcomes contributions from the MeTTa/Hyperon, program-analysis, compile
 6. **Test semantic claims.** When a transformation claims behavioral preservation, include differential, property-based, solver-backed, or otherwise appropriate verification.
 7. **Unknown is acceptable.** A recognizer should abstain rather than confidently misclassify unfamiliar code.
 8. **Keep changes reviewable.** Prefer focused pull requests over large mixed changes, especially while the Strategy IR is stabilizing.
+9. **Treat published surfaces as products.** A supported CLI, package, Pages lesson, or integration must have an executable gate at the boundary users actually encounter.
 
 ## Contribution license
 
@@ -28,9 +29,29 @@ For substantive changes:
 3. include tests or explain why a test is not applicable;
 4. document relevant prior art and third-party dependencies;
 5. open a pull request and complete the repository checklist;
-6. keep architecture or semantic decisions in the PR/issue record rather than only in private discussion.
+6. keep architecture or semantic decisions in the PR/issue record rather than only in private discussion;
+7. require product-facing changes to pass the relevant release gates in `docs/product-hardening.md`.
 
 Trivial typo and documentation fixes do not need a prior issue.
+
+## Product gates
+
+The canonical CI workflows are the release authority for supported engineering surfaces. Before opening a PR, run the locally available subset:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e '.[dev]'
+ruff check .
+mypy
+pytest
+python -m build
+twine check --strict dist/*
+```
+
+Pages changes additionally pass the repository's real-browser product smoke in CI. That check builds the pinned MesTTo/MeTTaScript Grapher, serves the generated site, mounts the actual custom elements in Chromium, checks internal navigation and runtime errors, and exercises the Grapher reduction API.
+
+Do not weaken a gate merely to make a PR green. If a gate is wrong, fix the gate and record why; if the product is wrong, fix the product.
 
 ## Adding a strategy recognizer
 
@@ -56,16 +77,13 @@ Prefer, in order when technically appropriate:
 3. a pinned git submodule when source-level integration is genuinely needed;
 4. vendoring only with a documented reason and preserved upstream history/license information.
 
+When source-building an upstream component for a published MeTTafy artifact, pin the exact upstream commit, honor its lockfile/toolchain, preserve its license, and record the integrity of the deployed bytes.
+
 ## Development
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e '.[dev]'
-pytest
-```
+The project remains pre-alpha scientifically and at the public-API level. Production engineering controls do not imply that semantic classifiers are complete, that untrusted execution is sandboxed, or that a formal proof has been re-proved by MeTTafy.
 
-The project is pre-alpha. Public interfaces may change. Small, evidence-backed changes are preferred over premature framework commitments.
+See `docs/product-hardening.md` for the engineering contract and current hardening backlog.
 
 ## Community and security
 

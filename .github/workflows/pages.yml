@@ -6,6 +6,10 @@ on:
       - "exemplars/**"
       - "site/**"
       - "scripts/build_pages.py"
+      - "scripts/build_mettascript_grapher.sh"
+      - "scripts/stamp_site_integrity.py"
+      - "tests/browser_smoke.py"
+      - "pyproject.toml"
       - ".github/workflows/pages.yml"
   push:
     branches: [main]
@@ -13,6 +17,10 @@ on:
       - "exemplars/**"
       - "site/**"
       - "scripts/build_pages.py"
+      - "scripts/build_mettascript_grapher.sh"
+      - "scripts/stamp_site_integrity.py"
+      - "tests/browser_smoke.py"
+      - "pyproject.toml"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -47,23 +55,39 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build MeTTaScript Grapher
-        working-directory: _vendor/MeTTaScript
+      - name: Set up Python
+        uses: actions/setup-python@8549b9f8f590ad24eab7482f36f6e1e24d34597b # v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Build verified MeTTaScript Grapher
+        run: bash scripts/build_mettascript_grapher.sh
+
+      - name: Install browser smoke dependency
         run: |
-          corepack enable
-          corepack prepare pnpm@11.2.2 --activate
-          pnpm install --frozen-lockfile
-          pnpm --filter @mettascript/grapher build
+          python -m pip install --disable-pip-version-check playwright==1.61.0
+          python -m playwright install --with-deps chromium
 
       - name: Build static site
-        run: python3 scripts/build_pages.py
+        run: |
+          python scripts/build_pages.py
+          python scripts/stamp_site_integrity.py
 
       - name: Verify deterministic rebuild
         run: |
           find _site -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/site-first.sha256
-          python3 scripts/build_pages.py
+          python scripts/build_pages.py
+          python scripts/stamp_site_integrity.py
           find _site -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/site-second.sha256
           diff -u /tmp/site-first.sha256 /tmp/site-second.sha256
+
+      - name: Browser product smoke
+        run: |
+          python -m http.server 8000 --bind 127.0.0.1 --directory _site >/tmp/mettafy-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill ${server_pid}' EXIT
+          python tests/browser_smoke.py
 
       - name: Configure Pages
         if: github.event_name != 'pull_request'

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from mettafy import StrategyKind, analyze_source, emit_strategy_metta
 
-
 EXAMPLE = Path("examples/four_color/solver.py")
 
 
