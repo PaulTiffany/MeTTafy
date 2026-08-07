@@ -24,8 +24,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  replay-bootstrap:
-    name: Four Color replay bootstrap
+  replay:
+    name: Four Color immutable replay
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout MeTTafy
@@ -41,13 +41,16 @@ jobs:
           path: _vendor/fourcolor
           persist-credentials: false
 
-      - name: Exercise upstream package build and discover immutable toolchain
-        run: bash scripts/bootstrap_four_color_replay.sh
+      - name: Replay proof under immutable checker toolchain
+        run: bash scripts/replay_four_color_proof.sh
 
-      - name: Upload bootstrap evidence
+      - name: Upload formal witness evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: four-color-replay-bootstrap
-          path: artifacts/witnesses/rocq-four-color-bootstrap.*
+          name: four-color-formal-witness
+          path: |
+            artifacts/witnesses/rocq-four-color-replay.json
+            artifacts/witnesses/rocq-four-color-replay.log
+            artifacts/witnesses/rocq-four-color-packages.txt
           if-no-files-found: error
