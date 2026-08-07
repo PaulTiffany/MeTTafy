@@ -5,13 +5,7 @@ from typing import Any
 
 
 def blind_exemplar_view(manifest: dict[str, Any]) -> dict[str, Any]:
-    """Return a benchmark-safe projection of an exemplar manifest.
-
-    Historical and documentary metadata are removed so a strategy classifier
-    cannot infer labels from famous theorem names, authors, filenames, or
-    narrative context. Structural annotations remain available only when they
-    are explicitly part of the benchmark target/evaluation record.
-    """
+    """Return classifier input with documentary and answer-key fields removed."""
 
     blinded = deepcopy(manifest)
     blinded.pop("title", None)
@@ -29,5 +23,25 @@ def blind_exemplar_view(manifest: dict[str, Any]) -> dict[str, Any]:
             if isinstance(layer, dict):
                 layer.pop("source", None)
                 layer.pop("theorem", None)
+                layer.pop("strategies", None)
 
     return blinded
+
+
+def exemplar_strategy_targets(manifest: dict[str, Any]) -> dict[str, list[str]]:
+    """Extract held-out strategy labels keyed by proof-layer id."""
+
+    targets: dict[str, list[str]] = {}
+    layers = manifest.get("proof_layers", [])
+    if not isinstance(layers, list):
+        return targets
+
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        layer_id = layer.get("id")
+        strategies = layer.get("strategies")
+        if isinstance(layer_id, str) and isinstance(strategies, list):
+            targets[layer_id] = [str(item) for item in strategies]
+
+    return targets
