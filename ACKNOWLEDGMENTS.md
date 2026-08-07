@@ -1,6 +1,6 @@
 # Acknowledgments
 
-MeTTafy is intentionally built as a participant in the existing MeTTa, Hyperon, OpenCog, and program-analysis communities.
+MeTTafy is intentionally built as a participant in the existing MeTTa, Hyperon, OpenCog, formal-methods, and program-analysis communities.
 
 ## OpenCog Hyperon / MeTTa
 
@@ -25,6 +25,22 @@ LogicMOO's `metta-src-conversions` repository is directly relevant prior art: it
 Upstream: https://github.com/logicmoo/metta-src-conversions
 
 At repository bootstrap time, MeTTafy did not identify a clear repository-wide root license for this project. Accordingly, it is treated here as credited prior art only. No code from it should be copied, vendored, derived, or submoduled into MeTTafy until the applicable licensing terms are established for the material in question.
+
+## FabricPC
+
+FabricPC is a high-performance predictive-coding framework maintained in the SingularityNET ecosystem and led by Matthew Behrend. MeTTafy may evaluate it as an optional learned recognizer over verified proof-trace graphs.
+
+Upstream: https://github.com/trueagi-io/FabricPC
+
+FabricPC is distributed under the MIT License, copyright Matthew Behrend. MeTTafy should integrate it, if useful, through a normal dependency or adapter boundary rather than by reimplementing or silently forking the project. FabricPC predictions are treated as evidence/routing signals and never as proof or correctness authority.
+
+## Lean community / mathlib4
+
+The Lean community's `mathlib4` library is a candidate source of machine-checkable proof-program exemplars, especially topology-heavy proofs used to train and evaluate MeTTafy's semantic strategy recovery.
+
+Upstream: https://github.com/leanprover-community/mathlib4
+
+mathlib4 is distributed under the Apache License 2.0. MeTTafy should prefer pinned upstream references and reproducible checker metadata over bulk copying. If any mathlib source is redistributed or modified, Apache-2.0 attribution and notice requirements must be preserved.
 
 ## Joern / Code Property Graph
 
