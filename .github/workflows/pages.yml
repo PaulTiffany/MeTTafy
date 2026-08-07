@@ -3,23 +3,31 @@ name: Pages
 on:
   pull_request:
     paths:
+      - "certification/**"
       - "exemplars/**"
       - "site/**"
       - "scripts/build_pages.py"
       - "scripts/build_mettascript_grapher.sh"
+      - "scripts/fetch_axe_core.sh"
       - "scripts/stamp_site_integrity.py"
+      - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
   push:
     branches: [main]
     paths:
+      - "certification/**"
       - "exemplars/**"
       - "site/**"
       - "scripts/build_pages.py"
       - "scripts/build_mettascript_grapher.sh"
+      - "scripts/fetch_axe_core.sh"
       - "scripts/stamp_site_integrity.py"
+      - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/site_size_witness.py"
       - "pyproject.toml"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -31,7 +39,7 @@ permissions:
 
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -64,6 +72,9 @@ jobs:
       - name: Build verified MeTTaScript Grapher
         run: bash scripts/build_mettascript_grapher.sh
 
+      - name: Fetch verified axe-core witness engine
+        run: bash scripts/fetch_axe_core.sh
+
       - name: Install browser smoke dependency
         run: |
           python -m pip install --disable-pip-version-check playwright==1.61.0
@@ -82,12 +93,24 @@ jobs:
           find _site -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/site-second.sha256
           diff -u /tmp/site-first.sha256 /tmp/site-second.sha256
 
-      - name: Browser product smoke
+      - name: Static site resource witness
+        run: python tests/site_size_witness.py
+
+      - name: Browser product and accessibility witnesses
         run: |
           python -m http.server 8000 --bind 127.0.0.1 --directory _site >/tmp/mettafy-http.log 2>&1 &
           server_pid=$!
           trap 'kill ${server_pid}' EXIT
           python tests/browser_smoke.py
+          python tests/accessibility_witness.py
+
+      - name: Upload witness evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mechanical-witness-evidence
+          path: artifacts/witnesses/
+          if-no-files-found: warn
 
       - name: Configure Pages
         if: github.event_name != 'pull_request'

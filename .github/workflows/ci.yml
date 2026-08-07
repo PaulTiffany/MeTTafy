@@ -37,7 +37,9 @@ jobs:
         run: python -m pip install --disable-pip-version-check -e '.[dev]'
 
       - name: Validate certification program
-        run: python scripts/validate_certification_program.py --status
+        run: |
+          python scripts/validate_certification_program.py --status
+          python scripts/validate_witness_registry.py
 
       - name: Lint
         run: ruff check .

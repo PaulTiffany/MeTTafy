@@ -1,6 +1,6 @@
 {
   "program": "MeTTafy Production Certification",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "schema_version": 1,
   "principle": "CI success is evidence, not a certificate.",
   "grades": {
@@ -16,6 +16,8 @@
         "SEC-RUNTIME-AUDIT",
         "WEB-DETERMINISM",
         "WEB-BROWSER",
+        "WEB-ACCESSIBILITY",
+        "WEB-SIZE-BUDGET",
         "SUPPLY-PINNING",
         "SUPPLY-ATTRIBUTION"
       ]
@@ -31,8 +33,14 @@
         "FCT-SEMANTICS"
       ]
     },
+    "accessibility_green": {
+      "requires": [
+        "WEB-ACCESSIBILITY",
+        "WEB-ACCESSIBILITY-MANUAL"
+      ]
+    },
     "product_green": {
-      "requires_grades": ["engineering_green", "exemplar_green"]
+      "requires_grades": ["engineering_green", "exemplar_green", "accessibility_green"]
     }
   },
   "gates": [
@@ -125,6 +133,60 @@
         "grapher_svg_each": true,
         "reduction_trace_min_states": 2,
         "reduction_trace_must_advance": true
+      }
+    },
+    {
+      "id": "WEB-ACCESSIBILITY",
+      "surface": "web",
+      "status": "implemented",
+      "command": "python tests/accessibility_witness.py",
+      "metric": "automated_wcag_a_aa_violations",
+      "threshold": {"op": "eq", "value": 0},
+      "standard": "mechanically detectable WCAG 2.0/2.1/2.2 Level A/AA subset",
+      "witness": "WIT-WCAG-AUTO",
+      "contract": {
+        "engine": "axe-core@4.12.1",
+        "primary_pages": 4,
+        "incomplete_findings_must_be_recorded": true,
+        "full_wcag_conformance_claim": false
+      }
+    },
+    {
+      "id": "WEB-ACCESSIBILITY-MANUAL",
+      "surface": "web",
+      "status": "planned",
+      "command": "versioned WCAG 2.2 AA manual and assistive-technology review",
+      "metric": "unresolved_manual_accessibility_checks",
+      "threshold": {"op": "eq", "value": 0},
+      "standard": "WCAG 2.2 AA",
+      "contract": {
+        "axe_incomplete_items_must_be_adjudicated": true,
+        "keyboard_review": true,
+        "screen_reader_review": true,
+        "zoom_reflow_review": true,
+        "color_contrast_review": true
+      }
+    },
+    {
+      "id": "WEB-SIZE-BUDGET",
+      "surface": "web",
+      "status": "implemented",
+      "command": "python tests/site_size_witness.py",
+      "witness": "WIT-WEB-SIZE",
+      "metrics": {
+        "first_party_static_bytes": {"op": "lte", "value": 524288},
+        "single_vendor_bundle_bytes": {"op": "lte", "value": 1048576}
+      },
+      "contract": {
+        "measurement": "uncompressed generated _site bytes",
+        "first_party_excludes": ["assets/vendor/"],
+        "runtime_performance_claim": false,
+        "baseline_measurement": {
+          "repository_commit": "0827e4423db1be7de71cf13167195c8c73f0f726",
+          "first_party_static_bytes": 30515,
+          "single_vendor_bundle_bytes": 559253,
+          "total_site_bytes": 590831
+        }
       }
     },
     {
@@ -243,23 +305,6 @@
         "Unavoidability",
         "Reducibility"
       ]
-    },
-    {
-      "id": "WEB-ACCESSIBILITY",
-      "surface": "web",
-      "status": "planned",
-      "metric": "wcag_2_2_aa_automated_violations",
-      "threshold": {"op": "eq", "value": 0},
-      "standard": "WCAG 2.2 AA"
-    },
-    {
-      "id": "WEB-SIZE-BUDGET",
-      "surface": "web",
-      "status": "planned",
-      "metrics": {
-        "first_party_static_bytes": {"op": "lte", "value": 524288},
-        "single_vendor_bundle_bytes": {"op": "lte", "value": 1048576}
-      }
     },
     {
       "id": "RELEASE-SBOM",
