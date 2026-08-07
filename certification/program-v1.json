@@ -1,0 +1,290 @@
+{
+  "program": "MeTTafy Production Certification",
+  "version": "1.0.0",
+  "schema_version": 1,
+  "principle": "CI success is evidence, not a certificate.",
+  "grades": {
+    "engineering_green": {
+      "requires": [
+        "ENG-LINT",
+        "ENG-TYPE",
+        "ENG-UNIT",
+        "ENG-PYTHON-MATRIX",
+        "PKG-BUILD",
+        "PKG-METADATA",
+        "PKG-WHEEL-SMOKE",
+        "SEC-RUNTIME-AUDIT",
+        "WEB-DETERMINISM",
+        "WEB-BROWSER",
+        "SUPPLY-PINNING",
+        "SUPPLY-ATTRIBUTION"
+      ]
+    },
+    "exemplar_green": {
+      "requires": [
+        "EPI-BLINDING",
+        "EPI-STRATEGY-QUALITY",
+        "EPI-EVIDENCE",
+        "EPI-ROBUSTNESS",
+        "EPI-ABSTENTION",
+        "FCT-STRUCTURE",
+        "FCT-SEMANTICS"
+      ]
+    },
+    "product_green": {
+      "requires_grades": ["engineering_green", "exemplar_green"]
+    }
+  },
+  "gates": [
+    {
+      "id": "ENG-LINT",
+      "surface": "engineering",
+      "status": "implemented",
+      "command": "ruff check .",
+      "metric": "lint_errors",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "ENG-TYPE",
+      "surface": "engineering",
+      "status": "implemented",
+      "command": "mypy",
+      "metric": "type_errors",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "ENG-UNIT",
+      "surface": "engineering",
+      "status": "implemented",
+      "command": "pytest",
+      "metric": "test_failures",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "ENG-PYTHON-MATRIX",
+      "surface": "engineering",
+      "status": "implemented",
+      "command": "GitHub Actions CI matrix",
+      "metric": "supported_interpreters_passing",
+      "threshold": {"op": "set_eq", "value": ["3.11", "3.12", "3.13", "3.14"]}
+    },
+    {
+      "id": "PKG-BUILD",
+      "surface": "release",
+      "status": "implemented",
+      "command": "python -m build",
+      "metric": "distribution_build_failures",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "PKG-METADATA",
+      "surface": "release",
+      "status": "implemented",
+      "command": "twine check --strict dist/*",
+      "metric": "metadata_errors",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "PKG-WHEEL-SMOKE",
+      "surface": "release",
+      "status": "implemented",
+      "command": "isolated wheel install and mettafy CLI smoke",
+      "metric": "installed_cli_failures",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "SEC-RUNTIME-AUDIT",
+      "surface": "security",
+      "status": "implemented",
+      "command": "pip-audit .",
+      "metric": "known_runtime_vulnerabilities",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "WEB-DETERMINISM",
+      "surface": "web",
+      "status": "implemented",
+      "command": "build site twice and compare SHA-256 tree",
+      "metric": "changed_files_between_identical_builds",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "WEB-BROWSER",
+      "surface": "web",
+      "status": "implemented",
+      "command": "python tests/browser_smoke.py",
+      "metric": "browser_contract_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "contract": {
+        "primary_pages_resolve": true,
+        "internal_links_resolve": true,
+        "console_errors": 0,
+        "page_errors": 0,
+        "failed_requests": 0,
+        "grapher_instances": 2,
+        "grapher_svg_each": true,
+        "reduction_trace_min_states": 2,
+        "reduction_trace_must_advance": true
+      }
+    },
+    {
+      "id": "SUPPLY-PINNING",
+      "surface": "supply_chain",
+      "status": "implemented",
+      "command": "workflow and upstream boundary assertions",
+      "metric": "floating_required_build_dependencies",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "SUPPLY-ATTRIBUTION",
+      "surface": "supply_chain",
+      "status": "implemented",
+      "command": "site integrity stamp",
+      "metric": "unattributed_shipped_third_party_artifacts",
+      "threshold": {"op": "eq", "value": 0},
+      "contract": {
+        "license_required": true,
+        "sha256_required": true,
+        "byte_size_required": true
+      }
+    },
+    {
+      "id": "EPI-BLINDING",
+      "surface": "epistemic",
+      "status": "planned",
+      "benchmark": "benchmarks/strategy-recovery-v1.jsonl",
+      "metric": "label_leakage_cases",
+      "threshold": {"op": "eq", "value": 0},
+      "contract": {
+        "strip_strategy_labels": true,
+        "strip_theorem_names": true,
+        "strip_history": true,
+        "strip_documentary_paths": true
+      }
+    },
+    {
+      "id": "EPI-STRATEGY-QUALITY",
+      "surface": "epistemic",
+      "status": "planned",
+      "benchmark": "benchmarks/strategy-recovery-v1.jsonl",
+      "metrics": {
+        "micro_precision": {"op": "gte", "value": 0.95},
+        "micro_recall": {"op": "gte", "value": 0.80},
+        "micro_f1": {"op": "gte", "value": 0.87}
+      }
+    },
+    {
+      "id": "EPI-EVIDENCE",
+      "surface": "epistemic",
+      "status": "planned",
+      "benchmark": "benchmarks/strategy-recovery-v1.jsonl",
+      "metrics": {
+        "predictions_with_source_evidence": {"op": "eq", "value": 1.0},
+        "valid_evidence_spans": {"op": "eq", "value": 1.0}
+      }
+    },
+    {
+      "id": "EPI-ROBUSTNESS",
+      "surface": "epistemic",
+      "status": "planned",
+      "benchmark": "benchmarks/strategy-perturbations-v1.jsonl",
+      "metrics": {
+        "semantic_label_invariance": {"op": "gte", "value": 0.95},
+        "evidence_relocalization_success": {"op": "gte", "value": 0.95}
+      },
+      "perturbations": ["identifier_rename", "comment_change", "whitespace_change", "helper_extraction"]
+    },
+    {
+      "id": "EPI-ABSTENTION",
+      "surface": "epistemic",
+      "status": "planned",
+      "benchmark": "benchmarks/negative-controls-v1.jsonl",
+      "metrics": {
+        "unsupported_false_positive_rate": {"op": "lte", "value": 0.02},
+        "unsupported_cases_with_explicit_abstention": {"op": "gte", "value": 0.98}
+      }
+    },
+    {
+      "id": "FCT-STRUCTURE",
+      "surface": "four_color",
+      "status": "planned",
+      "benchmark": "benchmarks/four-color-v1.json",
+      "metrics": {
+        "required_dependency_edge_recall": {"op": "eq", "value": 1.0},
+        "spurious_dependency_edges": {"op": "eq", "value": 0}
+      },
+      "required_edges": [
+        "four_color -> finitize.compactness_extension",
+        "four_color -> four_color_finite",
+        "four_color_finite -> discretize.discretize_to_hypermap",
+        "four_color_finite -> combinatorial4ct.four_color_hypermap"
+      ]
+    },
+    {
+      "id": "FCT-SEMANTICS",
+      "surface": "four_color",
+      "status": "planned",
+      "benchmark": "benchmarks/four-color-v1.json",
+      "metrics": {
+        "required_strategy_recall": {"op": "gte", "value": 0.90},
+        "required_strategy_precision": {"op": "gte", "value": 0.95},
+        "claims_with_source_evidence": {"op": "eq", "value": 1.0}
+      },
+      "required_strategies": [
+        "FiniteReduction",
+        "Discretization",
+        "RepresentationChange",
+        "ProofByTransport",
+        "CompactnessExtension",
+        "StructuralReduction",
+        "Induction",
+        "MinimalCounterexample",
+        "DecisionProcedure",
+        "Unavoidability",
+        "Reducibility"
+      ]
+    },
+    {
+      "id": "WEB-ACCESSIBILITY",
+      "surface": "web",
+      "status": "planned",
+      "metric": "wcag_2_2_aa_automated_violations",
+      "threshold": {"op": "eq", "value": 0},
+      "standard": "WCAG 2.2 AA"
+    },
+    {
+      "id": "WEB-SIZE-BUDGET",
+      "surface": "web",
+      "status": "planned",
+      "metrics": {
+        "first_party_static_bytes": {"op": "lte", "value": 524288},
+        "single_vendor_bundle_bytes": {"op": "lte", "value": 1048576}
+      }
+    },
+    {
+      "id": "RELEASE-SBOM",
+      "surface": "release",
+      "status": "planned",
+      "metric": "release_artifacts_without_sbom",
+      "threshold": {"op": "eq", "value": 0}
+    },
+    {
+      "id": "RELEASE-PROVENANCE",
+      "surface": "release",
+      "status": "planned",
+      "metric": "release_artifacts_without_build_provenance",
+      "threshold": {"op": "eq", "value": 0}
+    }
+  ],
+  "certificate_required_fields": [
+    "program_version",
+    "repository_commit",
+    "generated_at_utc",
+    "grade",
+    "gate_results",
+    "benchmark_hashes",
+    "artifact_hashes",
+    "tool_versions",
+    "result"
+  ]
+}

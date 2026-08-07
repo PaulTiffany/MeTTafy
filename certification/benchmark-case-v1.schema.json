@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paultiffany.github.io/MeTTafy/schemas/benchmark-case-v1.schema.json",
+  "title": "MeTTafy benchmark case v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "benchmark",
+    "partition",
+    "artifact",
+    "expected",
+    "provenance"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "benchmark": {"type": "string", "minLength": 1},
+    "partition": {"enum": ["train", "dev", "test"]},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "language"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "language": {"type": "string", "minLength": 1}
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategies", "abstain"],
+      "properties": {
+        "strategies": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "allowed_alternates": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true,
+          "default": []
+        },
+        "abstain": {"type": "boolean"},
+        "evidence_regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["strategy", "start_line", "end_line"],
+            "properties": {
+              "strategy": {"type": "string", "minLength": 1},
+              "start_line": {"type": "integer", "minimum": 1},
+              "end_line": {"type": "integer", "minimum": 1}
+            }
+          },
+          "default": []
+        }
+      }
+    },
+    "perturbation": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["kind", "parent_case_id"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "identifier_rename",
+            "comment_change",
+            "whitespace_change",
+            "helper_extraction"
+          ]
+        },
+        "parent_case_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "license"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "license": {"type": "string", "minLength": 1},
+        "source_commit": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
