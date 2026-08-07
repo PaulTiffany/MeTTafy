@@ -1,0 +1,150 @@
+{
+  "registry": "MeTTafy Mechanical Witness Registry",
+  "version": "1.0.0",
+  "principle": "A witness certifies only the proposition inside its declared claim boundary.",
+  "composition": {
+    "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
+    "no_implicit_promotion": true,
+    "conflict_policy": "A failed mandatory witness dominates passing sibling witnesses for the grade that requires it. Conflicting non-mandatory witnesses remain visible and require adjudication."
+  },
+  "witnesses": [
+    {
+      "id": "WIT-UNIT",
+      "name": "Deterministic unit tests",
+      "status": "implemented",
+      "kind": "local_invariant",
+      "strength": "bounded",
+      "claim": "Enumerated local implementation invariants hold for the tested cases.",
+      "non_claims": ["semantic completeness", "general correctness outside tested cases"],
+      "authority": "pytest assertions in the pinned repository commit",
+      "replayable": true
+    },
+    {
+      "id": "WIT-TYPE",
+      "name": "Static type witness",
+      "status": "implemented",
+      "kind": "static_analysis",
+      "strength": "bounded",
+      "claim": "The checked Python surface satisfies the configured mypy type constraints.",
+      "non_claims": ["runtime correctness", "semantic strategy correctness"],
+      "authority": "mypy under repository configuration",
+      "replayable": true
+    },
+    {
+      "id": "WIT-BROWSER",
+      "name": "Browser contract witness",
+      "status": "implemented",
+      "kind": "runtime",
+      "strength": "behavioral",
+      "claim": "The generated web artifact satisfies the explicitly tested browser/runtime contract in Chromium.",
+      "non_claims": ["cross-browser equivalence", "full accessibility", "mathematical correctness"],
+      "authority": "Playwright browser smoke against generated _site artifact",
+      "replayable": true
+    },
+    {
+      "id": "WIT-WCAG-AUTO",
+      "name": "Automated WCAG witness",
+      "status": "implemented",
+      "kind": "accessibility",
+      "strength": "bounded",
+      "claim": "axe-core reports zero automatically detectable WCAG 2.0/2.1/2.2 Level A/AA violations on every primary product page.",
+      "non_claims": [
+        "full WCAG 2.2 AA conformance",
+        "manual success-criterion satisfaction",
+        "screen-reader usability",
+        "all assistive-technology interoperability"
+      ],
+      "authority": "Deque axe-core 4.12.1 automated rules",
+      "replayable": true,
+      "evidence": ["violations", "incomplete/manual-review items", "passes", "inapplicable rules", "page URLs", "axe-core version"]
+    },
+    {
+      "id": "WIT-REPRO",
+      "name": "Reproducibility witness",
+      "status": "implemented",
+      "kind": "reproducibility",
+      "strength": "artifact",
+      "claim": "Repeated builds from identical declared inputs produce byte-identical site output.",
+      "non_claims": ["source correctness", "semantic correctness"],
+      "authority": "SHA-256 tree comparison",
+      "replayable": true
+    },
+    {
+      "id": "WIT-ROCQ-REPLAY",
+      "name": "Formal proof replay witness",
+      "status": "planned",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The pinned Four Color formal artifact is accepted by the pinned Rocq checker/toolchain.",
+      "non_claims": ["MeTTafy semantic interpretation is correct", "historical narrative correctness"],
+      "authority": "Rocq kernel/checker on pinned upstream artifact",
+      "replayable": true
+    },
+    {
+      "id": "WIT-DIFFERENTIAL",
+      "name": "Differential execution witness",
+      "status": "planned",
+      "kind": "behavioral_equivalence",
+      "strength": "behavioral",
+      "claim": "For the certified input domain, source execution and executable MeTTa lowering agree on observable results.",
+      "non_claims": ["equivalence outside the sampled/certified domain", "intensional strategy identity by itself"],
+      "authority": "independent execution of source and MeTTa artifacts",
+      "replayable": true
+    },
+    {
+      "id": "WIT-METAMORPHIC",
+      "name": "Metamorphic semantic witness",
+      "status": "planned",
+      "kind": "robustness",
+      "strength": "behavioral",
+      "claim": "Semantics-preserving source perturbations preserve recovered labels while evidence relocates appropriately.",
+      "non_claims": ["absolute semantic correctness"],
+      "authority": "frozen perturbation benchmark",
+      "replayable": true
+    },
+    {
+      "id": "WIT-MUTATION",
+      "name": "Mutation sensitivity witness",
+      "status": "planned",
+      "kind": "test_strength",
+      "strength": "diagnostic",
+      "claim": "The test suite detects a defined proportion of meaningfully mutated implementations.",
+      "non_claims": ["implementation correctness", "semantic completeness"],
+      "authority": "pinned mutation operator set and mutation score",
+      "replayable": true
+    },
+    {
+      "id": "WIT-FUZZ",
+      "name": "Fuzz and parser resilience witness",
+      "status": "planned",
+      "kind": "robustness",
+      "strength": "diagnostic",
+      "claim": "Adapters and parsers satisfy declared crash/resource/error-handling properties over the fuzz campaign.",
+      "non_claims": ["semantic correctness of accepted inputs"],
+      "authority": "seeded fuzz corpus and campaign artifacts",
+      "replayable": true
+    },
+    {
+      "id": "WIT-SUPPLY",
+      "name": "Supply-chain provenance witness",
+      "status": "planned",
+      "kind": "supply_chain",
+      "strength": "artifact",
+      "claim": "Release artifacts carry declared dependency inventory, licenses, hashes, and build provenance.",
+      "non_claims": ["absence of vulnerabilities", "correctness of dependencies"],
+      "authority": "SBOM plus build provenance/attestation",
+      "replayable": true
+    },
+    {
+      "id": "WIT-RESOURCE",
+      "name": "Performance and resource witness",
+      "status": "planned",
+      "kind": "resource",
+      "strength": "behavioral",
+      "claim": "Certified workloads remain within declared time, memory, output-size, and browser-asset budgets.",
+      "non_claims": ["performance outside certified environments/workloads"],
+      "authority": "versioned benchmark harness and budgets",
+      "replayable": true
+    }
+  ]
+}
