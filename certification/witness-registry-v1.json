@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -68,6 +68,18 @@
       "non_claims": ["source correctness", "semantic correctness"],
       "authority": "SHA-256 tree comparison",
       "replayable": true
+    },
+    {
+      "id": "WIT-WEB-SIZE",
+      "name": "Static site resource budget witness",
+      "status": "implemented",
+      "kind": "resource",
+      "strength": "artifact",
+      "claim": "The generated static site remains within the versioned first-party and single-vendor byte budgets.",
+      "non_claims": ["runtime latency", "memory consumption", "network transfer after compression", "performance on larger future exemplars"],
+      "authority": "deterministic byte counts over the generated _site artifact",
+      "replayable": true,
+      "evidence": ["per-file byte sizes", "first-party total", "largest vendor file", "total site bytes"]
     },
     {
       "id": "WIT-ROCQ-REPLAY",
