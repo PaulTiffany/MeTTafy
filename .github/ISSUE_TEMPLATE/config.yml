@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security reports
+    url: https://github.com/PaulTiffany/MeTTafy/security
+    about: Review the security policy before reporting sensitive vulnerabilities.
+  - name: Upstream MeTTa / Hyperon
+    url: https://github.com/trueagi-io/hyperon-experimental
+    about: Use the upstream project for questions about MeTTa or Hyperon that are not specific to MeTTafy.
+  - name: MeTTaScript
+    url: https://github.com/MesTTo/MeTTaScript
+    about: Use the upstream project for questions specific to MeTTaScript.
