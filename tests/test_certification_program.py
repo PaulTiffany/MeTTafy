@@ -35,7 +35,7 @@ def test_program_v1_validates_and_reports_current_readiness() -> None:
     result = run_validator(PROGRAM, "--status")
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["program_version"] == "1.1.0"
+    assert payload["program_version"] == "1.2.0"
     assert payload["grade_ready"] == {
         "accessibility_green": False,
         "engineering_green": True,
@@ -73,6 +73,18 @@ def test_manual_accessibility_gate_blocks_accessibility_and_product_green(
     payload = json.loads(result.stdout)
     assert payload["grade_ready"]["accessibility_green"] is False
     assert payload["grade_ready"]["product_green"] is False
+
+
+def test_site_size_budget_is_required_for_engineering_green(tmp_path: Path) -> None:
+    program = load_program()
+    gate = next(item for item in program["gates"] if item["id"] == "WEB-SIZE-BUDGET")
+    assert gate["status"] == "implemented"
+    assert "WEB-SIZE-BUDGET" in program["grades"]["engineering_green"]["requires"]
+    gate["status"] = "planned"
+    result = run_validator(write_program(tmp_path, program), "--status")
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["grade_ready"]["engineering_green"] is False
 
 
 def test_implemented_benchmark_must_exist(tmp_path: Path) -> None:
