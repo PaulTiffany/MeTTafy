@@ -88,7 +88,7 @@ def analyze_source(source: str, filename: str = "<memory>") -> list[Strategy]:
     tree = ast.parse(source, filename=filename)
     functions = [
         node
-        for node in tree.body
+        for node in ast.walk(tree)
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     ]
     facts = [_collect_function_facts(fn) for fn in functions]
