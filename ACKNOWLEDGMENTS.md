@@ -42,6 +42,14 @@ Upstream: https://github.com/leanprover-community/mathlib4
 
 mathlib4 is distributed under the Apache License 2.0. MeTTafy should prefer pinned upstream references and reproducible checker metadata over bulk copying. If any mathlib source is redistributed or modified, Apache-2.0 attribution and notice requirements must be preserved.
 
+## Rocq community / Four Color Theorem formalization
+
+Sprint 01 uses the maintained `rocq-community/fourcolor` project as the canonical formal proof artifact for the Four Color Theorem lineage associated with Georges Gonthier's computer-checked Coq proof.
+
+Upstream: https://github.com/rocq-community/fourcolor
+
+The project is distributed under the CeCILL-B license and carries copyright notices for Microsoft Corporation and Inria in the proof sources. MeTTafy references pinned upstream files and records derived semantic annotations; it does not copy the formalization wholesale. Any future redistribution or modification of upstream source must preserve the applicable CeCILL-B terms and notices.
+
 ## Joern / Code Property Graph
 
 Joern is a mature open-source platform for representing source code through Code Property Graphs and may provide an optional future multi-language structural front end.
