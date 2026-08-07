@@ -1,6 +1,6 @@
 {
   "program": "MeTTafy Production Certification",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "schema_version": 1,
   "principle": "CI success is evidence, not a certificate.",
   "grades": {
@@ -17,6 +17,7 @@
         "WEB-DETERMINISM",
         "WEB-BROWSER",
         "WEB-ACCESSIBILITY",
+        "WEB-SIZE-BUDGET",
         "SUPPLY-PINNING",
         "SUPPLY-ATTRIBUTION"
       ]
@@ -167,6 +168,28 @@
       }
     },
     {
+      "id": "WEB-SIZE-BUDGET",
+      "surface": "web",
+      "status": "implemented",
+      "command": "python tests/site_size_witness.py",
+      "witness": "WIT-WEB-SIZE",
+      "metrics": {
+        "first_party_static_bytes": {"op": "lte", "value": 524288},
+        "single_vendor_bundle_bytes": {"op": "lte", "value": 1048576}
+      },
+      "contract": {
+        "measurement": "uncompressed generated _site bytes",
+        "first_party_excludes": ["assets/vendor/"],
+        "runtime_performance_claim": false,
+        "baseline_measurement": {
+          "repository_commit": "0827e4423db1be7de71cf13167195c8c73f0f726",
+          "first_party_static_bytes": 30515,
+          "single_vendor_bundle_bytes": 559253,
+          "total_site_bytes": 590831
+        }
+      }
+    },
+    {
       "id": "SUPPLY-PINNING",
       "surface": "supply_chain",
       "status": "implemented",
@@ -282,15 +305,6 @@
         "Unavoidability",
         "Reducibility"
       ]
-    },
-    {
-      "id": "WEB-SIZE-BUDGET",
-      "surface": "web",
-      "status": "planned",
-      "metrics": {
-        "first_party_static_bytes": {"op": "lte", "value": 524288},
-        "single_vendor_bundle_bytes": {"op": "lte", "value": 1048576}
-      }
     },
     {
       "id": "RELEASE-SBOM",
