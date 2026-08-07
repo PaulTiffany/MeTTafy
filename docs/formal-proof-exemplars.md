@@ -4,6 +4,8 @@ MeTTafy will use **machine-checkable proof programs** as a high-quality semantic
 
 The purpose is not to turn MeTTafy into a theorem prover. The purpose is to learn and test MeTTafication against programs whose intended semantics and correctness can be checked independently.
 
+A second purpose is educational: the exemplar set should expose the history of computational reasoning in topology, geometry, and adjacent fields. Landmark proofs should be presented as lineages from mathematical problem to human strategy to computational intervention to formal/checkable artifact. See [`historical-curriculum.md`](historical-curriculum.md).
+
 ## Why formal proofs first
 
 Arbitrary software often has ambiguous intent. Formal proof programs give us unusually strong supervision:
@@ -47,6 +49,8 @@ Topology is a useful first domain because formal topology proofs exhibit recurri
 
 These are **semantic strategy labels**, not Lean tactic names. A proof using `simpa`, `rw`, or `aesop` may instantiate several different semantic strategies depending on context.
 
+The curriculum is intentionally broader than a single proof assistant or a narrow modern definition of topology. Famous computational lineages in planar graph theory, knot theory, discrete geometry, and algebraic topology are in scope when they illuminate how computation entered geometrical reasoning. Each exemplar should identify its mathematical field precisely.
+
 ## Exemplar record
 
 Each exemplar should be represented by a small manifest rather than copied into the repository without context.
@@ -77,7 +81,10 @@ tactic_trace
 local_context_transitions
 candidate_strategy_scores
 verification_log
+history_metadata
 ```
+
+Historical metadata is documentary and must not become a hidden label channel during evaluation. Benchmark tooling should support a blind mode that removes theorem names, authors, filenames, dates, and narrative descriptions before strategy classification.
 
 ## Verification boundary
 
@@ -144,6 +151,8 @@ For each corpus source:
 
 The initial candidate corpus is `leanprover-community/mathlib4`, licensed under Apache-2.0. MeTTafy should initially index selected topology proofs by reference and metadata rather than importing mathlib source wholesale.
 
+Historical landmark cases may come from other systems (for example Coq, HOL Light, Isabelle, specialized checkers, or citable computational implementations). Their artifacts should be incorporated only through the same provenance, licensing, and reproducibility discipline.
+
 ## Milestone success criterion
 
 The first formal-proof milestone succeeds when MeTTafy can take a small pinned set of verified topology proofs and produce:
@@ -151,5 +160,6 @@ The first formal-proof milestone succeeds when MeTTafy can take a small pinned s
 1. deterministic structural features;
 2. explicit semantic strategy annotations with provenance;
 3. a MeTTa Strategy IR representation;
-4. optional learned candidate scores kept separate from verified facts; and
-5. a reproducible verification record for every exemplar.
+4. optional learned candidate scores kept separate from verified facts;
+5. a reproducible verification record for every exemplar; and
+6. for landmark cases, a citable historical narrative that explains where computation entered the mathematics without leaking those labels into benchmark classification.
