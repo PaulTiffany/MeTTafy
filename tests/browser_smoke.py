@@ -81,18 +81,30 @@ def assert_grapher_product(page: Page) -> None:
     if not all(item["hasGrapher"] and item["hasSvg"] for item in state):
         fail("MeTTaScript Grapher custom element mounted without a usable SVG canvas")
 
-    playable = page.evaluate(
+    trace = page.evaluate(
         """
         () => {
           const g = document.querySelectorAll('metta-grapher')[1].grapher;
-          if (!g || typeof g.play !== 'function') return false;
-          g.play();
-          return true;
+          if (!g || typeof g.playTrace !== 'function' ||
+              typeof g.traceForward !== 'function' || typeof g.traceInfo !== 'function') {
+            return null;
+          }
+          g.playTrace();
+          const before = g.traceInfo();
+          if (!before || before.total < 2) return { before, after: null };
+          g.traceForward();
+          return { before, after: g.traceInfo() };
         }
         """
     )
-    if not playable:
-        fail("reduction Grapher mounted but did not expose its Play API")
+    if trace is None:
+        fail("reduction Grapher mounted without the supported trace API")
+    before = trace["before"]
+    after = trace["after"]
+    if before is None or before["total"] < 2:
+        fail(f"reduction demo did not produce a multi-state MeTTa trace: {before}")
+    if after is None or after["index"] <= before["index"]:
+        fail(f"Grapher trace did not advance: before={before}, after={after}")
 
 
 def runtime_diagnostics(
@@ -144,7 +156,7 @@ def main() -> int:
         finally:
             browser.close()
 
-    print("Browser product smoke passed: pages, links, Grapher mount, and Play API are usable.")
+    print("Browser product smoke passed: pages, links, Grapher mount, and MeTTa trace are usable.")
     return 0
 
 
