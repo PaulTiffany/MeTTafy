@@ -1,0 +1,108 @@
+{
+  "program": "MeTTafy Audience Interface Certification",
+  "version": "1.0.0",
+  "schema_version": 1,
+  "principle": "A stakeholder-facing green is earned only by the witness that answers that stakeholder's actual question.",
+  "grade": "audience_green",
+  "status": "implemented",
+  "requires": [
+    "WIT-METTA-RUNTIME",
+    "WIT-DOWNSTREAM-CONTRACT",
+    "WIT-OPERATOR-RESILIENCE",
+    "WIT-REVIEWER-TRACEABILITY",
+    "WIT-HUMAN-OPERABILITY"
+  ],
+  "witnesses": [
+    {
+      "id": "WIT-METTA-RUNTIME",
+      "audience": "MeTTa ecosystem integrator",
+      "strength": "behavioral",
+      "command": "node tests/metta_runtime_witness.mjs",
+      "evidence": "artifacts/witnesses/metta-runtime.json",
+      "metric": "runtime_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "claim": "The checked Four Color semantic artifact parses and the executable teaching projection reduces under the pinned MeTTaScript Hyperon runtime.",
+      "non_claims": [
+        "the semantic annotations are correct",
+        "MeTTaScript is the only supported MeTTa runtime",
+        "the teaching projection is the Four Color proof"
+      ]
+    },
+    {
+      "id": "WIT-DOWNSTREAM-CONTRACT",
+      "audience": "downstream software integrator",
+      "strength": "bounded",
+      "command": "python tests/integrator_contract_witness.py",
+      "evidence": "artifacts/witnesses/downstream-integrator-contract.json",
+      "metric": "contract_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "claim": "The Python CLI exposes deterministic JSON and bounded argument-error semantics for the certified fixture.",
+      "non_claims": [
+        "API stability outside the declared JSON surface",
+        "semantic correctness of recovered strategies"
+      ]
+    },
+    {
+      "id": "WIT-OPERATOR-RESILIENCE",
+      "audience": "security and production operator",
+      "strength": "bounded",
+      "command": "python tests/operator_resilience_witness.py",
+      "evidence": "artifacts/witnesses/operator-resilience.json",
+      "metric": "malformed_corpus_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "contract": {
+        "case_count": 10,
+        "timeout_seconds_per_case": 2,
+        "max_diagnostic_bytes": 65536
+      },
+      "claim": "The certified malformed-source corpus terminates within the declared per-case bound and rejects without runaway diagnostics.",
+      "non_claims": [
+        "memory safety of CPython",
+        "resilience against arbitrary hostile inputs",
+        "sandboxing of executable user code"
+      ]
+    },
+    {
+      "id": "WIT-REVIEWER-TRACEABILITY",
+      "audience": "research reviewer and reproducibility auditor",
+      "strength": "artifact",
+      "command": "python tests/reviewer_traceability_witness.py",
+      "evidence": "artifacts/witnesses/reviewer-traceability.json",
+      "metric": "traceability_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "claim": "The Four Color teaching target is internally traceable to one pinned upstream source and consistently declares checker and learned-model authority boundaries.",
+      "non_claims": [
+        "the semantic annotations are correct",
+        "the upstream proof currently replays",
+        "historical claims are complete"
+      ]
+    },
+    {
+      "id": "WIT-HUMAN-OPERABILITY",
+      "audience": "keyboard, low-vision, and human-audit user",
+      "strength": "bounded",
+      "command": "python tests/human_interface_witness.py",
+      "evidence": "artifacts/witnesses/human-operability.json",
+      "metric": "operability_failures",
+      "threshold": {"op": "eq", "value": 0},
+      "contract": {
+        "minimum_meaningful_keyboard_focus_stops": 5,
+        "reflow_width_css_px": 320,
+        "horizontal_overflow_tolerance_css_px": 2
+      },
+      "claim": "The primary Four Color lesson exposes meaningful keyboard focus stops and remains horizontally contained at the WCAG 1.4.10 vertical-content endpoint of 320 CSS pixels.",
+      "non_claims": [
+        "full WCAG 2.2 AA conformance",
+        "real-browser zoom equivalence",
+        "screen-reader usability",
+        "all browser/device combinations"
+      ]
+    }
+  ],
+  "composition": {
+    "all_required": true,
+    "no_implicit_authority_promotion": true,
+    "base_product_program": "certification/program-v1.json",
+    "base_product_green_is_not_implied": true
+  }
+}
