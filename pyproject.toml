@@ -61,6 +61,8 @@ files = [
   "src/mettafy",
   "scripts/build_pages.py",
   "scripts/validate_certification_program.py",
+  "scripts/validate_audience_interface_program.py",
+  "scripts/validate_formal_artifact_program.py",
 ]
 check_untyped_defs = true
 no_implicit_optional = true
