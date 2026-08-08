@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAM = ROOT / "certification" / "formal-artifact-v1.json"
@@ -11,7 +11,7 @@ REPLAY = ROOT / "scripts" / "replay_four_color_proof.sh"
 REGISTRY = ROOT / "certification" / "witness-registry-v1.json"
 
 
-def fail(message: str) -> None:
+def fail(message: str) -> NoReturn:
     raise SystemExit(f"formal artifact certification invalid: {message}")
 
 
@@ -37,8 +37,13 @@ def main() -> int:
     if not isinstance(non_claims, list) or len(non_claims) < 3:
         fail("formal witness must preserve explicit non-claims")
 
-    source = witness.get("source", {})
-    toolchain = witness.get("toolchain", {})
+    source = witness.get("source")
+    toolchain = witness.get("toolchain")
+    if not isinstance(source, dict):
+        fail("formal witness source contract is missing")
+    if not isinstance(toolchain, dict):
+        fail("formal witness toolchain contract is missing")
+
     expected_source = "f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2"
     expected_image = (
         "coqorg/coq@sha256:e50d77c4c5a9aa0d76ae1b343d79c5f922da3a75054b79c5dc635895438e4674"
@@ -61,9 +66,12 @@ def main() -> int:
             fail(f"replay script no longer carries required invariant: {required}")
 
     registry: dict[str, Any] = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    witness_entries = registry.get("witnesses")
+    if not isinstance(witness_entries, list):
+        fail("central witness registry has no witness list")
     entries = {
         item.get("id"): item
-        for item in registry.get("witnesses", [])
+        for item in witness_entries
         if isinstance(item, dict)
     }
     registered = entries.get("WIT-ROCQ-REPLAY")
@@ -74,7 +82,9 @@ def main() -> int:
     if registered.get("strength") != "formal":
         fail("central registry weakened WIT-ROCQ-REPLAY strength")
 
-    composition = data.get("composition", {})
+    composition = data.get("composition")
+    if not isinstance(composition, dict):
+        fail("formal artifact composition policy is missing")
     if composition.get("no_implicit_authority_promotion") is not True:
         fail("implicit authority promotion must remain forbidden")
     if composition.get("semantic_claims_require_independent_witnesses") is not True:
