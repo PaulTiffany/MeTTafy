@@ -1,80 +1,80 @@
 """Source-neutral semantic recognition seam (Issue #32).
 
-Consumes StructuralEvidence (or its blind projection) and produces
-evidence-backed Strategy candidates. The recognizer is deliberately
-conservative: it may return Unknown / abstain rather than invent labels.
-
-Authority boundary
-------------------
-- Structural features are observed facts.
-- Strategy labels are predictions with explicit evidence and confidence.
-- Rocq remains the sole theorem-validity authority.
-- Held-out annotations are consulted only in the evaluation helper,
-  never as classifier input.
+The recognizer is typed to accept only BlindStructuralEvidence.
+It therefore cannot access body_form, original names, raw references,
+or path strings. Held-out annotations are consulted only in the
+evaluation helper, never as classifier input.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from .ir import Evidence, SourceSpan, Strategy, StrategyKind
-from .structural import ObservableFeature, StructuralEvidence, StructuralUnit
+from .structural import (
+    BlindStructuralEvidence,
+    BlindStructuralUnit,
+    ObservableFeature,
+)
 
 
 @dataclass(frozen=True)
 class RecognitionResult:
     strategies: list[Strategy]
     abstentions: list[dict[str, Any]] = field(default_factory=list)
+    # local_id → list of predicted StrategyKind values (for unit-local eval)
+    predictions_by_unit: dict[str, list[str]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "strategies": [s.to_dict() for s in self.strategies],
             "abstentions": list(self.abstentions),
+            "predictions_by_unit": dict(self.predictions_by_unit),
         }
 
 
-def _span_from_unit(unit: StructuralUnit) -> SourceSpan:
-    if unit.span is None:
-        return SourceSpan(filename="<unknown>", start_line=1, end_line=1)
+def _span_from_blind(unit: BlindStructuralUnit) -> SourceSpan:
+    # Filename is the opaque span token only — no recoverable path.
     return SourceSpan(
-        filename=unit.span.path,
-        start_line=unit.span.start_line,
-        end_line=unit.span.end_line,
+        filename=unit.span_token or "<blind>",
+        start_line=unit.start_line,
+        end_line=unit.end_line,
     )
 
 
-def _feature_set(unit: StructuralUnit) -> set[ObservableFeature]:
-    return set(unit.features)
-
-
 def recognize_from_structural(
-    evidence: StructuralEvidence,
+    blind: BlindStructuralEvidence,
     *,
     min_confidence: float = 0.55,
 ) -> RecognitionResult:
-    """Map structural observations to Strategy candidates or abstain.
+    """Map blind structural observations to Strategy candidates or abstain.
 
-    The mapping is intentionally narrow and high-precision. It uses only
-    the mechanical features already present in the StructuralEvidence IR.
-    No theorem names, path roles, or held-out labels are consulted.
+    Parameters
+    ----------
+    blind:
+        Must be BlindStructuralEvidence. Passing raw StructuralEvidence is a
+        type error and is the mechanical enforcement of the authority boundary.
     """
+    if not isinstance(blind, BlindStructuralEvidence):
+        raise TypeError(
+            "recognize_from_structural accepts only BlindStructuralEvidence; "
+            "raw StructuralEvidence must first pass through blind_structural_view()"
+        )
+
     strategies: list[Strategy] = []
     abstentions: list[dict[str, Any]] = []
+    predictions_by_unit: dict[str, list[str]] = {}
 
-    for unit in evidence.units:
-        feats = _feature_set(unit)
-        span = _span_from_unit(unit)
+    for unit in blind.units:
+        feats = set(unit.features)
+        span = _span_from_blind(unit)
         local = unit.local_id
+        unit_preds: list[str] = []
 
-        # Composition of applications on a short theorem body is a strong
-        # structural signal for a reduction / transport pipeline.
-        if (
-            ObservableFeature.COMPOSITION in feats
-            or (
-                ObservableFeature.APPLICATION in feats
-                and ObservableFeature.REWRITE_TRANSPORT in feats
-            )
+        if ObservableFeature.COMPOSITION in feats or (
+            ObservableFeature.APPLICATION in feats
+            and ObservableFeature.REWRITE_TRANSPORT in feats
         ):
             strategies.append(
                 Strategy(
@@ -85,7 +85,7 @@ def recognize_from_structural(
                         Evidence(
                             kind="structural-composition",
                             detail=(
-                                "Unit body exhibits multiple applications / "
+                                "Unit exhibits multiple applications / "
                                 "composition of previously established results"
                             ),
                             span=span,
@@ -93,10 +93,8 @@ def recognize_from_structural(
                     ],
                 )
             )
+            unit_preds.append(StrategyKind.REDUCTION.value)
 
-        # Induction + decision procedure is a classic minimal-counterexample
-        # / structural-reduction shape; we surface it as REDUCTION with
-        # supporting evidence rather than inventing a new StrategyKind.
         if ObservableFeature.INDUCTION in feats:
             strategies.append(
                 Strategy(
@@ -112,6 +110,7 @@ def recognize_from_structural(
                     ],
                 )
             )
+            unit_preds.append(StrategyKind.REDUCTION.value)
 
         if ObservableFeature.DECISION_CALL in feats:
             strategies.append(
@@ -122,14 +121,14 @@ def recognize_from_structural(
                     evidence=[
                         Evidence(
                             kind="structural-decision",
-                            detail="Explicit colorability / decision procedure call observed",
+                            detail="Explicit decision-procedure call observed",
                             span=span,
                         )
                     ],
                 )
             )
+            unit_preds.append(StrategyKind.CERTIFICATE_CHECK.value)
 
-        # If a unit carries no recognised high-precision features, abstain.
         if not feats:
             abstentions.append(
                 {
@@ -139,46 +138,54 @@ def recognize_from_structural(
                 }
             )
 
-    # Filter by minimum confidence
+        if unit_preds:
+            predictions_by_unit[local] = unit_preds
+
     strategies = [s for s in strategies if s.confidence >= min_confidence]
-    return RecognitionResult(strategies=strategies, abstentions=abstentions)
+    return RecognitionResult(
+        strategies=strategies,
+        abstentions=abstentions,
+        predictions_by_unit=predictions_by_unit,
+    )
 
 
 def evaluate_against_held_out(
     result: RecognitionResult,
-    held_out: dict[str, list[str]],
+    held_out_by_unit: dict[str, list[str]],
 ) -> dict[str, Any]:
-    """Post-hoc comparison only. Never used as classifier input.
+    """Unit-local post-hoc comparison. Never used as classifier input.
 
     Parameters
     ----------
     result:
         Output of recognize_from_structural.
-    held_out:
-        Mapping from proof-layer id to list of strategy label strings,
-        typically produced by exemplar_strategy_targets(manifest).
+    held_out_by_unit:
+        Mapping from blind local_id (or a stable unit key) to held-out
+        strategy label strings. Only predictions for the same unit are
+        compared; there is no global credit across layers.
     """
-    predicted_kinds = {s.kind.value for s in result.strategies}
-    # The held-out vocabulary uses different surface names; we perform a
-    # deliberately coarse, documented alignment for evaluation only.
     alignment = {
         "Reduction": {"FiniteReduction", "StructuralReduction", "Reducibility"},
         "CertificateCheck": {"DecisionProcedure", "CertificateCheck"},
-        # Further alignments can be added as the recognizer grows.
     }
 
     matches: list[dict[str, Any]] = []
     misses: list[dict[str, Any]] = []
+    unmatched_units: list[str] = []
 
-    for layer_id, targets in held_out.items():
+    for unit_id, targets in held_out_by_unit.items():
         target_set = set(targets)
-        for pred in predicted_kinds:
+        preds = result.predictions_by_unit.get(unit_id, [])
+        if not preds:
+            unmatched_units.append(unit_id)
+            continue
+        for pred in preds:
             related = alignment.get(pred, set())
             hit = target_set & related
             if hit:
                 matches.append(
                     {
-                        "layer": layer_id,
+                        "unit": unit_id,
                         "predicted": pred,
                         "held_out_hit": sorted(hit),
                     }
@@ -186,21 +193,22 @@ def evaluate_against_held_out(
             else:
                 misses.append(
                     {
-                        "layer": layer_id,
+                        "unit": unit_id,
                         "predicted": pred,
                         "held_out": sorted(target_set),
-                        "note": "no documented alignment",
+                        "note": "no documented alignment for this unit",
                     }
                 )
 
     return {
-        "predicted_kinds": sorted(predicted_kinds),
         "matches": matches,
         "misses": misses,
+        "unmatched_units": unmatched_units,
         "abstention_count": len(result.abstentions),
         "evaluation_only": True,
+        "unit_local": True,
         "note": (
-            "This comparison is performed after recognition and must never "
-            "be fed back into the recognizer as input."
+            "Comparison is unit-local and post-hoc. "
+            "It must never be fed back into the recognizer."
         ),
     }
