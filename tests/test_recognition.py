@@ -1,89 +1,130 @@
-"""Tests for the Issue #32 recognition seam."""
+"""Tests for blind-only structural recognition and unit-local evaluation."""
 
 from __future__ import annotations
 
-from mettafy.exemplars import exemplar_strategy_targets
+import pytest
+
+from mettafy.ir import StrategyKind
 from mettafy.recognition import evaluate_against_held_out, recognize_from_structural
-from mettafy.structural import extract_structural_evidence
-
-# Minimal high-level sources (same pinned text used by structural tests).
-FOURCOLOR_V = r'''
-Theorem four_color_finite m : finite_simple_map m -> colorable_with 4 m.
-Proof.
-intros fin_m.
-pose proof (discretize.discretize_to_hypermap fin_m) as [G planarG colG].
-exact (colG (combinatorial4ct.four_color_hypermap planarG)).
-Qed.
-
-Theorem four_color m : simple_map m -> colorable_with 4 m.
-Proof. revert m; exact (finitize.compactness_extension four_color_finite). Qed.
-'''
-
-COMBINATORIAL4CT_V = r'''
-Theorem four_color_hypermap G : planar_bridgeless G -> four_colorable G.
-Proof.
-move=> geoG; apply: cube_colorable.
-pose n := #|cube G|.+1; move: geoGQ (leqnn n); rewrite {1}/n.
-elim: {G}n (cube G) => // n IHn G geoG; rewrite ltnS leq_eqVlt.
-case/predU1P=> [Dn | /IHn]; [rewrite -{n}Dn in IHn | exact].
-have [// | noncolG] := decide_colorable G.
-by have [] := @unavoidability the_reducibility G.
-Qed.
-'''
+from mettafy.structural import (
+    blind_audit_map,
+    blind_structural_view,
+    extract_structural_evidence,
+)
 
 UPSTREAM_SHA = "f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2"
 
+SOURCE = r'''
+Theorem composed x : target x.
+Proof.
+pose proof (prepare x) as [w transport].
+exact (transport (finish w)).
+Qed.
 
-def _evidence():
-    sources = {
-        "theories/proof/fourcolor.v": FOURCOLOR_V,
-        "theories/proof/combinatorial4ct.v": COMBINATORIAL4CT_V,
+Theorem induction_only n : target n.
+Proof.
+elim: n => // n IHn.
+exact IHn.
+Qed.
+
+Theorem decision_only x : target x.
+Proof.
+have H := decide_colorable x.
+exact x.
+Qed.
+
+Theorem plain x : target x.
+Proof. exact x. Qed.
+'''
+
+
+def _raw():
+    return extract_structural_evidence(
+        {"proof.v": SOURCE}, upstream_sha=UPSTREAM_SHA, mettafy_sha="test"
+    )
+
+
+def test_recognizer_rejects_raw_structural_evidence_by_type_boundary():
+    with pytest.raises(TypeError, match="BlindStructuralEvidence"):
+        recognize_from_structural(_raw())  # type: ignore[arg-type]
+
+
+def test_compound_dataflow_can_promote_to_generic_reduction():
+    blind = blind_structural_view(_raw())
+    result = recognize_from_structural(blind)
+    reductions = [
+        strategy for strategy in result.strategies if strategy.kind == StrategyKind.REDUCTION
+    ]
+    assert len(reductions) == 1
+    assert reductions[0].evidence[0].kind == "structural-dataflow-composition"
+    assert reductions[0].evidence[0].span.filename.startswith("source:")
+
+
+def test_single_induction_and_decision_observations_abstain_instead_of_overclaiming():
+    raw = _raw()
+    blind = blind_structural_view(raw)
+    audit = blind_audit_map(raw)
+    result = recognize_from_structural(blind)
+
+    name_by_blind_id = {unit_id: info["original_name"] for unit_id, info in audit.items()}
+    abstained_names = {
+        name_by_blind_id[item["local_id"]]
+        for item in result.abstentions
     }
-    return extract_structural_evidence(sources, upstream_sha=UPSTREAM_SHA)
+    assert "induction_only" in abstained_names
+    assert "decision_only" in abstained_names
+    assert all(strategy.kind != StrategyKind.CERTIFICATE_CHECK for strategy in result.strategies)
 
 
-def test_recognize_produces_strategies_or_abstentions():
-    evidence = _evidence()
-    result = recognize_from_structural(evidence)
-    # At least one high-precision prediction or an explicit abstention list.
-    assert result.strategies or result.abstentions
-    for s in result.strategies:
-        assert 0.0 <= s.confidence <= 1.0
-        assert s.evidence, "every prediction must carry evidence"
+def test_near_miss_multiple_applications_without_dataflow_does_not_become_reduction():
+    source = r'''Theorem near_miss x : target x.
+Proof. apply helper. exact x. Qed.
+'''
+    raw = extract_structural_evidence({"n.v": source}, upstream_sha=UPSTREAM_SHA)
+    result = recognize_from_structural(blind_structural_view(raw))
+    assert not result.strategies
+    assert result.abstentions
 
 
-def test_recognizer_does_not_see_held_out_labels():
-    """Sanity: the recognizer API never receives the answer key."""
-    evidence = _evidence()
-    # Call with only structural evidence; no held-out dict is passed.
-    result = recognize_from_structural(evidence)
-    dumped = str(result.to_dict())
-    for label in (
-        "FiniteReduction",
-        "Discretization",
-        "Unavoidability",
-        "Reducibility",
-        "Discharging",
+def test_recognition_output_contains_no_held_out_labels_or_audit_names():
+    raw = _raw()
+    result = recognize_from_structural(blind_structural_view(raw))
+    dumped = str(result.to_dict()).lower()
+    for token in (
+        "composed",
+        "induction_only",
+        "decision_only",
+        "finitereduction",
+        "discretization",
+        "unavoidability",
+        "reducibility",
     ):
-        assert label not in dumped
+        assert token not in dumped
 
 
-def test_post_hoc_evaluation_is_separate():
-    evidence = _evidence()
-    result = recognize_from_structural(evidence)
+def test_evaluation_is_unit_local_and_cannot_credit_an_unrelated_layer():
+    raw = _raw()
+    blind = blind_structural_view(raw)
+    audit = blind_audit_map(raw)
+    result = recognize_from_structural(blind)
+    composed_id = next(
+        unit_id for unit_id, info in audit.items() if info["original_name"] == "composed"
+    )
+    induction_id = next(
+        unit_id
+        for unit_id, info in audit.items()
+        if info["original_name"] == "induction_only"
+    )
 
-    # Minimal held-out target mimicking the manifest shape.
-    held_out = {
-        "high-level-finite": ["Discretization", "RepresentationChange", "ProofByTransport"],
-        "finite-combinatorial-core": [
-            "StructuralReduction",
-            "Induction",
-            "MinimalCounterexample",
-            "DecisionProcedure",
-            "Unavoidability",
-            "Reducibility",
-        ],
-    }
-    report = evaluate_against_held_out(result, held_out)
+    report = evaluate_against_held_out(
+        result,
+        {
+            composed_id: ["FiniteReduction"],
+            induction_id: ["StructuralReduction"],
+        },
+    )
     assert report["evaluation_only"] is True
-    assert "predicted_kinds" in report
+    assert report["unit_local"] is True
+    assert any(item["unit"] == composed_id for item in report["matches"])
+    assert induction_id in report["unpredicted_units"]
+    assert not any(item["unit"] == induction_id for item in report["matches"])
