@@ -11,6 +11,8 @@ from .recognition import (
 from .structural import (
     StructuralEvidence,
     StructuralUnit,
+    BlindStructuralEvidence,
+    BlindStructuralUnit,
     extract_structural_evidence,
     blind_structural_view,
     PRIMARY_PROOF_LAYERS,
@@ -26,6 +28,8 @@ __all__ = [
     "emit_strategy_metta",
     "StructuralEvidence",
     "StructuralUnit",
+    "BlindStructuralEvidence",
+    "BlindStructuralUnit",
     "extract_structural_evidence",
     "blind_structural_view",
     "PRIMARY_PROOF_LAYERS",
