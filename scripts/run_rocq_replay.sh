@@ -7,6 +7,13 @@ OUT="${ROOT}/artifacts/witnesses"
 EXPECTED_SHA="f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2"
 mkdir -p "${OUT}"
 
+# GitHub checks out the pinned repository on the host and bind-mounts it into
+# the replay container. The host/container UIDs differ, so Git correctly
+# requires an explicit trust decision before it will inspect the mounted repo.
+# Scope that exception to this one exact replay checkout; all SHA/tree/dirty
+# checks below remain in force.
+git config --global --add safe.directory "${UPSTREAM}"
+
 actual_sha="$(git -C "${UPSTREAM}" rev-parse HEAD)"
 if [[ "${actual_sha}" != "${EXPECTED_SHA}" ]]; then
   echo "pinned Four Color source drift: expected ${EXPECTED_SHA}, got ${actual_sha}" >&2
