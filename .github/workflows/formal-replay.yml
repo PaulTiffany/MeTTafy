@@ -1,0 +1,100 @@
+name: Formal Replay
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/formal-replay.yml"
+      - "scripts/run_rocq_replay.sh"
+      - "scripts/emit_rocq_replay_evidence.py"
+      - "certification/witness-registry-v1.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/formal-replay.yml"
+      - "scripts/run_rocq_replay.sh"
+      - "scripts/emit_rocq_replay_evidence.py"
+      - "certification/witness-registry-v1.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: formal-replay-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  four-color:
+    name: Pinned Four Color replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout MeTTafy
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout pinned Four Color source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: rocq-community/fourcolor
+          ref: f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2
+          path: _vendor/fourcolor-replay
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify immutable replay container
+        shell: bash
+        run: |
+          set -euo pipefail
+          image='coqorg/coq@sha256:e50d77c4c5a9aa0d76ae1b343d79c5f922da3a75054b79c5dc635895438e4674'
+          docker pull "${image}"
+          resolved="$(docker image inspect "${image}" --format '{{index .RepoDigests 0}}')"
+          test "${resolved}" = "${image}"
+
+      - name: Replay formal artifact through upstream opam boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/witnesses
+          chmod 0777 artifacts/witnesses
+          docker run --rm \
+            -v "${PWD}:/work" \
+            -w /work \
+            'coqorg/coq@sha256:e50d77c4c5a9aa0d76ae1b343d79c5f922da3a75054b79c5dc635895438e4674' \
+            bash /work/scripts/run_rocq_replay.sh /work
+
+      - name: Emit machine-readable replay evidence
+        run: python scripts/emit_rocq_replay_evidence.py
+
+      - name: Validate replay evidence contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('artifacts/witnesses/rocq-four-color-replay.json')
+          data = json.loads(p.read_text())
+          assert data['witness'] == 'WIT-ROCQ-REPLAY'
+          assert data['result'] == 'pass'
+          assert data['upstream']['commit'] == 'f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2'
+          assert data['execution']['exit_status'] == 0
+          assert data['toolchain']['container_image'].startswith('coqorg/coq@sha256:')
+          assert data['toolchain']['installed_packages']
+          PY
+
+      - name: Upload formal replay evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rocq-four-color-replay-evidence
+          path: |
+            artifacts/witnesses/rocq-four-color-replay.json
+            artifacts/witnesses/rocq-four-color-replay.log
+            artifacts/witnesses/rocq-installed-packages.txt
+            artifacts/witnesses/rocq-checker-version.txt
+            artifacts/witnesses/rocq-ocaml-version.txt
+            artifacts/witnesses/rocq-opam-version.txt
+            artifacts/witnesses/rocq-upstream-tree.txt
+          if-no-files-found: warn
