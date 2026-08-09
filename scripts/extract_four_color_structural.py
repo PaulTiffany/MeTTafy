@@ -141,6 +141,8 @@ def _held_out_by_blind_unit(audit: dict[str, dict[str, Any]]) -> dict[str, list[
     result: dict[str, list[str]] = {}
     for blind_id, entry in audit.items():
         original_name = entry.get("original_name")
+        if not isinstance(original_name, str):
+            continue
         targets = HELD_OUT_BY_ORIGINAL_NAME.get(original_name)
         if targets is not None:
             result[blind_id] = targets
