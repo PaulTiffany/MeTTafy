@@ -1,15 +1,16 @@
-"""Source-neutral structural evidence layer for MeTTafy.
+"""Source-neutral structural evidence for MeTTafy.
 
-Issue #32 tranche with type-level one-way membrane:
+Issue #32 establishes a one-way membrane:
 
-  raw StructuralEvidence (+ audit metadata)
-      → blind_structural_view()
-      → BlindStructuralEvidence   # literally cannot carry leakage fields
-      → recognizer
-      → Strategy / abstention
-      → separately joined held-out evaluation
+    raw StructuralEvidence + audit metadata
+        -> blind_structural_view()
+        -> BlindStructuralEvidence
+        -> recognizer
+        -> Strategy candidate / abstention
+        -> separately joined held-out evaluation
 
-Semantic strategy labels are never stored in either IR.
+The blind type cannot carry source text, source identifiers, source paths, or
+per-file provenance. Semantic strategy labels are never stored in either IR.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-EXTRACTOR_VERSION = "0.1.1-structural-bootstrap"
+EXTRACTOR_VERSION = "0.2.0-structural-bootstrap"
 
 PRIMARY_PROOF_LAYERS = (
     "theories/proof/fourcolor.v",
@@ -30,6 +31,8 @@ PRIMARY_PROOF_LAYERS = (
     "theories/proof/reducibility.v",
     "theories/proof/discharge.v",
 )
+
+HIGH_LEVEL_PROOF_LAYERS = PRIMARY_PROOF_LAYERS[:2]
 
 
 class UnitKind(str, Enum):
@@ -63,7 +66,7 @@ class SourceLocation:
 
 @dataclass(frozen=True)
 class StructuralUnit:
-    """Raw unit — may hold audit-sensitive fields. Never pass to a recognizer."""
+    """Raw structural unit. It may contain audit-sensitive source material."""
 
     local_id: str
     kind: UnitKind
@@ -76,19 +79,20 @@ class StructuralUnit:
 
 @dataclass(frozen=True)
 class BlindStructuralUnit:
-    """Classifier-safe unit. Typed so leakage fields cannot be present."""
+    """Classifier-safe unit with no source text, names, references, or paths."""
 
     local_id: str
     kind: UnitKind
     features: tuple[ObservableFeature, ...] = ()
-    # Opaque tokens only — no recoverable path or identifier content.
-    span_token: str = ""
+    source_token: str = ""
     start_line: int = 0
     end_line: int = 0
 
 
 @dataclass
 class Provenance:
+    """Full provenance retained on the audit side of the membrane."""
+
     mettafy_sha: str
     upstream_sha: str
     extractor_version: str
@@ -96,9 +100,19 @@ class Provenance:
     notes: str = ""
 
 
+@dataclass(frozen=True)
+class BlindProvenance:
+    """Classifier-safe provenance with source identity removed."""
+
+    mettafy_sha: str
+    extractor_version: str
+    corpus_hash: str
+    source_count: int
+
+
 @dataclass
 class StructuralEvidence:
-    """Raw evidence + audit side of the membrane."""
+    """Raw evidence plus source/audit metadata."""
 
     provenance: Provenance
     units: list[StructuralUnit] = field(default_factory=list)
@@ -109,37 +123,37 @@ class StructuralEvidence:
             "provenance": asdict(self.provenance),
             "units": [
                 {
-                    "local_id": u.local_id,
-                    "kind": u.kind.value,
-                    "body_form": u.body_form,
-                    "references": list(u.references),
-                    "features": [f.value for f in u.features],
-                    "span": asdict(u.span) if u.span else None,
+                    "local_id": unit.local_id,
+                    "kind": unit.kind.value,
+                    "body_form": unit.body_form,
+                    "references": list(unit.references),
+                    "features": [feature.value for feature in unit.features],
+                    "span": asdict(unit.span) if unit.span else None,
                 }
-                for u in self.units
+                for unit in self.units
             ],
-            "edges": [list(e) for e in self.edges],
+            "edges": [list(edge) for edge in self.edges],
         }
 
     def audit_map(self) -> dict[str, dict[str, Any]]:
+        """Return raw-unit audit metadata. Never pass this mapping to recognizers."""
         result: dict[str, dict[str, Any]] = {}
-        for u in self.units:
-            result[u.local_id] = {
-                "original_name": u.original_name,
-                "span": asdict(u.span) if u.span else None,
-                "kind": u.kind.value,
-                "references": list(u.references),
+        for unit in self.units:
+            result[unit.local_id] = {
+                "original_name": unit.original_name,
+                "span": asdict(unit.span) if unit.span else None,
+                "kind": unit.kind.value,
+                "references": list(unit.references),
             }
         return result
 
 
 @dataclass(frozen=True)
 class BlindStructuralEvidence:
-    """One-way blind projection. Recognizers accept only this type."""
+    """One-way projection accepted by semantic recognizers."""
 
-    provenance: Provenance
+    provenance: BlindProvenance
     units: tuple[BlindStructuralUnit, ...] = ()
-    # Edges retain only blind local_ids.
     edges: tuple[tuple[str, str], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
@@ -147,16 +161,16 @@ class BlindStructuralEvidence:
             "provenance": asdict(self.provenance),
             "units": [
                 {
-                    "local_id": u.local_id,
-                    "kind": u.kind.value,
-                    "features": [f.value for f in u.features],
-                    "span_token": u.span_token,
-                    "start_line": u.start_line,
-                    "end_line": u.end_line,
+                    "local_id": unit.local_id,
+                    "kind": unit.kind.value,
+                    "features": [feature.value for feature in unit.features],
+                    "source_token": unit.source_token,
+                    "start_line": unit.start_line,
+                    "end_line": unit.end_line,
                 }
-                for u in self.units
+                for unit in self.units
             ],
-            "edges": [list(e) for e in self.edges],
+            "edges": [list(edge) for edge in self.edges],
         }
 
 
@@ -164,20 +178,53 @@ def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def _stable_local_id(path: str, kind: str, index: int) -> str:
-    material = f"{path}:{kind}:{index}"
-    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:12]
-    return f"unit:{digest}"
+def _corpus_hash(input_hashes: dict[str, str]) -> str:
+    """Hash corpus content without embedding source paths in the material."""
+    material = "\n".join(sorted(input_hashes.values()))
+    return hashlib.sha256(material.encode("ascii")).hexdigest()
+
+
+def _stable_raw_id(source_digest: str, kind: str, index: int) -> str:
+    """Path-independent raw ID; blind projection replaces it with an ordinal ID."""
+    material = f"{source_digest}:{kind}:{index}"
+    digest = hashlib.sha256(material.encode("ascii")).hexdigest()[:16]
+    return f"raw:{digest}"
 
 
 def _strip_coq_comments(text: str) -> str:
-    """Remove (* ... *) comments, including nested forms, before feature detection."""
-    # Iterative non-greedy removal handles simple nesting adequately for bootstrap.
-    prev = None
-    while prev != text:
-        prev = text
-        text = re.sub(r"\(\*.*?\*\)", " ", text, flags=re.DOTALL)
-    return text
+    """Remove nested Rocq comments while preserving byte/line positions.
+
+    Characters inside comments become spaces, except newlines which are retained.
+    Unterminated comments fail closed rather than leaking documentary text into
+    feature extraction.
+    """
+    output: list[str] = []
+    depth = 0
+    index = 0
+    while index < len(text):
+        if text.startswith("(*", index):
+            depth += 1
+            output.extend((" ", " "))
+            index += 2
+            continue
+        if text.startswith("*)", index):
+            if depth == 0:
+                raise ValueError("unmatched Rocq comment terminator")
+            depth -= 1
+            output.extend((" ", " "))
+            index += 2
+            continue
+
+        char = text[index]
+        if depth:
+            output.append("\n" if char == "\n" else " ")
+        else:
+            output.append(char)
+        index += 1
+
+    if depth:
+        raise ValueError("unterminated Rocq comment")
+    return "".join(output)
 
 
 _THEOREM_RE = re.compile(
@@ -185,68 +232,97 @@ _THEOREM_RE = re.compile(
     re.MULTILINE,
 )
 _QED_RE = re.compile(r"^Qed\.?\s*$", re.MULTILINE)
+_APPLICATION_RE = re.compile(r"\b(?:exact|apply\s*:|apply|pose\s+proof)\b", re.IGNORECASE)
+_DECISION_CALL_RE = re.compile(
+    r"\b(?:have|pose\s+proof|exact|apply\s*:|apply)\b"
+    r"[^.\n]*\bdecide_[A-Za-z0-9_']+\b\s+[@({A-Za-z0-9_]",
+    re.IGNORECASE,
+)
+_POSE_BINDING_RE = re.compile(
+    r"\bpose\s+proof\b[^.\n]*?\bas\s+"
+    r"(?:\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_']*))",
+    re.IGNORECASE,
+)
 
 
-def _extract_units_from_source(source: str, path: str) -> list[StructuralUnit]:
+def _has_dataflow_composition(code: str) -> bool:
+    """Detect a bound result from one application consumed by a later one."""
+    for match in _POSE_BINDING_RE.finditer(code):
+        binding_text = match.group(1) or match.group(2) or ""
+        names = re.findall(r"[A-Za-z_][A-Za-z0-9_']*", binding_text)
+        tail = code[match.end() :]
+        for name in names:
+            if re.search(
+                rf"\b(?:exact|apply\s*:|apply)\b[^.\n]*\b{re.escape(name)}\b",
+                tail,
+                re.IGNORECASE,
+            ):
+                return True
+    return False
+
+
+def _extract_units_from_source(
+    source: str,
+    path: str,
+    source_digest: str,
+) -> list[StructuralUnit]:
+    """Extract bounded, mechanically observable structure from one Rocq file."""
+    code_source = _strip_coq_comments(source)
     units: list[StructuralUnit] = []
-    index = 0
+    unit_index = 0
 
-    for match in _THEOREM_RE.finditer(source):
-        kind_str = match.group(1).lower()
-        name = match.group(2)
+    for match in _THEOREM_RE.finditer(code_source):
+        kind_text = match.group(1).lower()
+        original_name = match.group(2)
         start_char = match.start()
-        start_line = source.count("\n", 0, start_char) + 1
+        start_line = code_source.count("\n", 0, start_char) + 1
 
-        rest = source[match.end() :]
-        end_rel = len(rest)
-        for end_pat in (_THEOREM_RE, _QED_RE):
-            m2 = end_pat.search(rest)
-            if m2 and m2.start() < end_rel:
-                end_rel = m2.start()
-        end_char = match.end() + end_rel
-        end_line = source.count("\n", 0, end_char) + 1
+        rest = code_source[match.end() :]
+        end_relative = len(rest)
+        for pattern in (_THEOREM_RE, _QED_RE):
+            candidate = pattern.search(rest)
+            if candidate and candidate.start() < end_relative:
+                end_relative = candidate.start()
+        end_char = match.end() + end_relative
+        end_line = code_source.count("\n", 0, end_char) + 1
 
-        body = source[match.start() : end_char]
-        # Feature detection must ignore comments.
-        code_only = _strip_coq_comments(body)
-        code_lower = code_only.lower()
+        raw_body = source[match.start() : end_char]
+        code_body = code_source[match.start() : end_char]
 
         features: list[ObservableFeature] = []
-        if re.search(r"\belim\b|\binduction\b", code_only):
+        if re.search(r"\belim\s*:|\binduction\b", code_body, re.IGNORECASE):
             features.append(ObservableFeature.INDUCTION)
-        if re.search(r"\bcase\b|\bdestruct\b", code_only):
+        if re.search(r"\bcase(?:/[A-Za-z0-9_']+)?\b|\bdestruct\b", code_body, re.IGNORECASE):
             features.append(ObservableFeature.CASE_SPLIT)
-        if re.search(r"\brewrite\b", code_only):
+        if re.search(r"\brewrite\b", code_body, re.IGNORECASE):
             features.append(ObservableFeature.REWRITE_TRANSPORT)
-        if re.search(r"\bdecide_\w+|\bdecide_colorable\b", code_lower):
+        if _DECISION_CALL_RE.search(code_body):
             features.append(ObservableFeature.DECISION_CALL)
-        if re.search(r"\bexact\b|\bapply:?\b", code_lower):
+        if _APPLICATION_RE.search(code_body):
             features.append(ObservableFeature.APPLICATION)
-        app_count = len(re.findall(r"\bexact\b|\bapply:?\b|\bpose proof\b", code_lower))
-        if app_count >= 2:
+        if _has_dataflow_composition(code_body):
             features.append(ObservableFeature.COMPOSITION)
 
-        refs: list[str] = []
-        for ref_match in re.finditer(
-            r"\b([a-z][a-z0-9_']*(?:\.[a-z][a-z0-9_']*)+)\b", code_only, re.IGNORECASE
+        references: list[str] = []
+        for reference in re.finditer(
+            r"\b([A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)+)\b",
+            code_body,
         ):
-            refs.append(ref_match.group(1))
+            references.append(reference.group(1))
 
         kind = {
             "theorem": UnitKind.THEOREM,
             "lemma": UnitKind.LEMMA,
             "definition": UnitKind.DEFINITION,
-        }.get(kind_str, UnitKind.OTHER)
-
-        local_id = _stable_local_id(path, kind.value, index)
-        index += 1
+        }.get(kind_text, UnitKind.OTHER)
 
         units.append(
             StructuralUnit(
-                local_id=local_id,
+                local_id=_stable_raw_id(source_digest, kind.value, unit_index),
                 kind=kind,
-                body_form=body.strip()[:400] + ("\u2026" if len(body.strip()) > 400 else ""),
-                references=tuple(dict.fromkeys(refs)),
+                body_form=raw_body.strip()[:400]
+                + ("…" if len(raw_body.strip()) > 400 else ""),
+                references=tuple(dict.fromkeys(references)),
                 features=tuple(features),
                 span=SourceLocation(
                     path=path,
@@ -255,9 +331,10 @@ def _extract_units_from_source(source: str, path: str) -> list[StructuralUnit]:
                     start_byte=start_char,
                     end_byte=end_char,
                 ),
-                original_name=name,
+                original_name=original_name,
             )
         )
+        unit_index += 1
 
     return units
 
@@ -268,18 +345,25 @@ def extract_structural_evidence(
     upstream_sha: str,
     mettafy_sha: str = "unknown",
 ) -> StructuralEvidence:
-    input_hashes = {path: _sha256_text(text) for path, text in sorted(sources.items())}
+    """Extract raw evidence from path->source mappings with exact provenance."""
+    if not sources:
+        raise ValueError("at least one Rocq source is required")
+
+    input_hashes = {
+        path: _sha256_text(text) for path, text in sorted(sources.items())
+    }
     units: list[StructuralUnit] = []
     for path, text in sorted(sources.items()):
-        units.extend(_extract_units_from_source(text, path))
+        units.extend(_extract_units_from_source(text, path, input_hashes[path]))
 
-    name_to_id = {u.original_name: u.local_id for u in units if u.original_name}
+    name_to_id = {unit.original_name: unit.local_id for unit in units if unit.original_name}
     edges: list[tuple[str, str]] = []
-    for u in units:
-        for ref in u.references:
-            short = ref.split(".")[-1]
-            if short in name_to_id and name_to_id[short] != u.local_id:
-                edges.append((u.local_id, name_to_id[short]))
+    for unit in units:
+        for reference in unit.references:
+            short_name = reference.split(".")[-1]
+            target = name_to_id.get(short_name)
+            if target and target != unit.local_id:
+                edges.append((unit.local_id, target))
 
     return StructuralEvidence(
         provenance=Provenance(
@@ -288,8 +372,7 @@ def extract_structural_evidence(
             extractor_version=EXTRACTOR_VERSION,
             input_hashes=input_hashes,
             notes=(
-                "Bootstrap syntax-surface extractor. "
-                "Does not claim completeness or semantic authority. "
+                "Bootstrap syntax-surface extractor; incomplete by design. "
                 "Rocq remains the sole theorem-validity authority."
             ),
         ),
@@ -298,33 +381,100 @@ def extract_structural_evidence(
     )
 
 
+def _blind_maps(
+    evidence: StructuralEvidence,
+) -> tuple[dict[str, str], dict[str, str], list[StructuralUnit]]:
+    """Create deterministic, source-name-independent tokens for blind projection."""
+    paths = {
+        unit.span.path
+        for unit in evidence.units
+        if unit.span is not None
+    }
+    ordered_paths = sorted(
+        paths,
+        key=lambda path: (evidence.provenance.input_hashes.get(path, ""), path),
+    )
+    source_tokens = {path: f"source:{index:03d}" for index, path in enumerate(ordered_paths)}
+
+    ordered_units = sorted(
+        evidence.units,
+        key=lambda unit: (
+            evidence.provenance.input_hashes.get(unit.span.path, "") if unit.span else "",
+            unit.span.start_byte if unit.span else 0,
+            unit.local_id,
+        ),
+    )
+    id_map = {
+        unit.local_id: f"unit:{index:05d}" for index, unit in enumerate(ordered_units)
+    }
+    return id_map, source_tokens, ordered_units
+
+
 def blind_structural_view(evidence: StructuralEvidence) -> BlindStructuralEvidence:
-    """One-way projection. Result type cannot carry leakage fields."""
-    blind_units: list[BlindStructuralUnit] = []
-    for u in evidence.units:
-        path = u.span.path if u.span else ""
-        span_token = "span:" + hashlib.sha256(path.encode()).hexdigest()[:12]
-        blind_units.append(
-            BlindStructuralUnit(
-                local_id=u.local_id,
-                kind=u.kind,
-                features=u.features,
-                span_token=span_token,
-                start_line=u.span.start_line if u.span else 0,
-                end_line=u.span.end_line if u.span else 0,
-            )
+    """Project raw evidence one-way into classifier-safe structural facts."""
+    id_map, source_tokens, ordered_units = _blind_maps(evidence)
+    blind_units = tuple(
+        BlindStructuralUnit(
+            local_id=id_map[unit.local_id],
+            kind=unit.kind,
+            features=unit.features,
+            source_token=source_tokens.get(unit.span.path, "source:unknown")
+            if unit.span
+            else "source:unknown",
+            start_line=unit.span.start_line if unit.span else 0,
+            end_line=unit.span.end_line if unit.span else 0,
         )
+        for unit in ordered_units
+    )
+    blind_edges = tuple(
+        sorted(
+            (id_map[source], id_map[target])
+            for source, target in evidence.edges
+            if source in id_map and target in id_map
+        )
+    )
     return BlindStructuralEvidence(
-        provenance=evidence.provenance,
-        units=tuple(blind_units),
-        edges=tuple(evidence.edges),
+        provenance=BlindProvenance(
+            mettafy_sha=evidence.provenance.mettafy_sha,
+            extractor_version=evidence.provenance.extractor_version,
+            corpus_hash=_corpus_hash(evidence.provenance.input_hashes),
+            source_count=len(source_tokens),
+        ),
+        units=blind_units,
+        edges=blind_edges,
     )
 
 
-def load_primary_layers_from_directory(root: Path) -> dict[str, str]:
+def blind_audit_map(evidence: StructuralEvidence) -> dict[str, dict[str, Any]]:
+    """Join blind IDs back to raw metadata for evaluation/human audit only."""
+    id_map, _, ordered_units = _blind_maps(evidence)
+    result: dict[str, dict[str, Any]] = {}
+    for unit in ordered_units:
+        result[id_map[unit.local_id]] = {
+            "raw_local_id": unit.local_id,
+            "original_name": unit.original_name,
+            "span": asdict(unit.span) if unit.span else None,
+            "kind": unit.kind.value,
+            "references": list(unit.references),
+        }
+    return result
+
+
+def load_primary_layers_from_directory(
+    root: Path,
+    paths: tuple[str, ...] = PRIMARY_PROOF_LAYERS,
+) -> dict[str, str]:
+    """Load an explicit set of primary proof layers, failing closed if missing."""
     sources: dict[str, str] = {}
-    for rel in PRIMARY_PROOF_LAYERS:
-        p = root / rel
-        if p.is_file():
-            sources[rel] = p.read_text(encoding="utf-8")
+    missing: list[str] = []
+    for relative_path in paths:
+        path = root / relative_path
+        if not path.is_file():
+            missing.append(relative_path)
+            continue
+        sources[relative_path] = path.read_text(encoding="utf-8")
+    if missing:
+        raise FileNotFoundError(
+            "missing pinned Rocq source layers: " + ", ".join(missing)
+        )
     return sources
