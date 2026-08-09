@@ -60,6 +60,7 @@ python_version = "3.11"
 files = [
   "src/mettafy",
   "scripts/build_pages.py",
+  "scripts/extract_four_color_structural.py",
   "scripts/validate_certification_program.py",
 ]
 check_untyped_defs = true
