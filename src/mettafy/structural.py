@@ -238,8 +238,10 @@ _DECISION_CALL_RE = re.compile(
     r"[^.\n]*\bdecide_[A-Za-z0-9_']+\b\s+[@({A-Za-z0-9_]",
     re.IGNORECASE,
 )
+# Rocq identifiers may be qualified with dots, so a dot is not a safe command
+# delimiter before the `as` binder. Keep the bootstrap pattern line-bounded.
 _POSE_BINDING_RE = re.compile(
-    r"\bpose\s+proof\b[^.\n]*?\bas\s+"
+    r"\bpose\s+proof\b[^\n]*?\bas\s+"
     r"(?:\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_']*))",
     re.IGNORECASE,
 )
