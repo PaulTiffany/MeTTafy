@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Produce StructuralEvidence, recognition, and post-hoc evaluation artifacts
-for the pinned high-level Four Color layers (Issue #32).
+"""Generate deterministic Issue #32 structural/recognition witness artifacts.
 
-Usage (from repository root, after install or with PYTHONPATH=src):
-
-    python scripts/extract_four_color_structural.py
+This bootstrap witness uses two exact, hash-verified source fixtures copied from
+rocq-community/fourcolor at the declared upstream commit. It does not replay or
+validate the Rocq proof; WIT-ROCQ-REPLAY owns that independent authority claim.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -23,7 +25,7 @@ from mettafy.recognition import (  # noqa: E402
 )
 from mettafy.structural import (  # noqa: E402
     EXTRACTOR_VERSION,
-    ObservableFeature,
+    blind_audit_map,
     blind_structural_view,
     extract_structural_evidence,
 )
@@ -81,11 +83,15 @@ by have [] := @unavoidability the_reducibility G.
 Qed.
 '''
 
-# Held-out targets (evaluation only; never fed to the recognizer).
-HELD_OUT = {
-    "high-level-finite": ["Discretization", "RepresentationChange", "ProofByTransport"],
-    "high-level-general": ["CompactnessExtension", "FiniteReduction"],
-    "finite-combinatorial-core": [
+FIXTURE_HASHES = {
+    "theories/proof/fourcolor.v": "61a0b38fa69b4030a10eec5e6a78ca6e1b36dbbf224c9a5c5b24b9f676aebb46",
+    "theories/proof/combinatorial4ct.v": "bef1b755ab55bdd656750c292ed63cae3f2af56ea146328f9e9df9f448fd0177",
+}
+
+HELD_OUT_BY_ORIGINAL_NAME = {
+    "four_color_finite": ["Discretization", "RepresentationChange", "ProofByTransport"],
+    "four_color": ["CompactnessExtension", "FiniteReduction"],
+    "four_color_hypermap": [
         "StructuralReduction",
         "Induction",
         "MinimalCounterexample",
@@ -96,123 +102,137 @@ HELD_OUT = {
 }
 
 
-def main() -> int:
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _sha256_json(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _repository_sha() -> str:
+    environment_sha = os.environ.get("GITHUB_SHA")
+    if environment_sha:
+        return environment_sha
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("cannot establish MeTTafy repository SHA") from exc
+
+
+def _verified_sources() -> dict[str, str]:
     sources = {
         "theories/proof/fourcolor.v": FOURCOLOR_V,
         "theories/proof/combinatorial4ct.v": COMBINATORIAL4CT_V,
     }
+    observed = {path: _sha256_text(text) for path, text in sources.items()}
+    if observed != FIXTURE_HASHES:
+        raise RuntimeError(
+            "pinned Four Color bootstrap fixture drifted; update only after "
+            "independent comparison with the declared upstream commit"
+        )
+    return sources
+
+
+def _held_out_by_blind_unit(audit: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for blind_id, entry in audit.items():
+        original_name = entry.get("original_name")
+        targets = HELD_OUT_BY_ORIGINAL_NAME.get(original_name)
+        if targets is not None:
+            result[blind_id] = targets
+    return result
+
+
+def _write_json(path: Path, payload: Any) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    repository_sha = _repository_sha()
+    sources = _verified_sources()
     evidence = extract_structural_evidence(
         sources,
         upstream_sha=UPSTREAM_SHA,
-        mettafy_sha="issue-32-working",
+        mettafy_sha=repository_sha,
     )
+    blind = blind_structural_view(evidence)
+
+    # The recognizer's type boundary accepts only this blind projection.
+    recognition = recognize_from_structural(blind)
+
+    # Audit metadata and answer-key labels are joined only after recognition.
+    audit = blind_audit_map(evidence)
+    held_out = _held_out_by_blind_unit(audit)
+    evaluation = evaluate_against_held_out(recognition, held_out)
+
+    blind_payload = blind.to_dict()
+    blind_hash = _sha256_json(blind_payload)
+
+    full_payload = {
+        "schema_version": 1,
+        "witness": "WIT-ROCQ-STRUCTURAL-BOOTSTRAP",
+        "claim": (
+            "The declared hash-verified Rocq source fixtures deterministically yield "
+            "bounded structural features and a one-way classifier-safe projection."
+        ),
+        "non_claims": [
+            "Four Color theorem validity",
+            "completeness of Rocq structural extraction",
+            "correctness of every semantic strategy interpretation",
+            "equivalence between Rocq proof terms and emitted MeTTa",
+            "identity with a live upstream checkout beyond the committed fixture hashes",
+        ],
+        "authority": "Rocq proof validity remains outside this witness",
+        "repository_sha": repository_sha,
+        "upstream_declared_sha": UPSTREAM_SHA,
+        "extractor_version": EXTRACTOR_VERSION,
+        "verified_fixture_hashes": FIXTURE_HASHES,
+        "blind_projection_sha256": blind_hash,
+        "structural_evidence": evidence.to_dict(),
+    }
+
+    recognition_payload = {
+        "schema_version": 1,
+        "repository_sha": repository_sha,
+        "extractor_version": EXTRACTOR_VERSION,
+        "blind_projection_sha256": blind_hash,
+        **recognition.to_dict(),
+    }
+    evaluation_payload = {
+        "schema_version": 1,
+        "repository_sha": repository_sha,
+        "blind_projection_sha256": blind_hash,
+        **evaluation,
+    }
 
     out_dir = ROOT / "artifacts" / "witnesses"
     out_dir.mkdir(parents=True, exist_ok=True)
+    outputs = {
+        "full": out_dir / "rocq-structural-fourcolor-highlevel.json",
+        "blind": out_dir / "rocq-structural-fourcolor-highlevel-blind.json",
+        "audit": out_dir / "rocq-structural-fourcolor-highlevel-audit.json",
+        "recognition": out_dir / "rocq-recognition-fourcolor-highlevel.json",
+        "evaluation": out_dir / "rocq-evaluation-fourcolor-highlevel.json",
+    }
 
-    full_path = out_dir / "rocq-structural-fourcolor-highlevel.json"
-    blind_path = out_dir / "rocq-structural-fourcolor-highlevel-blind.json"
-    audit_path = out_dir / "rocq-structural-fourcolor-highlevel-audit.json"
-    recog_path = out_dir / "rocq-recognition-fourcolor-highlevel.json"
-    eval_path = out_dir / "rocq-evaluation-fourcolor-highlevel.json"
+    _write_json(outputs["full"], full_payload)
+    _write_json(outputs["blind"], blind_payload)
+    _write_json(outputs["audit"], audit)
+    _write_json(outputs["recognition"], recognition_payload)
+    _write_json(outputs["evaluation"], evaluation_payload)
 
-    generated_at = datetime.now(timezone.utc).isoformat()
-
-    full = evidence.to_dict()
-    full["generated_at"] = generated_at
-    full["claim_boundary"] = (
-        "Structural observations only. No semantic strategy labels are asserted. "
-        "Rocq remains the sole authority for theorem validity."
-    )
-
-    observations = []
-    for unit in evidence.units:
-        feats = set(unit.features)
-        if ObservableFeature.COMPOSITION in feats or ObservableFeature.APPLICATION in feats:
-            observations.append(
-                {
-                    "local_id": unit.local_id,
-                    "plain_language": (
-                        "The body is a short composition of applications: "
-                        "one step obtains a hypermap and a coloring transport, "
-                        "another step applies a previously established combinatorial result."
-                    ),
-                    "mathematical": (
-                        "Finite case reduces by discretization to a hypermap, "
-                        "invokes the combinatorial four-color theorem, then transports "
-                        "the coloring; the general case is a compactness extension of "
-                        "the finite result."
-                    ),
-                    "features": [f.value for f in unit.features],
-                    "confidence": "structural-high",
-                    "status": "observed",
-                }
-            )
-        if ObservableFeature.INDUCTION in feats:
-            observations.append(
-                {
-                    "local_id": unit.local_id,
-                    "plain_language": (
-                        "An inductive argument on a size measure appears, "
-                        "together with a decision procedure for colorability "
-                        "and a reference to an unavoidability result."
-                    ),
-                    "mathematical": (
-                        "Proof proceeds by induction on the cardinality of the "
-                        "cubified hypermap; the base relies on a colorability "
-                        "decision procedure and the unavoidability of a set of "
-                        "reducible configurations."
-                    ),
-                    "features": [f.value for f in unit.features],
-                    "confidence": "structural-high",
-                    "status": "observed",
-                }
-            )
-
-    full["structural_observations"] = observations
-
-    # Recognition (blind with respect to held-out labels).
-    recognition = recognize_from_structural(evidence)
-    full["abstentions"] = recognition.abstentions
-
-    with full_path.open("w", encoding="utf-8") as fh:
-        json.dump(full, fh, indent=2, sort_keys=True)
-        fh.write("\n")
-
-    blind = blind_structural_view(evidence)
-    blind["generated_at"] = generated_at
-    with blind_path.open("w", encoding="utf-8") as fh:
-        json.dump(blind, fh, indent=2, sort_keys=True)
-        fh.write("\n")
-
-    with audit_path.open("w", encoding="utf-8") as fh:
-        json.dump(evidence.audit_map(), fh, indent=2, sort_keys=True)
-        fh.write("\n")
-
-    recog_payload = recognition.to_dict()
-    recog_payload["generated_at"] = generated_at
-    recog_payload["extractor_version"] = EXTRACTOR_VERSION
-    with recog_path.open("w", encoding="utf-8") as fh:
-        json.dump(recog_payload, fh, indent=2, sort_keys=True)
-        fh.write("\n")
-
-    # Post-hoc evaluation only.
-    evaluation = evaluate_against_held_out(recognition, HELD_OUT)
-    evaluation["generated_at"] = generated_at
-    with eval_path.open("w", encoding="utf-8") as fh:
-        json.dump(evaluation, fh, indent=2, sort_keys=True)
-        fh.write("\n")
-
-    print(f"Extractor version : {EXTRACTOR_VERSION}")
-    print(f"Units extracted   : {len(evidence.units)}")
-    print(f"Observations      : {len(observations)}")
-    print(f"Strategies        : {len(recognition.strategies)}")
-    print(f"Abstentions       : {len(recognition.abstentions)}")
-    print(f"Full artifact     : {full_path}")
-    print(f"Blind artifact    : {blind_path}")
-    print(f"Audit map         : {audit_path}")
-    print(f"Recognition       : {recog_path}")
-    print(f"Evaluation        : {eval_path}")
+    print(f"Repository SHA      : {repository_sha}")
+    print(f"Extractor version   : {EXTRACTOR_VERSION}")
+    print(f"Raw units           : {len(evidence.units)}")
+    print(f"Blind projection    : {blind_hash}")
+    print(f"Strategies promoted : {len(recognition.strategies)}")
+    print(f"Abstentions         : {len(recognition.abstentions)}")
+    for label, path in outputs.items():
+        print(f"{label:20}: {path}")
     return 0
 
 
