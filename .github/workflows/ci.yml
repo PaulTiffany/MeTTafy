@@ -51,6 +51,20 @@ jobs:
       - name: Unit and deterministic build tests
         run: pytest
 
+      - name: Replay deterministic Rocq structural witness
+        if: matrix.python-version == '3.14'
+        shell: bash
+        run: |
+          python scripts/extract_four_color_structural.py
+          find artifacts/witnesses -maxdepth 1 -type f -name 'rocq-*-fourcolor-highlevel*.json' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > /tmp/rocq-structural-first.sha256
+          python scripts/extract_four_color_structural.py
+          find artifacts/witnesses -maxdepth 1 -type f -name 'rocq-*-fourcolor-highlevel*.json' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > /tmp/rocq-structural-second.sha256
+          diff -u /tmp/rocq-structural-first.sha256 /tmp/rocq-structural-second.sha256
+
       - name: Audience witnesses for integrators, operators, and reviewers
         if: matrix.python-version == '3.14'
         shell: bash
