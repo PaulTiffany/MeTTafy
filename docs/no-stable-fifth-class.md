@@ -1,6 +1,6 @@
 # NoStableFifthClass: what is proved, and what remains
 
-This note separates an exact observer-geometric theorem from the graph-theoretic bridge still required to connect it to the Four Color Theorem.
+This note separates an exact observer-geometric theorem from the graph-theoretic bridge still required to connect it to the Four Color Theorem. It is stacked on the independently certified observer-critical witness in PR #35; this tranche adds only the four-versus-five separation and the explicit planar bridge obligations.
 
 ## 1. Exact four-versus-five observer separation
 
