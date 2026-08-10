@@ -25,6 +25,14 @@ class ReductionState:
 
 
 @dataclass(frozen=True)
+class LiftWitness:
+    """Mechanical evidence that a reduced solution extends to the source state."""
+
+    witness_id: str
+    verified: bool
+
+
+@dataclass(frozen=True)
 class ReducibilityTrace:
     """White-box decision trace for one candidate structural reduction."""
 
@@ -35,13 +43,15 @@ class ReducibilityTrace:
     obstruction_before: int
     obstruction_after: int
     obstruction_decreased: bool
+    lift_witness_id: str
+    lift_verified: bool
     decision: str
     reason: str
 
 
 @dataclass(frozen=True)
 class ReducibilityCertificate:
-    """Certificate emitted only when both reducibility guards hold."""
+    """Certificate emitted only when all reducibility guards hold."""
 
     certificate_id: str
     trace_id: str
@@ -50,13 +60,16 @@ class ReducibilityCertificate:
     boundary_sha256: str
     obstruction_before: int
     obstruction_after: int
+    lift_witness_id: str
 
 
 def evaluate_reducibility(
     before: ReductionState,
     after: ReductionState,
+    *,
+    lift_witness: LiftWitness,
 ) -> tuple[ReducibilityTrace, ReducibilityCertificate | None, list[ProvenanceEdge]]:
-    """Certify a reduction iff the observable boundary is preserved and obstruction strictly decreases."""
+    """Certify iff boundary is preserved, obstruction descends, and lift is verified."""
 
     boundary_preserved = before.boundary_sha256 == after.boundary_sha256
     obstruction_decreased = after.obstruction_measure < before.obstruction_measure
@@ -68,9 +81,15 @@ def evaluate_reducibility(
     elif not obstruction_decreased:
         decision = "reject"
         reason = "obstruction measure did not strictly decrease"
+    elif not lift_witness.verified:
+        decision = "reject"
+        reason = "reduced witness is not verified to lift to the source state"
     else:
         decision = "certify"
-        reason = "boundary preserved and obstruction measure strictly decreased"
+        reason = (
+            "boundary preserved, obstruction measure strictly decreased, "
+            "and reduced witness lifts to source"
+        )
 
     trace = ReducibilityTrace(
         trace_id=trace_id,
@@ -80,6 +99,8 @@ def evaluate_reducibility(
         obstruction_before=before.obstruction_measure,
         obstruction_after=after.obstruction_measure,
         obstruction_decreased=obstruction_decreased,
+        lift_witness_id=lift_witness.witness_id,
+        lift_verified=lift_witness.verified,
         decision=decision,
         reason=reason,
     )
@@ -96,18 +117,12 @@ def evaluate_reducibility(
         boundary_sha256=before.boundary_sha256,
         obstruction_before=before.obstruction_measure,
         obstruction_after=after.obstruction_measure,
+        lift_witness_id=lift_witness.witness_id,
     )
     provenance = [
-        ProvenanceEdge(
-            relation="reduced_to",
-            source_id=before.state_id,
-            target_id=after.state_id,
-        ),
-        ProvenanceEdge(
-            relation="justified_by",
-            source_id=trace_id,
-            target_id=certificate_id,
-        ),
+        ProvenanceEdge("reduced_to", before.state_id, after.state_id),
+        ProvenanceEdge("lifts_via", after.state_id, lift_witness.witness_id),
+        ProvenanceEdge("certified_reducible_by", before.state_id, certificate_id),
     ]
     return trace, certificate, provenance
 
@@ -115,14 +130,10 @@ def evaluate_reducibility(
 def strategy_from_certificate(
     certificate: ReducibilityCertificate,
 ) -> tuple[Strategy, ProvenanceEdge]:
-    """Promote a mechanically certified reduction into Strategy IR."""
+    """Promote only a mechanically certified reduction into Strategy IR."""
 
     strategy_id = f"certified:{certificate.before_id}:{certificate.after_id}:reduction"
-    strategy = Strategy(
-        id=strategy_id,
-        kind=StrategyKind.REDUCTION,
-        confidence=1.0,
-    )
+    strategy = Strategy(id=strategy_id, kind=StrategyKind.REDUCTION, confidence=1.0)
     authorization = ProvenanceEdge(
         relation="authorized_by",
         source_id=certificate.certificate_id,
