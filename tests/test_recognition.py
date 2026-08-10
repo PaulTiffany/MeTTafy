@@ -45,9 +45,10 @@ COUNTEREXAMPLE_SOURCE = r'''
 Theorem discharge n G : target G.
 Proof.
 elim: n G => // n IHn G.
-case: (decide_colorable G) => [done | blocked].
+case: G => [done | blocked].
+have H := decide_colorable blocked.
 apply helper.
-exact blocked.
+exact H.
 Qed.
 '''
 
