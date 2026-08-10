@@ -60,7 +60,7 @@ def test_cost_and_soft_mode_collapse_conditions_are_exactly_equivalent() -> None
 def test_response_cost_softens_monotonically_toward_the_cliff() -> None:
     rhos = [Fraction(i, 30) for i in range(10)]  # all below rho_c = 1/3 for k=4
     costs = [geometry(rho).minimum_cost_squared for rho in rhos]
-    assert all(left < right for left, right in zip(costs, costs[1:], strict=True))
+    assert all(left < right for left, right in zip(costs, costs[1:]))
 
 
 def test_observer_routes_before_singularity_when_budget_is_exhausted() -> None:
