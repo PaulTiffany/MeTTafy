@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from mettafy.reducibility import (
+    LiftWitness,
     ReductionState,
     evaluate_reducibility,
     strategy_from_certificate,
@@ -22,12 +23,15 @@ def main() -> int:
     boundary = digest("external-boundary")
     before = ReductionState("state:before", boundary, 11)
     after = ReductionState("state:after", boundary, 7)
+    lift = LiftWitness("lift:witness:1", True)
 
-    trace, certificate, provenance = evaluate_reducibility(before, after)
+    trace, certificate, provenance = evaluate_reducibility(
+        before, after, lift_witness=lift
+    )
     failures: list[str] = []
 
     if trace.decision != "certify":
-        failures.append("valid boundary-preserving strict descent did not certify")
+        failures.append("valid boundary-preserving strict descent with verified lift did not certify")
     if certificate is None:
         failures.append("valid reduction emitted no certificate")
         strategy = None
@@ -42,6 +46,7 @@ def main() -> int:
     changed_boundary, changed_certificate, _ = evaluate_reducibility(
         before,
         ReductionState("state:changed-boundary", digest("different-boundary"), 7),
+        lift_witness=lift,
     )
     if changed_boundary.decision != "reject" or changed_certificate is not None:
         failures.append("changed observable boundary did not fail closed")
@@ -49,16 +54,26 @@ def main() -> int:
     no_descent, no_descent_certificate, _ = evaluate_reducibility(
         before,
         ReductionState("state:no-descent", boundary, 11),
+        lift_witness=lift,
     )
     if no_descent.decision != "reject" or no_descent_certificate is not None:
         failures.append("nondecreasing obstruction did not fail closed")
+
+    no_lift, no_lift_certificate, _ = evaluate_reducibility(
+        before,
+        after,
+        lift_witness=LiftWitness("lift:witness:failed", False),
+    )
+    if no_lift.decision != "reject" or no_lift_certificate is not None:
+        failures.append("unverified lift did not fail closed")
 
     payload = {
         "witness": "WIT-TRACED-REDUCIBILITY",
         "result": "pass" if not failures else "fail",
         "claim": (
             "A Reduction Strategy may be authorized only by a certificate proving identical "
-            "observable boundary hash and strict descent of an explicit obstruction measure."
+            "observable boundary hash, strict descent of an explicit obstruction measure, "
+            "and a verified lift from the reduced state back to the source obligation."
         ),
         "non_claims": [
             "the current Rocq Four Color configurations have already been mapped to this contract",
@@ -75,6 +90,7 @@ def main() -> int:
         "negative_cases": {
             "changed_boundary": changed_boundary.__dict__,
             "no_strict_descent": no_descent.__dict__,
+            "unverified_lift": no_lift.__dict__,
         },
         "failures": failures,
     }
@@ -82,7 +98,7 @@ def main() -> int:
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if failures:
         raise SystemExit("; ".join(failures))
-    print("Traced reducibility witness passed: boundary preservation + strict descent authorize Reduction.")
+    print("Traced reducibility witness passed: boundary + descent + lift authorize Reduction.")
     return 0
 
 
