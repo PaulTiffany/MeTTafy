@@ -2,6 +2,8 @@
 
 > **Goal:** understand one famous computational proof without needing to know Rocq, Coq, or MeTTa first.
 
+> **Related theorem-development track:** [`srmf-four-color-amortization.md`](srmf-four-color-amortization.md) records a separate, explicitly non-canonical research hypothesis connecting Principia Symbolica / Fuzzy Calculus / SRMF to an amortized fuzzy-to-exact Four Color construction. It is kept distinct from the Rocq interpretation path to prevent benchmark leakage and overclaiming.
+
 ## 1. The question
 
 Can every map drawn on a plane be colored with at most four colors so that regions sharing a boundary have different colors?
