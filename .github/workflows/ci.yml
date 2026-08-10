@@ -77,6 +77,10 @@ jobs:
         if: matrix.python-version == '3.14'
         run: python tests/interpretability_trace_witness.py
 
+      - name: Provenance fold collapse witness
+        if: matrix.python-version == '3.14'
+        run: python tests/provenance_fold_witness.py
+
       - name: Upload observer and interpretability evidence
         if: always() && matrix.python-version == '3.14'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -86,6 +90,7 @@ jobs:
             artifacts/witnesses/observer-critical-collapse.json
             artifacts/witnesses/four-stable-five-routes.json
             artifacts/witnesses/mechanistic-interpretability-trace.json
+            artifacts/witnesses/provenance-fold-collapse.json
           if-no-files-found: warn
 
       - name: Audience witnesses for integrators, operators, and reviewers
