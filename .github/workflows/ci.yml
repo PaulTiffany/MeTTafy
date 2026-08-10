@@ -65,6 +65,18 @@ jobs:
             | xargs -0 sha256sum > /tmp/rocq-structural-second.sha256
           diff -u /tmp/rocq-structural-first.sha256 /tmp/rocq-structural-second.sha256
 
+      - name: Observer-critical collapse witness
+        if: matrix.python-version == '3.14'
+        run: python tests/observer_critical_witness.py
+
+      - name: Upload observer-critical evidence
+        if: always() && matrix.python-version == '3.14'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: observer-critical-evidence
+          path: artifacts/witnesses/observer-critical-collapse.json
+          if-no-files-found: warn
+
       - name: Audience witnesses for integrators, operators, and reviewers
         if: matrix.python-version == '3.14'
         shell: bash
