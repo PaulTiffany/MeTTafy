@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .ir import ProvenanceEdge
+from .ir import ProvenanceEdge, Strategy, StrategyKind
 
 
 @dataclass(frozen=True)
@@ -110,3 +110,22 @@ def evaluate_reducibility(
         ),
     ]
     return trace, certificate, provenance
+
+
+def strategy_from_certificate(
+    certificate: ReducibilityCertificate,
+) -> tuple[Strategy, ProvenanceEdge]:
+    """Promote a mechanically certified reduction into Strategy IR."""
+
+    strategy_id = f"certified:{certificate.before_id}:{certificate.after_id}:reduction"
+    strategy = Strategy(
+        id=strategy_id,
+        kind=StrategyKind.REDUCTION,
+        confidence=1.0,
+    )
+    authorization = ProvenanceEdge(
+        relation="authorized_by",
+        source_id=certificate.certificate_id,
+        target_id=strategy_id,
+    )
+    return strategy, authorization
