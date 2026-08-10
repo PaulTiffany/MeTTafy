@@ -23,18 +23,22 @@ def test_provenance_survives_recognition_ir_and_metta_emission() -> None:
 
     assert len(result.strategies) == 1
     assert len(result.rule_traces) == 1
+    assert len(result.provenance_edges) == 1
     strategy = result.strategies[0]
     trace = result.rule_traces[0]
+    edge = result.provenance_edges[0]
 
     assert trace.decision == "promote"
-    assert strategy.provenance[0].relation == "authorized_by"
-    assert strategy.provenance[0].source_id == trace.trace_id
-    assert strategy.provenance[0].target_id == strategy.id
+    assert edge.relation == "authorized_by"
+    assert edge.source_id == trace.trace_id
+    assert edge.target_id == strategy.id
+    assert "provenance" not in strategy.to_dict()
 
-    emitted = emit_strategy_metta(result.strategies)
-    expected = (
-        f'(Provenance "authorized_by" "{trace.trace_id}" "{strategy.id}")'
+    emitted = emit_strategy_metta(
+        result.strategies,
+        provenance_edges=result.provenance_edges,
     )
+    expected = f'(Provenance "authorized_by" "{trace.trace_id}" "{strategy.id}")'
     assert expected in emitted
 
 
@@ -43,7 +47,10 @@ def test_emitted_provenance_remains_inside_blind_capability_boundary() -> None:
         {"secret-fourcolor-proof.v": SOURCE}, upstream_sha=UPSTREAM_SHA, mettafy_sha="test"
     )
     result = recognize_from_structural(blind_structural_view(raw))
-    emitted = emit_strategy_metta(result.strategies).lower()
+    emitted = emit_strategy_metta(
+        result.strategies,
+        provenance_edges=result.provenance_edges,
+    ).lower()
 
     for forbidden in (
         "secret-fourcolor-proof",
