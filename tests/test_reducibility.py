@@ -4,7 +4,12 @@ import hashlib
 
 import pytest
 
-from mettafy.reducibility import ReductionState, evaluate_reducibility
+from mettafy.ir import StrategyKind
+from mettafy.reducibility import (
+    ReductionState,
+    evaluate_reducibility,
+    strategy_from_certificate,
+)
 
 
 def digest(label: str) -> str:
@@ -33,6 +38,13 @@ def test_certifies_only_boundary_preserving_strict_descent() -> None:
     assert certificate.obstruction_before == 7
     assert certificate.obstruction_after == 4
     assert [edge.relation for edge in provenance] == ["reduced_to", "justified_by"]
+
+    strategy, authorization = strategy_from_certificate(certificate)
+    assert strategy.kind is StrategyKind.REDUCTION
+    assert strategy.confidence == 1.0
+    assert authorization.relation == "authorized_by"
+    assert authorization.source_id == certificate.certificate_id
+    assert authorization.target_id == strategy.id
 
 
 def test_rejects_when_observable_boundary_changes() -> None:
