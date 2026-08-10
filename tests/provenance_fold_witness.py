@@ -29,26 +29,30 @@ def main() -> int:
     raw = extract_structural_evidence(
         {"proof.v": SOURCE}, upstream_sha=UPSTREAM_SHA, mettafy_sha="witness"
     )
-    blind = blind_structural_view(raw)
-    result = recognize_from_structural(blind)
-    emitted = emit_strategy_metta(result.strategies)
+    result = recognize_from_structural(blind_structural_view(raw))
+    emitted = emit_strategy_metta(
+        result.strategies,
+        provenance_edges=result.provenance_edges,
+    )
 
     failures: list[str] = []
     chains: list[dict[str, str]] = []
     traces = {trace.trace_id: trace for trace in result.rule_traces}
 
     for strategy in result.strategies:
-        parents = [edge for edge in strategy.provenance if edge.relation == "authorized_by"]
+        parents = [
+            edge
+            for edge in result.provenance_edges
+            if edge.relation == "authorized_by" and edge.target_id == strategy.id
+        ]
         if len(parents) != 1:
             failures.append(f"{strategy.id}: expected exactly one authorized_by parent")
             continue
         edge = parents[0]
         trace = traces.get(edge.source_id)
-        if trace is None:
-            failures.append(f"{strategy.id}: provenance parent has no rule trace")
+        if trace is None or trace.decision != "promote":
+            failures.append(f"{strategy.id}: invalid authorization parent")
             continue
-        if trace.decision != "promote":
-            failures.append(f"{strategy.id}: authorization parent did not promote")
         expected = f'(Provenance "authorized_by" "{edge.source_id}" "{edge.target_id}")'
         if expected not in emitted:
             failures.append(f"{strategy.id}: emitted MeTTa lost authorization edge")
@@ -65,15 +69,7 @@ def main() -> int:
     payload = {
         "witness": "WIT-PROVENANCE-FOLD-COLLAPSE",
         "result": "pass" if not failures else "fail",
-        "claim": (
-            "Every promoted strategy in this bounded recognizer has exactly one deterministic "
-            "rule-authorization parent and that provenance edge survives MeTTa emission."
-        ),
-        "non_claims": [
-            "runtime execution is yet linked into the provenance graph",
-            "arbitrary neural-model causal interpretability",
-            "semantic completeness beyond configured recognition rules",
-        ],
+        "claim": "Sibling RuleTrace authorization survives Strategy construction and MeTTa emission.",
         "chains": chains,
         "chain_sha256": sha256(canonical),
         "emitted_metta_sha256": sha256(emitted),
@@ -83,7 +79,7 @@ def main() -> int:
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if failures:
         raise SystemExit("; ".join(failures))
-    print("Provenance fold witness passed: RuleTrace -> Strategy -> MeTTa authorization chain intact.")
+    print("Provenance fold witness passed with stable Strategy contract.")
     return 0
 
 
