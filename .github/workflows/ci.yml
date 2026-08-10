@@ -69,12 +69,18 @@ jobs:
         if: matrix.python-version == '3.14'
         run: python tests/observer_critical_witness.py
 
+      - name: Four-stable five-routes witness
+        if: matrix.python-version == '3.14'
+        run: python tests/fifth_class_witness.py
+
       - name: Upload observer-critical evidence
         if: always() && matrix.python-version == '3.14'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: observer-critical-evidence
-          path: artifacts/witnesses/observer-critical-collapse.json
+          path: |
+            artifacts/witnesses/observer-critical-collapse.json
+            artifacts/witnesses/four-stable-five-routes.json
           if-no-files-found: warn
 
       - name: Audience witnesses for integrators, operators, and reviewers
