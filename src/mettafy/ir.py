@@ -35,12 +35,22 @@ class Evidence:
     span: SourceSpan
 
 
+@dataclass(frozen=True)
+class ProvenanceEdge:
+    """Typed, source-neutral causal/provenance edge attached to a strategy."""
+
+    relation: str
+    source_id: str
+    target_id: str
+
+
 @dataclass
 class Strategy:
     id: str
     kind: StrategyKind
     confidence: float
     evidence: list[Evidence] = field(default_factory=list)
+    provenance: list[ProvenanceEdge] = field(default_factory=list)
     children: list["Strategy"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -59,6 +69,14 @@ class Strategy:
                     },
                 }
                 for item in self.evidence
+            ],
+            "provenance": [
+                {
+                    "relation": edge.relation,
+                    "source_id": edge.source_id,
+                    "target_id": edge.target_id,
+                }
+                for edge in self.provenance
             ],
             "children": [child.to_dict() for child in self.children],
         }
