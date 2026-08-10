@@ -78,7 +78,32 @@ REDUCTION_COMPOSITION_RULE = RecognitionRule(
         "application in the same structural unit"
     ),
 )
-RECOGNITION_RULES: tuple[RecognitionRule, ...] = (REDUCTION_COMPOSITION_RULE,)
+
+COUNTEREXAMPLE_DISCHARGE_RULE = RecognitionRule(
+    rule_id="recognition.reduction.counterexample-discharge.v1",
+    target=StrategyKind.REDUCTION,
+    required=frozenset(
+        {
+            ObservableFeature.INDUCTION,
+            ObservableFeature.CASE_SPLIT,
+            ObservableFeature.DECISION_CALL,
+            ObservableFeature.APPLICATION,
+        }
+    ),
+    forbidden=frozenset(),
+    confidence=0.74,
+    evidence_kind="structural-counterexample-discharge",
+    evidence_detail=(
+        "An inductive descent is combined with an explicit decision branch and "
+        "subsequent proof application, mechanically indicating a candidate "
+        "counterexample-discharge reduction"
+    ),
+)
+
+RECOGNITION_RULES: tuple[RecognitionRule, ...] = (
+    REDUCTION_COMPOSITION_RULE,
+    COUNTEREXAMPLE_DISCHARGE_RULE,
+)
 UNSUPPORTED_SEMANTIC_FEATURES = frozenset(
     {
         ObservableFeature.INDUCTION,
