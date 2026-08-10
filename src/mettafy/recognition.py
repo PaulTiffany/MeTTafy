@@ -14,18 +14,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .ir import Evidence, SourceSpan, Strategy, StrategyKind
-from .structural import (
-    BlindStructuralEvidence,
-    BlindStructuralUnit,
-    ObservableFeature,
-)
+from .ir import Evidence, ProvenanceEdge, SourceSpan, Strategy, StrategyKind
+from .structural import BlindStructuralEvidence, BlindStructuralUnit, ObservableFeature
 
 
 @dataclass(frozen=True)
 class RuleTrace:
-    """Mechanistic trace for one rule evaluated against one blind unit."""
-
     rule_id: str
     local_id: str
     target: str
@@ -39,8 +33,13 @@ class RuleTrace:
     decision: str
     reason: str
 
+    @property
+    def trace_id(self) -> str:
+        return f"trace:{self.local_id}:{self.rule_id}"
+
     def to_dict(self) -> dict[str, Any]:
         return {
+            "trace_id": self.trace_id,
             "rule_id": self.rule_id,
             "local_id": self.local_id,
             "target": self.target,
@@ -58,8 +57,6 @@ class RuleTrace:
 
 @dataclass(frozen=True)
 class RecognitionRule:
-    """Bounded, inspectable promotion rule over blind structural features."""
-
     rule_id: str
     target: StrategyKind
     required: frozenset[ObservableFeature]
@@ -81,9 +78,7 @@ REDUCTION_COMPOSITION_RULE = RecognitionRule(
         "application in the same structural unit"
     ),
 )
-
 RECOGNITION_RULES: tuple[RecognitionRule, ...] = (REDUCTION_COMPOSITION_RULE,)
-
 UNSUPPORTED_SEMANTIC_FEATURES = frozenset(
     {
         ObservableFeature.INDUCTION,
@@ -114,41 +109,26 @@ class RecognitionResult:
 
 
 def _span_from_blind(unit: BlindStructuralUnit) -> SourceSpan:
-    return SourceSpan(
-        filename=unit.source_token or "<blind>",
-        start_line=unit.start_line,
-        end_line=unit.end_line,
-    )
+    return SourceSpan(filename=unit.source_token or "<blind>", start_line=unit.start_line, end_line=unit.end_line)
 
 
 def _feature_names(features: set[ObservableFeature] | frozenset[ObservableFeature]) -> tuple[str, ...]:
     return tuple(sorted(feature.value for feature in features))
 
 
-def _evaluate_rule(
-    rule: RecognitionRule,
-    unit: BlindStructuralUnit,
-    *,
-    min_confidence: float,
-) -> RuleTrace:
+def _evaluate_rule(rule: RecognitionRule, unit: BlindStructuralUnit, *, min_confidence: float) -> RuleTrace:
     features = set(unit.features)
     observed_required = rule.required & features
     missing_required = rule.required - features
     observed_forbidden = rule.forbidden & features
-
     if missing_required:
-        decision = "not_applicable"
-        reason = "required mechanical premise(s) were not observed"
+        decision, reason = "not_applicable", "required mechanical premise(s) were not observed"
     elif observed_forbidden:
-        decision = "blocked"
-        reason = "a forbidden mechanical feature was observed"
+        decision, reason = "blocked", "a forbidden mechanical feature was observed"
     elif rule.confidence < min_confidence:
-        decision = "below_threshold"
-        reason = "rule confidence is below the configured promotion threshold"
+        decision, reason = "below_threshold", "rule confidence is below the configured promotion threshold"
     else:
-        decision = "promote"
-        reason = "all mechanical premises hold and no guard blocks promotion"
-
+        decision, reason = "promote", "all mechanical premises hold and no guard blocks promotion"
     return RuleTrace(
         rule_id=rule.rule_id,
         local_id=unit.local_id,
@@ -165,23 +145,9 @@ def _evaluate_rule(
     )
 
 
-def recognize_from_structural(
-    blind: BlindStructuralEvidence,
-    *,
-    min_confidence: float = 0.55,
-) -> RecognitionResult:
-    """Promote only rules whose blind mechanical premises are satisfied.
-
-    Every configured rule is evaluated for every blind structural unit and a
-    RuleTrace is emitted whether the rule promotes or not. This gives an exact
-    counterfactual boundary: a caller can see which premise was absent without
-    inspecting raw source or relying on a post-hoc natural-language explainer.
-    """
+def recognize_from_structural(blind: BlindStructuralEvidence, *, min_confidence: float = 0.55) -> RecognitionResult:
     if not isinstance(blind, BlindStructuralEvidence):
-        raise TypeError(
-            "recognize_from_structural accepts only BlindStructuralEvidence; "
-            "raw StructuralEvidence must first pass through blind_structural_view()"
-        )
+        raise TypeError("recognize_from_structural accepts only BlindStructuralEvidence; raw StructuralEvidence must first pass through blind_structural_view()")
     if not 0.0 <= min_confidence <= 1.0:
         raise ValueError("min_confidence must be between 0 and 1")
 
@@ -195,91 +161,71 @@ def recognize_from_structural(
         span = _span_from_blind(unit)
         unit_predictions: list[str] = []
         unit_traces: list[RuleTrace] = []
-
         for rule in RECOGNITION_RULES:
             trace = _evaluate_rule(rule, unit, min_confidence=min_confidence)
             rule_traces.append(trace)
             unit_traces.append(trace)
             if trace.decision != "promote":
                 continue
-
+            strategy_id = f"pred:{unit.local_id}:{rule.target.value.lower()}"
             strategy = Strategy(
-                id=f"pred:{unit.local_id}:{rule.target.value.lower()}",
+                id=strategy_id,
                 kind=rule.target,
                 confidence=rule.confidence,
-                evidence=[
-                    Evidence(
-                        kind=rule.evidence_kind,
-                        detail=rule.evidence_detail,
-                        span=span,
+                evidence=[Evidence(kind=rule.evidence_kind, detail=rule.evidence_detail, span=span)],
+                provenance=[
+                    ProvenanceEdge(
+                        relation="authorized_by",
+                        source_id=trace.trace_id,
+                        target_id=strategy_id,
                     )
                 ],
             )
             strategies.append(strategy)
             unit_predictions.append(strategy.kind.value)
 
-        unsupported = sorted(
-            feature.value for feature in features if feature in UNSUPPORTED_SEMANTIC_FEATURES
-        )
+        unsupported = sorted(feature.value for feature in features if feature in UNSUPPORTED_SEMANTIC_FEATURES)
         if not unit_predictions:
             if unsupported:
-                reason = (
-                    "mechanical features are present, but no configured semantic rule "
-                    "is justified by the blind evidence"
-                )
+                reason = "mechanical features are present, but no configured semantic rule is justified by the blind evidence"
             elif not features:
                 reason = "no high-precision structural features observed"
             else:
                 reason = "observed features do not satisfy any configured promotion rule"
-            abstentions.append(
-                {
-                    "local_id": unit.local_id,
-                    "observed_features": sorted(feature.value for feature in features),
-                    "unsupported_semantic_features": unsupported,
-                    "considered_rules": [trace.rule_id for trace in unit_traces],
-                    "why_not": [
-                        {
-                            "rule_id": trace.rule_id,
-                            "target": trace.target,
-                            "decision": trace.decision,
-                            "missing_required_features": list(trace.missing_required_features),
-                            "observed_forbidden_features": list(trace.observed_forbidden_features),
-                            "reason": trace.reason,
-                        }
-                        for trace in unit_traces
-                        if trace.decision != "promote"
-                    ],
-                    "reason": reason,
-                    "status": "abstain",
-                }
-            )
-
+            abstentions.append({
+                "local_id": unit.local_id,
+                "observed_features": sorted(feature.value for feature in features),
+                "unsupported_semantic_features": unsupported,
+                "considered_rules": [trace.rule_id for trace in unit_traces],
+                "why_not": [
+                    {
+                        "rule_id": trace.rule_id,
+                        "target": trace.target,
+                        "decision": trace.decision,
+                        "missing_required_features": list(trace.missing_required_features),
+                        "observed_forbidden_features": list(trace.observed_forbidden_features),
+                        "reason": trace.reason,
+                    }
+                    for trace in unit_traces if trace.decision != "promote"
+                ],
+                "reason": reason,
+                "status": "abstain",
+            })
         if unit_predictions:
             predictions_by_unit[unit.local_id] = unit_predictions
 
-    return RecognitionResult(
-        strategies=strategies,
-        abstentions=abstentions,
-        predictions_by_unit=predictions_by_unit,
-        rule_traces=rule_traces,
-    )
+    return RecognitionResult(strategies=strategies, abstentions=abstentions, predictions_by_unit=predictions_by_unit, rule_traces=rule_traces)
 
 
-def evaluate_against_held_out(
-    result: RecognitionResult,
-    held_out_by_unit: dict[str, list[str]],
-) -> dict[str, Any]:
-    """Perform unit-local post-hoc evaluation; never classifier feedback."""
+def evaluate_against_held_out(result: RecognitionResult, held_out_by_unit: dict[str, list[str]]) -> dict[str, Any]:
     alignment = {
         "Reduction": {"FiniteReduction", "StructuralReduction", "Reducibility"},
         "CertificateCheck": {"DecisionProcedure", "CertificateCheck"},
     }
-
     matches: list[dict[str, Any]] = []
     misses: list[dict[str, Any]] = []
     unpredicted_units: list[str] = []
     unevaluated_prediction_units: list[str] = []
-
     for unit_id, targets in held_out_by_unit.items():
         target_set = set(targets)
         predictions = result.predictions_by_unit.get(unit_id, [])
@@ -290,27 +236,12 @@ def evaluate_against_held_out(
             related = alignment.get(prediction, set())
             hit = target_set & related
             if hit:
-                matches.append(
-                    {
-                        "unit": unit_id,
-                        "predicted": prediction,
-                        "held_out_hit": sorted(hit),
-                    }
-                )
+                matches.append({"unit": unit_id, "predicted": prediction, "held_out_hit": sorted(hit)})
             else:
-                misses.append(
-                    {
-                        "unit": unit_id,
-                        "predicted": prediction,
-                        "held_out": sorted(target_set),
-                        "note": "no documented alignment for this unit",
-                    }
-                )
-
+                misses.append({"unit": unit_id, "predicted": prediction, "held_out": sorted(target_set), "note": "no documented alignment for this unit"})
     for unit_id in result.predictions_by_unit:
         if unit_id not in held_out_by_unit:
             unevaluated_prediction_units.append(unit_id)
-
     return {
         "matches": matches,
         "misses": misses,
@@ -319,8 +250,5 @@ def evaluate_against_held_out(
         "abstention_count": len(result.abstentions),
         "evaluation_only": True,
         "unit_local": True,
-        "note": (
-            "Comparison is unit-local and post-hoc. Held-out annotations are "
-            "outside the recognizer input boundary."
-        ),
+        "note": "Comparison is unit-local and post-hoc. Held-out annotations are outside the recognizer input boundary.",
     }
