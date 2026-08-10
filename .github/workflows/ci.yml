@@ -85,6 +85,10 @@ jobs:
         if: matrix.python-version == '3.14'
         run: python tests/runtime_provenance_witness.py
 
+      - name: Traced reducibility witness
+        if: matrix.python-version == '3.14'
+        run: python tests/reducibility_witness.py
+
       - name: Upload observer and interpretability evidence
         if: always() && matrix.python-version == '3.14'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -96,6 +100,7 @@ jobs:
             artifacts/witnesses/mechanistic-interpretability-trace.json
             artifacts/witnesses/provenance-fold-collapse.json
             artifacts/witnesses/runtime-provenance-fold.json
+            artifacts/witnesses/traced-reducibility.json
           if-no-files-found: warn
 
       - name: Audience witnesses for integrators, operators, and reviewers
