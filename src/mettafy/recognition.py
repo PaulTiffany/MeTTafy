@@ -1,8 +1,12 @@
-"""Source-neutral semantic recognition seam for Issue #32.
+"""Source-neutral semantic recognition with mechanistic rule traces.
 
 Recognizers accept only BlindStructuralEvidence. Raw source text, names,
-references, paths, comments, and held-out annotations are therefore outside the
+references, paths, comments, and held-out annotations are outside the
 recognizer's object capability, not merely ignored by convention.
+
+The trace layer is deliberately white-box: it records which bounded rule was
+considered, which premises were observed, which guards failed, what decision was
+made, and why. It does not ask a model to explain a decision after the fact.
 """
 
 from __future__ import annotations
@@ -19,16 +23,93 @@ from .structural import (
 
 
 @dataclass(frozen=True)
+class RuleTrace:
+    """Mechanistic trace for one rule evaluated against one blind unit."""
+
+    rule_id: str
+    local_id: str
+    target: str
+    required_features: tuple[str, ...]
+    observed_required_features: tuple[str, ...]
+    missing_required_features: tuple[str, ...]
+    forbidden_features: tuple[str, ...]
+    observed_forbidden_features: tuple[str, ...]
+    confidence: float
+    min_confidence: float
+    decision: str
+    reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "rule_id": self.rule_id,
+            "local_id": self.local_id,
+            "target": self.target,
+            "required_features": list(self.required_features),
+            "observed_required_features": list(self.observed_required_features),
+            "missing_required_features": list(self.missing_required_features),
+            "forbidden_features": list(self.forbidden_features),
+            "observed_forbidden_features": list(self.observed_forbidden_features),
+            "confidence": self.confidence,
+            "min_confidence": self.min_confidence,
+            "decision": self.decision,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True)
+class RecognitionRule:
+    """Bounded, inspectable promotion rule over blind structural features."""
+
+    rule_id: str
+    target: StrategyKind
+    required: frozenset[ObservableFeature]
+    forbidden: frozenset[ObservableFeature]
+    confidence: float
+    evidence_kind: str
+    evidence_detail: str
+
+
+REDUCTION_COMPOSITION_RULE = RecognitionRule(
+    rule_id="recognition.reduction.dataflow-composition.v1",
+    target=StrategyKind.REDUCTION,
+    required=frozenset({ObservableFeature.COMPOSITION}),
+    forbidden=frozenset(),
+    confidence=0.78,
+    evidence_kind="structural-dataflow-composition",
+    evidence_detail=(
+        "A result bound by one proof application is consumed by a later "
+        "application in the same structural unit"
+    ),
+)
+
+RECOGNITION_RULES: tuple[RecognitionRule, ...] = (REDUCTION_COMPOSITION_RULE,)
+
+UNSUPPORTED_SEMANTIC_FEATURES = frozenset(
+    {
+        ObservableFeature.INDUCTION,
+        ObservableFeature.CASE_SPLIT,
+        ObservableFeature.REWRITE_TRANSPORT,
+        ObservableFeature.DECISION_CALL,
+        ObservableFeature.APPLICATION,
+        ObservableFeature.RECURSION,
+        ObservableFeature.EXTERNAL_BOUNDARY,
+    }
+)
+
+
+@dataclass(frozen=True)
 class RecognitionResult:
     strategies: list[Strategy]
     abstentions: list[dict[str, Any]] = field(default_factory=list)
     predictions_by_unit: dict[str, list[str]] = field(default_factory=dict)
+    rule_traces: list[RuleTrace] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "strategies": [strategy.to_dict() for strategy in self.strategies],
             "abstentions": list(self.abstentions),
             "predictions_by_unit": dict(self.predictions_by_unit),
+            "rule_traces": [trace.to_dict() for trace in self.rule_traces],
         }
 
 
@@ -40,90 +121,135 @@ def _span_from_blind(unit: BlindStructuralUnit) -> SourceSpan:
     )
 
 
+def _feature_names(features: set[ObservableFeature] | frozenset[ObservableFeature]) -> tuple[str, ...]:
+    return tuple(sorted(feature.value for feature in features))
+
+
+def _evaluate_rule(
+    rule: RecognitionRule,
+    unit: BlindStructuralUnit,
+    *,
+    min_confidence: float,
+) -> RuleTrace:
+    features = set(unit.features)
+    observed_required = rule.required & features
+    missing_required = rule.required - features
+    observed_forbidden = rule.forbidden & features
+
+    if missing_required:
+        decision = "not_applicable"
+        reason = "required mechanical premise(s) were not observed"
+    elif observed_forbidden:
+        decision = "blocked"
+        reason = "a forbidden mechanical feature was observed"
+    elif rule.confidence < min_confidence:
+        decision = "below_threshold"
+        reason = "rule confidence is below the configured promotion threshold"
+    else:
+        decision = "promote"
+        reason = "all mechanical premises hold and no guard blocks promotion"
+
+    return RuleTrace(
+        rule_id=rule.rule_id,
+        local_id=unit.local_id,
+        target=rule.target.value,
+        required_features=_feature_names(rule.required),
+        observed_required_features=_feature_names(observed_required),
+        missing_required_features=_feature_names(missing_required),
+        forbidden_features=_feature_names(rule.forbidden),
+        observed_forbidden_features=_feature_names(observed_forbidden),
+        confidence=rule.confidence,
+        min_confidence=min_confidence,
+        decision=decision,
+        reason=reason,
+    )
+
+
 def recognize_from_structural(
     blind: BlindStructuralEvidence,
     *,
     min_confidence: float = 0.55,
 ) -> RecognitionResult:
-    """Promote only compound structural evidence to semantic StrategyKind.
+    """Promote only rules whose blind mechanical premises are satisfied.
 
-    Single lower-level observations such as induction, rewrite, case split, or
-    a decision-procedure-shaped call remain structural facts. They are reported
-    as abstentions when the current StrategyKind vocabulary would require a
-    stronger semantic claim than the evidence warrants.
+    Every configured rule is evaluated for every blind structural unit and a
+    RuleTrace is emitted whether the rule promotes or not. This gives an exact
+    counterfactual boundary: a caller can see which premise was absent without
+    inspecting raw source or relying on a post-hoc natural-language explainer.
     """
     if not isinstance(blind, BlindStructuralEvidence):
         raise TypeError(
             "recognize_from_structural accepts only BlindStructuralEvidence; "
             "raw StructuralEvidence must first pass through blind_structural_view()"
         )
+    if not 0.0 <= min_confidence <= 1.0:
+        raise ValueError("min_confidence must be between 0 and 1")
 
     strategies: list[Strategy] = []
     abstentions: list[dict[str, Any]] = []
     predictions_by_unit: dict[str, list[str]] = {}
+    rule_traces: list[RuleTrace] = []
 
     for unit in blind.units:
         features = set(unit.features)
         span = _span_from_blind(unit)
         unit_predictions: list[str] = []
+        unit_traces: list[RuleTrace] = []
 
-        # A dataflow composition is stronger than the mere occurrence of two
-        # tactic words: one applied result is mechanically observed feeding a
-        # later application. The existing bootstrap vocabulary can honestly
-        # represent that as a generic Reduction, but not as a more specific
-        # Four Color strategy such as Discretization or ProofByTransport.
-        if ObservableFeature.COMPOSITION in features:
+        for rule in RECOGNITION_RULES:
+            trace = _evaluate_rule(rule, unit, min_confidence=min_confidence)
+            rule_traces.append(trace)
+            unit_traces.append(trace)
+            if trace.decision != "promote":
+                continue
+
             strategy = Strategy(
-                id=f"pred:{unit.local_id}:reduction",
-                kind=StrategyKind.REDUCTION,
-                confidence=0.78,
+                id=f"pred:{unit.local_id}:{rule.target.value.lower()}",
+                kind=rule.target,
+                confidence=rule.confidence,
                 evidence=[
                     Evidence(
-                        kind="structural-dataflow-composition",
-                        detail=(
-                            "A result bound by one proof application is consumed "
-                            "by a later application in the same structural unit"
-                        ),
+                        kind=rule.evidence_kind,
+                        detail=rule.evidence_detail,
                         span=span,
                     )
                 ],
             )
-            if strategy.confidence >= min_confidence:
-                strategies.append(strategy)
-                unit_predictions.append(strategy.kind.value)
+            strategies.append(strategy)
+            unit_predictions.append(strategy.kind.value)
 
         unsupported = sorted(
-            feature.value
-            for feature in features
-            if feature
-            in {
-                ObservableFeature.INDUCTION,
-                ObservableFeature.CASE_SPLIT,
-                ObservableFeature.REWRITE_TRANSPORT,
-                ObservableFeature.DECISION_CALL,
-                ObservableFeature.APPLICATION,
-                ObservableFeature.RECURSION,
-                ObservableFeature.EXTERNAL_BOUNDARY,
-            }
+            feature.value for feature in features if feature in UNSUPPORTED_SEMANTIC_FEATURES
         )
-        if unsupported and not unit_predictions:
+        if not unit_predictions:
+            if unsupported:
+                reason = (
+                    "mechanical features are present, but no configured semantic rule "
+                    "is justified by the blind evidence"
+                )
+            elif not features:
+                reason = "no high-precision structural features observed"
+            else:
+                reason = "observed features do not satisfy any configured promotion rule"
             abstentions.append(
                 {
                     "local_id": unit.local_id,
-                    "observed_features": unsupported,
-                    "reason": (
-                        "mechanical features are present, but the current "
-                        "StrategyKind vocabulary would overstate their semantics"
-                    ),
-                    "status": "abstain",
-                }
-            )
-        elif not features:
-            abstentions.append(
-                {
-                    "local_id": unit.local_id,
-                    "observed_features": [],
-                    "reason": "no high-precision structural features observed",
+                    "observed_features": sorted(feature.value for feature in features),
+                    "unsupported_semantic_features": unsupported,
+                    "considered_rules": [trace.rule_id for trace in unit_traces],
+                    "why_not": [
+                        {
+                            "rule_id": trace.rule_id,
+                            "target": trace.target,
+                            "decision": trace.decision,
+                            "missing_required_features": list(trace.missing_required_features),
+                            "observed_forbidden_features": list(trace.observed_forbidden_features),
+                            "reason": trace.reason,
+                        }
+                        for trace in unit_traces
+                        if trace.decision != "promote"
+                    ],
+                    "reason": reason,
                     "status": "abstain",
                 }
             )
@@ -135,6 +261,7 @@ def recognize_from_structural(
         strategies=strategies,
         abstentions=abstentions,
         predictions_by_unit=predictions_by_unit,
+        rule_traces=rule_traces,
     )
 
 
