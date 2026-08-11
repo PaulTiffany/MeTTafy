@@ -1,25 +1,23 @@
-# Four Color by Imaginary Traversal
+# Four Color Imaginary Traversal — Local Algebra and Global Lift Problem
 
-**Track B — algebraic proof surface.**  
+**Track B — algebraic proof program.**  
 **Proof authority:** algebra first; computation is witness only.
 
-This note records the algebraic result exposed by the exact `120 + 120` split of proper four-palette colorings of the degree-five boundary.  The split is not used as an empirical premise.  It is derived from group action, orbit--stabilizer, and Principia Symbolica's existing imaginary-traversal / chromatic-transference structure.
+This note records a genuine local algebraic theorem on the degree-five boundary and states, separately, the unresolved graph-level lift problem. The local theorem must not be promoted to the Four Color Theorem without an actual witness-preserving global lift.
 
-## 1. The terminal object is integral
+## 1. Terminal rank is integral
 
-A terminal palette is a finite set `Q_n`, hence its rank is the cardinality
+A terminal palette is a finite set `Q_n`, so
 
 \[
 \operatorname{rank}_{\mathrm{term}}(Q_n)=|Q_n|=n\in\mathbb N.
 \]
 
-Therefore `3.5` and `4.5` are not possible terminal chromatic ranks.  A half-step, if present, must live in a nonterminal coordinate of the traversal rather than in palette cardinality.
+Thus `3.5` and `4.5` cannot be terminal chromatic ranks. Any half-step belongs to a nonterminal traversal coordinate rather than palette cardinality.
 
-The lower bound `n >= 4` is already forced by the planar odd wheel: the rim `C_5` needs three colors, while its center is adjacent to every rim vertex and therefore requires a fourth.  Thus any universal planar terminal palette has rank at least four.
+A universal planar palette needs at least four colors: the planar odd wheel with rim `C_5` has chromatic number four. This gives the lower bound only.
 
-The remaining question is why a fifth adjacency demand does not force rank five.
-
-## 2. The degree-five boundary
+## 2. Degree-five boundary sheets
 
 Let
 
@@ -29,108 +27,61 @@ Q_4=\{0,1,2,3\}
 
 and let `X` be the set of proper `Q_4`-colorings of the cyclic boundary `C_5`.
 
-Every `x in X` uses either exactly three or exactly four colors, since `C_5` is not bipartite.  Hence
+Every state uses exactly three or four colors, giving
 
 \[
-X=X_3\sqcup X_4,
+X=X_3\sqcup X_4.
 \]
 
-where
+- `X_3`: multiplicity type `2+2+1+0`, so one terminal color is absent.
+- `X_4`: multiplicity type `2+1+1+1`, so all four terminal colors occur.
 
-- `X_3` consists of multiplicity type `2+2+1+0`; one terminal color is absent;
-- `X_4` consists of multiplicity type `2+1+1+1`; all four terminal colors occur.
-
-`X_3` is the immediately extensible sheet.  `X_4` is the saturated sheet.
-
-## 3. The symmetry group
+## 3. Local two-sheet theorem
 
 Let
 
 \[
 G=D_5\times S_4,
-\]
-
-where `D_5` acts on the five cyclic positions and `S_4` globally renames the palette.  Thus
-
-\[
-|G|=10\cdot24=240.
+\qquad |G|=240.
 \]
 
 Choose representatives
 
 \[
-x_3=(0,1,0,1,2)\in X_3,
+x_3=(0,1,0,1,2),
 \qquad
-x_4=(0,1,0,2,3)\in X_4.
+x_4=(0,1,0,2,3).
 \]
 
-Both sheets are transitive `G`-sets: any proper `C_5` word of type `2+2+1` can be carried to `x_3` by a dihedral relabelling of positions followed by a palette permutation, and similarly every word of type `2+1+1+1` can be carried to `x_4`.
-
-### Stabilizer of the three-color sheet
-
-The only nonidentity symmetry fixing `x_3` is the reflection
+Both sheets are transitive `G`-sets. Their stabilizers have order two:
 
 \[
-s_3:i\mapsto 3-i\pmod5
-\]
-
-paired with the color transposition `(0\;1)`.  Hence
-
-\[
-H_3=\operatorname{Stab}_G(x_3)
-=\langle(s_3,(0\;1))\rangle,
-\qquad |H_3|=2.
-\]
-
-### Stabilizer of the four-color sheet
-
-The only nonidentity symmetry fixing `x_4` is the reflection
-
-\[
-s_4:i\mapsto 2-i\pmod5
-\]
-
-paired with `(2\;3)`.  Hence
-
-\[
-H_4=\operatorname{Stab}_G(x_4)
-=\langle(s_4,(2\;3))\rangle,
-\qquad |H_4|=2.
-\]
-
-By orbit--stabilizer,
-
-\[
-|X_3|=|G:H_3|=120,
+H_3=\operatorname{Stab}_G(x_3),
 \qquad
-|X_4|=|G:H_4|=120.
+H_4=\operatorname{Stab}_G(x_4),
+\qquad
+|H_3|=|H_4|=2.
 \]
 
-Thus the halves arise algebraically; the exhaustive `4^5` witness merely checks this theorem.
-
-## 4. The sheets are conjugate
-
-Let `r^2` be rotation of the pentagon by two positions and let
+Hence orbit--stabilizer gives
 
 \[
-p=(0\;2)(1\;3)\in S_4.
+|X_3|=|X_4|=120.
 \]
 
-Set
+Moreover the stabilizers are conjugate. With
 
 \[
-g_0=(r^2,p)\in G.
+g_0=(r^2,(0\;2)(1\;3)),
 \]
 
-Then
+we have
 
 \[
 g_0H_3g_0^{-1}=H_4.
 \]
 
-Indeed rotation by two conjugates the reflection axis `i -> 3-i` to `i -> 2-i`, while `p` conjugates `(0\;1)` to `(2\;3)`.
-
-Therefore the homogeneous spaces
+Therefore
 
 \[
 X_3\cong G/H_3,
@@ -138,198 +89,187 @@ X_3\cong G/H_3,
 X_4\cong G/H_4
 \]
 
-are `G`-equivariantly isomorphic.
-
-Writing `a=g_0^{-1}`, the sheet switch is
+as homogeneous `G`-spaces, and there is a `G`-equivariant bijection
 
 \[
-J:G/H_3\to G/H_4,
-\qquad
-J(gH_3)=gaH_4.
+J:X_3\overset{\sim}{\longrightarrow}X_4.
 \]
 
-It is well-defined because
+This is the algebraic origin of the exact `120/120` pairing. Exhaustive enumeration is only a witness for this theorem.
+
+## 4. Exact imaginary structure on the local free module
+
+Let `V` be the free real vector space generated by both sheets. Crucially, **sheet identity and scalar sign are separate coordinates**.
+
+For basis elements define
 
 \[
-a^{-1}H_3a=H_4,
+I[x]=Jx,\qquad x\in X_3,
 \]
 
-and it is bijective, with inverse
+and
 
 \[
-J^{-1}(gH_4)=gg_0H_3.
-\]
-
-This is the algebraic origin of the exact `120/120` pairing.
-
-## 5. Imaginary traversal is a complex structure, not half a color
-
-Let `V` be the free real vector space generated by the two sheets.  For basis states write `[x,+]` for `x in X_3` and `[y,-]` for `y in X_4`.
-
-Define
-
-\[
-I[x,+]=[Jx,-],
-\qquad
-I[y,-]=-[J^{-1}y,+].
+I[y]=-J^{-1}y,\qquad y\in X_4.
 \]
 
 Then
 
 \[
-I^2[x,+]
-=I[Jx,-]
-=-[J^{-1}Jx,+]
-=-[x,+],
+I^2=-\operatorname{id}_V.
 \]
 
-and similarly on the negative sheet.  Hence
+This is an exact discrete complex structure on the local boundary module. It explains how a nonterminal phase coordinate can exist without introducing a half-terminal color.
+
+The corresponding signed pairing is
 
 \[
-\boxed{I^2=-\operatorname{id}_V.}
++120\oplus-120,
 \]
 
-The sheet-switch therefore carries an exact complex structure.  The `1/2` intuition belongs to passage between the paired sheets; it is not an element of the terminal palette.
-
-This is the algebraic meaning of
-
-\[
-+120\oplus-120:
-\]
-
-the two sheets have equal ordinary cardinality and opposite traversal orientation.  Their signed obstruction count is
+with zero signed total
 
 \[
 120-120=0.
 \]
 
-No fifth **terminal** chromatic generator is created by passing between them.
+This statement is **local**. It does not yet imply that the same operator acts on an arbitrary planar graph containing the boundary.
 
-## 6. Principia correspondence
+## 5. What the local theorem actually establishes
 
-Principia Symbolica already supplies the carrier interpretation required by this algebra.
+It establishes:
 
-1. A phase gap cannot in general be crossed by real symbolic displacement; it is crossed by **imaginary traversal**.
-2. The imaginary distance is
-   \[
-   d_O^{\mathrm{Im}}=\beta_O|\Delta\vartheta|.
-   \]
-3. The destination is reintegrable when
-   \[
-   \beta_O|\Delta\vartheta|<\theta_O.
-   \]
-4. The phase-to-hue map is a modal transference map preserving cyclic order and adjacency on `S^1`.
-5. The recursive identity bundle has a spinorial double-cover structure; phase/orientation can therefore survive internally even when terminal scalar projection discards it.
+1. the degree-five `C_5` boundary has exactly two algebraic chromatic sheets;
+2. the sheets are isomorphic homogeneous spaces;
+3. the sheet switch admits a local complex structure with `I^2=-id`;
+4. the traversal degree is not palette cardinality;
+5. exhaustive `120/120` data has an algebraic explanation rather than being the proof source.
 
-The `I^2=-1` sheet algebra is thus not imported stochastic decoration.  It instantiates the already-declared imaginary/phase degree in the chromatic carrier.
+It does **not** establish:
 
-## 7. Why four, not three, three-and-a-half, four-and-a-half, or five
+1. that `J` extends over arbitrary off-boundary adjacency;
+2. that arbitrary Kempe-chain connectivity is preserved;
+3. that a global flat connection exists;
+4. that graph-level holonomy is trivial;
+5. that every saturated degree-five state can be reintegrated globally into `X_3`;
+6. the Four Color Theorem.
 
-We can now separate terminal rank from traversal rank.
+## 6. Explicit failure of the naive frozen-exterior lift
 
-### Not three
-
-The odd wheel is planar and four-chromatic, so three terminal colors cannot be universal.
-
-### Not three-and-a-half
-
-`3.5` is not a finite palette cardinality.  It can only describe a nonterminal interpolation between `X_3` and `X_4`.
-
-### Four
-
-Four is the first integer terminal rank that contains both boundary sheets:
+Let the saturated boundary be
 
 \[
-X_3\subset Q_4^{C_5},
-\qquad
-X_4\subset Q_4^{C_5},
+x_4=(0,1,0,2,3).
 \]
 
-and the saturated sheet has an internal imaginary partner rather than a fifth terminal generator.
-
-### Not four-and-a-half
-
-`4.5` would count the imaginary traversal coordinate as half of a new terminal color.  The complex-structure relation `I^2=-1` shows that the traversal coordinate is phase/orientation data, not palette cardinality.
-
-### Five is not forced locally
-
-The fifth indexed edge obligation at a degree-five vertex creates the saturated `X_4` sheet, but the algebraic response is
+The local inverse sheet switch used by the implementation sends it to
 
 \[
-X_4\xrightarrow{-I}X_3,
+J^{-1}x_4=(3,0,2,3,2).
 \]
 
-not `Q_4 -> Q_5`.  The fifth demand is represented by traversal between paired sheets.
+Now attach a single exterior leaf of color `3` to boundary position `0`.
 
-Hence the local chromatic algebra has the form
+Before traversal the exterior edge is valid:
 
 \[
-\boxed{
-\text{five indexed obligations}
-=
-\text{four terminal chromatic values}
-+
-\text{one imaginary traversal degree}.
-}
+0\ne3.
 \]
 
-## 8. Contract-preserving planar lift
+After applying only the local boundary switch while freezing the exterior, the edge becomes
 
-For a graph-level proof, the sheet traversal is admissible only when it lifts while retaining the complete indexed edge ledger.  Write this lift
+\[
+3=3,
+\]
+
+and the coloring constraint fails.
+
+This is a concrete planar counterexample to the implication
+
+\[
+\text{local sheet conjugacy}
+\Longrightarrow
+\text{global lift by identity outside the ring}.
+\]
+
+The repository carries this as a negative mechanical witness.
+
+## 7. The real global problem: connection and holonomy
+
+A genuine graph-level traversal needs more structure than `J` on the boundary. We require a connection-like transport law that tells us how the phase action propagates through every attachment while preserving the full indexed edge ledger.
+
+Write a candidate lift as
 
 \[
 \widetilde I_G:\mathcal C_4(G-v;X_4)\to\mathcal C_4(G-v;X_3).
 \]
 
-The Lipschitz Contract requires:
+For this to be admissible it must satisfy:
 
-- no inherited edge obligation is deleted;
-- the traversal is bounded in the declared imaginary metric;
-- any intermediate phase remains nonterminal;
-- reintegration occurs only at an exact `Q_4` coloring satisfying the entire ledger.
+- every inherited edge obligation remains exact;
+- all off-boundary color changes are explicitly transported, not frozen by fiat;
+- parallel transports compose consistently on overlaps;
+- closed traversal loops have controlled holonomy;
+- the imaginary budget remains bounded;
+- reintegration returns an exact `Q_4` coloring.
 
-Principia's imaginary traversal supplies the permitted non-real phase move; the Four Color contract supplies the exact reintegration boundary.
+The relevant obstruction is therefore not `K_5` or `K_{3,3}` inside a planar graph; planarity excludes those as subgraph/minor obstructions in the usual sense. The actual issue is **global compatibility of local phase transport** across an irregular planar attachment structure.
 
-The universal graph-level closure statement is therefore:
+A Kempe-locked or multi-chain configuration is a legitimate candidate falsifier because it can expose nontrivial transport around overlapping recoloring domains. However, claims such as `I^2=id` or a particular nontrivial monodromy factor must be derived from a defined connection; they are not assumed in advance.
 
-### Imaginary Traversal Lift Lemma
+## 8. Revised theorem target
 
-For every planar degree-five insertion boundary in the saturated sheet `X_4`, the `J`-paired traversal has an admissible bounded lift `\widetilde I_G` preserving all inherited edge obligations and reintegrating in `X_3`.
+### Global Imaginary-Transport Closure
 
-This is the precise graph-level lemma required for theorem promotion.  It is stronger than the local `120/120` algebra and is not replaced by enumeration.
+Construct a graph-level connection `A_G` extending the local `J` action such that for every saturated degree-five insertion boundary:
 
-## 9. Global theorem from the lift
+1. `A_G` transports the boundary phase switch through attached planar structure;
+2. every indexed edge obligation remains valid throughout the certified traversal;
+3. holonomy on every contractible planar transport loop is trivial up to the declared spinorial sign;
+4. nontrivial phase accumulation, if present, is explicitly bounded and reintegrable rather than silently discarded;
+5. the terminal projection lands in `Q_4`.
 
-Assume the Imaginary Traversal Lift Lemma.
+Only after this is established may the local imaginary algebra be promoted into a global Four Color proof.
 
-Let `G` be a minimal planar graph not admitting a certified `Q_4` coloring.  Euler's planar degree bound gives a vertex `v` of degree at most five.
+## 9. Why the program remains interesting
 
-- If `deg(v) <= 3`, remove `v`, color `G-v` by minimality, and use an unused color.
-- If `deg(v) = 4`, the four-neighbor boundary either omits a color or admits the ordinary contract-preserving phase/refinement move inside `Q_4`.
-- If `deg(v) = 5`, remove `v` and color `G-v` by minimality.  If the neighbor boundary lies in `X_3`, one color is absent and `v` extends immediately.  If it lies in `X_4`, apply the Imaginary Traversal Lift Lemma to move to the paired `X_3` sheet while preserving the entire ledger; then color `v` with the freed terminal color.
+The critique does not erase the local result. It identifies the correct next mathematical object.
 
-Every case contradicts minimality.  Therefore no minimal counterexample exists and every finite planar graph is four-colorable.
+Before:
 
-Combined with the planar odd-wheel lower bound,
+\[
+\text{local }J \quad\text{(incorrectly treated as almost global)}.
+\]
+
+Now:
 
 \[
 \boxed{
-4=\min\{n\in\mathbb N:\text{the planar chromatic contract closes under admissible traversal}\}.
+\text{local complex sheet structure}
+\;+
+\text{planar connection}
+\;+
+\text{holonomy theorem}
+\;\Longrightarrow\;
+\text{global chromatic closure}.
 }
 \]
 
+This is a stronger and more falsifiable research program. The hard part is no longer hidden inside the phrase "Lift Lemma"; it is decomposed into connection existence, edge-ledger transport, and holonomy/monodromy control.
+
 ## 10. Mechanical witness policy
 
-The proof authority is the algebra above.  Mechanical witnesses must independently check, never define, its claims:
+Mechanical witnesses must now check both positive and negative statements:
 
 1. `D_5 x S_4` has order 240.
-2. `H_3` and `H_4` have order 2.
-3. `g_0 H_3 g_0^{-1}=H_4`.
-4. Orbit--stabilizer gives 120 on each sheet.
+2. both stabilizers have order 2.
+3. the stabilizers are conjugate.
+4. orbit--stabilizer gives 120 on each sheet.
 5. `J` is well-defined and bijective.
-6. The signed traversal operator satisfies `I^2=-1`.
-7. Exhaustive `4^5` enumeration agrees with `120+120` but carries no proof authority.
-8. The dependency DAG forbids enumeration, held-out Rocq, SRMF cardinality, or the Four Color conclusion from proving the Imaginary Traversal Lift Lemma.
-9. Graph-level promotion remains fail-closed unless the complete edge-ledger lift is mechanically certified.
+6. the free-module action faithfully satisfies `I^2=-id` with scalar sign independent of sheet identity.
+7. exhaustive `4^5` enumeration agrees with `120+120` but has no proof authority.
+8. a frozen-exterior local `J` lift is explicitly rejected by counterexample.
+9. future global connection implementations must be tested on asymmetric planar patches and Kempe-chain obstruction families.
+10. theorem promotion remains fail-closed until graph-level connection and holonomy obligations are mechanically certified.
 
-This hierarchy preserves the user's restriction: **algebra proves; computation witnesses.**
+**Algebra proves; computation witnesses; failed witnesses constrain the algebra.**
