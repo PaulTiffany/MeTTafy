@@ -1,0 +1,92 @@
+{
+  "schema": "mettafy-four-color-algebraic-v1",
+  "version": "1.0.0",
+  "track": "B-independent",
+  "canonical_proof": "docs/four-color-algebraic-proof.md",
+  "governing_contract": "docs/four-color-lipschitz-contract.md",
+  "claim_boundary": "The checked-in algebraic proof surface fixes the Four Color theorem species, exposes Contract Expansion Closure as the sole theorem-specific global closure obligation, and provides multiple independent mechanical witnesses for dependency hygiene, boundary preservation, finite diffusion/browning behavior, and exhaustive degree-five boundary classification.",
+  "non_claims": [
+    "The certification manifest alone proves the Four Color Theorem",
+    "Finite-instance enumeration substitutes for Contract Expansion Closure",
+    "Four SRMF operators imply four colors",
+    "Held-out Rocq proof authority is used upstream",
+    "Brown is a fifth terminal color"
+  ],
+  "witnesses": [
+    {
+      "id": "WIT-DEPENDENCY-DAG",
+      "kind": "proof-dependency",
+      "implementation": "src/mettafy/four_color_dependency.py",
+      "tests": ["tests/test_four_color_dependency.py"],
+      "checks": [
+        "held-out Rocq authority cannot prove Contract Expansion Closure",
+        "SRMF chart cardinality cannot prove Contract Expansion Closure",
+        "NoStableFifthClass cannot be used circularly upstream",
+        "final theorem path must pass through Contract Expansion Closure"
+      ]
+    },
+    {
+      "id": "WIT-CONTRACT-BOUNDARY",
+      "kind": "exact-edge-ledger",
+      "implementation": "src/mettafy/four_color_contract.py",
+      "tests": ["tests/test_four_color_contract.py"],
+      "checks": [
+        "indexed inherited edge obligations persist",
+        "new edge obligations are checked by exact terminal coloring",
+        "brown is rejected as a terminal palette value",
+        "declared distortion cannot exceed reserve"
+      ]
+    },
+    {
+      "id": "WIT-DIFFUSION-BROWN",
+      "kind": "finite-diffusion",
+      "implementation": "src/mettafy/four_color_contract.py",
+      "tests": ["tests/test_four_color_contract.py"],
+      "checks": [
+        "finite diffusion rows preserve unit mass",
+        "negative/non-stochastic operators fail closed",
+        "ambiguous terminal maxima decode to nonterminal brown"
+      ]
+    },
+    {
+      "id": "WIT-DEGREE5-EXHAUSTIVE",
+      "kind": "exhaustive-local-enumeration",
+      "implementation": "src/mettafy/four_color_contract.py",
+      "tests": ["tests/test_four_color_contract.py"],
+      "domain": "all 4^5 assignments on a C5 neighbor boundary",
+      "expected": {
+        "proper_C5": 240,
+        "immediate_center_extension": 120,
+        "saturated_reparameterization_surface": 120
+      }
+    },
+    {
+      "id": "WIT-FOUR-STABLE-FIVE-ROUTES",
+      "kind": "observer-critical-exact-arithmetic",
+      "implementation": "src/mettafy/fifth_class.py",
+      "tests": ["tests/test_fifth_class.py"],
+      "claim": "Within the declared symmetric observer model, there is an exact nonempty interval where four channels remain stable while five routes. This is corroborative geometry, not Four Color proof authority."
+    }
+  ],
+  "local_execution_note": {
+    "date": "2026-08-11",
+    "status": "core-mathematics-reexecuted-in-session",
+    "observed": {
+      "proper_C5": 240,
+      "immediate": 120,
+      "saturated": 120,
+      "diffusion_mass_preserved": true,
+      "dependency_guard_examples": "pass"
+    },
+    "limitation": "The current runtime could not resolve github.com for a fresh git clone, so exact branch pytest execution remains pending; no GitHub Actions run was triggered."
+  },
+  "promotion_gate": {
+    "required_for_full_theorem_certificate": [
+      "complete finite-planar generator calculus",
+      "mechanically accepted contract-preserving local T_e witness for every generator case",
+      "composition/termination proof",
+      "exact final coloring certificate validation",
+      "dependency audit showing no hidden Four Color equivalent upstream"
+    ]
+  }
+}
