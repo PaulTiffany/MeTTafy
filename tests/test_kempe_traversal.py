@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import Counter
+
 from mettafy.color_construction import ConstructionState
 from mettafy.kempe_traversal import (
     KempeMove,
@@ -35,6 +37,42 @@ def locked_planar_state() -> ConstructionState:
             "z": 1,
         },
     )
+
+
+def undirected_edge(left: str, right: str) -> tuple[str, str]:
+    return (left, right) if left < right else (right, left)
+
+
+def test_locked_witness_has_explicit_spherical_embedding_certificate() -> None:
+    state = locked_planar_state()
+    faces = (
+        ("v", "b", "a"),
+        ("v", "c", "b"),
+        ("v", "d", "c"),
+        ("v", "e", "d"),
+        ("v", "a", "e"),
+        ("a", "b", "x"),
+        ("a", "x", "y", "z", "d", "e"),
+        ("b", "c", "y"),
+        ("b", "y", "x"),
+        ("c", "d", "z"),
+        ("c", "z", "y"),
+    )
+
+    graph_edges = {
+        undirected_edge(vertex, neighbor)
+        for vertex, neighbors in state.graph.items()
+        for neighbor in neighbors
+        if vertex != neighbor
+    }
+    face_edge_counts: Counter[tuple[str, str]] = Counter()
+    for face in faces:
+        for left, right in zip(face, face[1:] + face[:1]):
+            face_edge_counts[undirected_edge(left, right)] += 1
+
+    assert set(face_edge_counts) == graph_edges
+    assert set(face_edge_counts.values()) == {2}
+    assert len(state.graph) - len(graph_edges) + len(faces) == 2
 
 
 def test_saturated_focus_can_be_single_move_locked() -> None:
