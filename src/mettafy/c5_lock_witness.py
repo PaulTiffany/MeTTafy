@@ -103,11 +103,11 @@ class LockedC5Witness:
         for connection, flank_vertex, expected_pair in zip(
             connections, flank_vertices, expected_pairs
         ):
+            if not connection.valid_in(self.state):
+                return False
             if connection.color_pair != expected_pair:
                 return False
             if connection.path[0] != pivot_vertex or connection.path[-1] != flank_vertex:
-                return False
-            if not connection.valid_in(self.state):
                 return False
 
         return True
