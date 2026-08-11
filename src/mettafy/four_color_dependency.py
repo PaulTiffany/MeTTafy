@@ -38,7 +38,16 @@ def closure_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
     return not bool(upstream & FORBIDDEN_UPSTREAM)
 
 
+def holonomy_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """Terminal holonomy cannot be imported from downstream Four Color authority."""
+    upstream = ancestors("TerminalHolonomyClosure", edges)
+    return not bool(upstream & FORBIDDEN_UPSTREAM)
+
+
 def theorem_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """The final theorem must pass through the declared local closure interface."""
+    """The final theorem must pass through both declared global closure gates."""
     upstream = ancestors("FourColorTheorem", edges)
-    return "ContractExpansionClosure" in upstream
+    return {
+        "ContractExpansionClosure",
+        "TerminalHolonomyClosure",
+    } <= upstream
