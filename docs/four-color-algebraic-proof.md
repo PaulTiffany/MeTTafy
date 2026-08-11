@@ -102,84 +102,125 @@ The construction law therefore consists of both:
 - the index-four traversal algebra; and
 - the exact adjacency complement `A_K(v)=Q_4\setminus S_K(v)`.
 
-## 4. Degree-five surface
+## 4. Plane parameterization as a discrete calculus
 
-In a minimal planar obstruction, a degree-five vertex exposes five separately indexed adjacency obligations.
+Fix one already colored region as a local reference state. Relative to that region, every adjacent region must lie in the three-color complement. Encode the four absolute colors as the Klein four group `V4`; then the three admissible relative differences are exactly the three nonzero `V4` elements.
 
-If the five committed neighbors use fewer than four distinct colors, then
-
-\[
-A_K(v)\ne\varnothing
-\]
-
-and the center extends directly.
-
-The nontrivial case is a proper `C5` boundary using all four colors. Its multiplicity pattern is necessarily
+For a cyclic frontier with colors `q_0,...,q_{n-1}`, define the discrete frontier derivative
 
 \[
-2+1+1+1.
+\delta_i=q_i-q_{i+1}\in V_4\setminus\{0\}.
 \]
 
-Hence two nonadjacent indexed boundary obligations carry the same terminal color. Algebraically, five indexed obligations map into four terminal modes with a forced kernel dependency.
+Closure of the frontier gives the telescoping integrability law
 
-This dependency is real, but it is not yet a recoloring theorem.
+\[
+\sum_i \delta_i=0.
+\]
 
-## 5. Exact component traversals and composition
+If `n_1,n_2,n_3` count the three nonzero frontier modes, then `V4` closure implies
+
+\[
+n_1\equiv n_2\equiv n_3\pmod 2.
+\]
+
+This is the first layer of the discrete calculus: local state change is not arbitrary; it is parameterized by a closed planar frontier.
+
+### Degree-five corner law
+
+For a degree-five frontier, the parity law and `n_1+n_2+n_3=5` force
+
+\[
+(n_1,n_2,n_3)=(3,1,1)
+\]
+
+up to permutation.
+
+Moreover, on every proper three-color `C5` frontier, the two singleton transition edges are adjacent. Therefore there is a unique boundary vertex where the two exceptional transition modes meet, and the remaining three frontier edges carry one dominant mode.
+
+This gives a canonical local shape without recoloring search:
+
+```text
+three-edge dominant continuation run
+        +
+one exceptional two-edge corner
+```
+
+The exceptional corner is a geometrically distinguished **inspection locus**. It is not yet a proven recoloring locus.
+
+## 5. Bounded planar continuation
+
+The second layer of the calculus is integrability of proposed state continuations in the plane.
+
+Consider two simple continuation arcs inside a disk whose endpoints lie on one cyclic boundary. If their endpoint pairs alternate in cyclic order, then the arcs are forced to intersect. If the endpoint pairs do not alternate, cyclic order alone does not force an intersection.
+
+Thus a primitive obstruction can be expressed without metric geometry:
+
+\[
+\boxed{\text{alternating boundary endpoints}\Rightarrow\text{forbidden intersection}.}
+\]
+
+A continuation is therefore operationally admissible only while it preserves the existing cyclic order/incidence relations and does not force an intersection with an already retained trajectory.
+
+This matches the red-team model:
+
+- a state may continue arbitrarily far when nothing constrains it;
+- deflection is admissible while cyclic order remains integrable;
+- obstruction occurs when the demanded continuation would violate bounded planar coexistence.
+
+Length itself is not the scarce resource. Planar incidence is.
+
+## 6. Exact component traversals remain verification tools
 
 A two-color component traversal is an exact graph morphism on construction state. Choose two terminal colors `a,b`, take one connected component of the subgraph induced by vertices colored `a` or `b`, and exchange `a<->b` on that entire component.
 
-Every committed edge remains valid:
+Every committed edge remains valid, so such traversals compose exactly. They remain useful as mechanical witnesses and falsifiers.
 
-- edges inside the component still connect unequal colors after the swap;
-- edges outside the component are unchanged;
-- an edge from the component to an outside vertex cannot carry the other member of the same two-color pair, or that outside vertex would belong to the same induced component.
-
-Therefore each component traversal is individually ledger-preserving, and finite compositions remain ledger-preserving.
-
-This yields an important refinement of the degree-five target. A saturated state may be **single-move locked**: no one component traversal opens a color at the focus vertex. That does not imply construction failure. A later component traversal may become available after an earlier exact traversal changes the component structure.
-
-The repository contains an explicit mechanically certified planar witness with:
-
-- a saturated degree-five focus;
-- no opening one-step two-color component traversal;
-- a two-step composition that preserves every committed edge and opens a terminal color;
-- an explicit spherical embedding certificate for the witness graph.
-
-This witness is not proof authority. It establishes only that the constructive theorem must quantify over finite compositions rather than single moves.
-
-## 6. Nilpotent desaturation obligation
-
-The exact remaining constructive statement is therefore:
-
-### Nilpotent Desaturation Closure
-
-For every saturated degree-five construction state `K` occurring in a finite planar graph, the forced boundary dependency induced by the index-four traversal algebra admits a **finite composition of exact construction traversals**
+However, component traversal search is no longer the source calculus. The source calculus is now:
 
 \[
-K=K_0\xrightarrow{T_1}K_1\xrightarrow{T_2}\cdots\xrightarrow{T_m}K_m=K'
+\text{frontier derivative}
++\text{cyclic closure}
++\text{noncrossing integrability}.
+\]
+
+A graph-level component move is admissible as proof authority only when it is derived from, or explicitly mapped back to, that planar continuation structure.
+
+## 7. Remaining constructive obligation
+
+The theorem-specific missing map is now more precise.
+
+### Planar Continuation Closure
+
+For every saturated degree-five construction state `K` occurring in a finite planar graph, let its fixed-region frontier induce the `3,1,1` transition signature and unique exceptional corner. The planar continuation calculus must determine a finite ledger-preserving construction rewrite
+
+\[
+K\xrightarrow{T}K'
 \]
 
 such that:
 
-1. the graph is unchanged throughout;
-2. every committed edge obligation remains satisfied at every intermediate state;
-3. the center remains uncommitted during the traversal;
-4. the final visible neighbor-color image strictly desaturates:
+1. the graph is unchanged;
+2. every committed edge obligation remains satisfied;
+3. the center remains uncommitted during the rewrite;
+4. `T` is justified by the frontier derivative and noncrossing continuation law, not by search over completed colorings;
+5. the final neighbor-color image satisfies
    \[
    |S_{K'}(v)|\le3;
    \]
-5. therefore
-   \[
-   A_{K'}(v)=Q_4\setminus S_{K'}(v)\ne\varnothing;
-   \]
-6. the composition is generated by the declared construction algebra rather than imported from a completed four-coloring;
-7. the traversal length is finite and its required construction distortion is explicitly bounded.
+   and hence `A_{K'}(v)` is nonempty;
+6. the construction distortion is finite and explicitly bounded.
 
-Nilpotency alone, linear dependence alone, brown observation, finite enumeration, and one-step Kempe availability are insufficient substitutes.
+The new ingredients narrow the target substantially, but they do **not** yet prove this closure theorem. In particular:
 
-The current algebraic problem is now narrower: prove that planarity plus the saturated `C5` dependency prevents an infinite or closed sequence of exact component traversals that remains permanently saturated.
+- `3,1,1` alone does not imply recolorability;
+- adjacency of the singleton modes alone does not imply recolorability;
+- non-alternating endpoints alone do not construct the required graph rewrite;
+- component-swap availability cannot be imported as proof authority unless tied back to the continuation calculus.
 
-## 7. Brown belongs only to observation
+The next proof step is exactly the map from the exceptional corner plus surrounding planar continuation relations to a legal construction rewrite.
+
+## 8. Brown belongs only to observation
 
 Brown remains useful for Principia's bounded-observer account. A construction state may project to brown when provenance or unresolved alternatives are compressed:
 
@@ -201,7 +242,7 @@ not
 
 The observer path and construction path may coexist, but authority flows only from construction witnesses to observer descriptions, not backward.
 
-## 8. Terminal completion
+## 9. Terminal completion
 
 If construction traversal reaches a complete state `K_T`, terminal decoding is sound exactly when the full edge ledger holds:
 
@@ -212,42 +253,26 @@ D(K_T)=c\in\operatorname{Col}_4(G),
 
 The completed four-color map certifies the result. It does not explain or define the traversal that constructed it.
 
-## 9. Global induction once desaturation is proved
+## 10. Global induction once continuation closure is proved
 
-Assume Nilpotent Desaturation Closure.
+Assume Planar Continuation Closure.
 
 Let `G` be a minimal planar counterexample. By the planar degree bound, `G` has a vertex `v` of degree at most five. Remove `v` and construct a valid four-coloring of `G-v` by minimality.
 
 - If the committed neighbor image of `v` uses at most three colors, `A_K(v)` is nonempty and `v` is committed directly.
-- If `v` has degree five and the boundary uses all four colors, apply Nilpotent Desaturation Closure. The finite traversal produces `K'` with at most three visible neighbor colors, so `A_{K'}(v)` is nonempty. Commit `v` with any color in that complement.
+- If `v` has degree five and the boundary uses all four colors, apply Planar Continuation Closure. The rewrite produces `K'` with at most three visible neighbor colors, so `A_{K'}(v)` is nonempty. Commit `v` with any color in that complement.
 
 The resulting complete construction contradicts minimality. Therefore no minimal counterexample exists.
 
-This induction is valid only after Nilpotent Desaturation Closure is independently established.
-
-## 10. Mechanical witness lines
-
-The repository must keep independent verification lines:
-
-1. **construction-state witness** — partial commits use only `Q4`, preserve committed edge obligations, and compute admissible colors exactly as `Q4 \ S`;
-2. **observer-separation witness** — distinct construction states can project to the same brown observation, proving that brown is not sufficient construction authority;
-3. **terminal-decode witness** — decoding is refused until construction is complete and the full edge ledger is valid;
-4. **nilpotency witness** — `I^3 != 0` and `I^4 = 0`, with four nonzero cyclic stages;
-5. **degree-five kernel witness** — every saturated proper `C5` has multiplicity `2+1+1+1` and a forced indexed dependency;
-6. **component-traversal witness** — every two-color component swap preserves the exact committed edge ledger;
-7. **composition witness** — an explicit planar single-move-locked saturated state desaturates after two exact component traversals;
-8. **desaturation certificate witness** — every proposed graph rewrite must explicitly preserve all committed edges and open at least one terminal color at the focus vertex;
-9. **dependency witness** — brown observation, completed-map facts, held-out Rocq, exhaustive enumeration, SRMF cardinality, and 4CT itself are forbidden upstream of traversal/desaturation authority.
-
-Computation may falsify or certify declared lemmas. It may not replace the missing algebraic implication.
+This induction is valid only after Planar Continuation Closure is independently established.
 
 ## 11. Certification boundary
 
-Mechanical success means the checked-in construction algebra and species boundaries obey their declared contract. A full theorem certificate additionally requires an algebraic proof of Nilpotent Desaturation Closure for every admissible saturated planar degree-five construction state.
+Mechanical success means the checked-in construction algebra and species boundaries obey their declared contract. A full theorem certificate additionally requires an algebraic proof of Planar Continuation Closure for every admissible saturated planar degree-five construction state.
 
 A valid counterexample to this proof route must preserve the theorem species and exhibit one of:
 
-- a saturated planar construction state whose forced nilpotent dependency admits no finite ledger-preserving desaturation;
+- a saturated planar construction state whose exceptional-corner continuation structure admits no ledger-preserving desaturation;
 - a lost inherited edge obligation;
 - an unavoidable fifth independently terminal construction mode;
 - unbounded required construction distortion/exhausted reserve; or
