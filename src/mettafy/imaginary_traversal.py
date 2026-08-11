@@ -100,19 +100,6 @@ def orbit(word: ColorWord) -> frozenset[ColorWord]:
 G0: GroupElement = ((1, 2), (2, 3, 0, 1))
 
 
-@dataclass(frozen=True)
-class SignedSheetState:
-    word: ColorWord
-    sign: int
-
-    def __post_init__(self) -> None:
-        if self.sign not in (1, -1):
-            raise ValueError("sign must be +1 or -1")
-        expected = 3 if self.sign == 1 else 4
-        if sheet(self.word) != expected:
-            raise ValueError("sign does not match chromatic sheet")
-
-
 def _coset_representative(word: ColorWord, base: ColorWord) -> GroupElement:
     for g in group_elements():
         if act(base, g) == word:
@@ -137,19 +124,66 @@ def j_inv_map(word: ColorWord) -> ColorWord:
     return act(X3_REP, group_mul(g, G0))
 
 
-def imaginary_traversal(state: SignedSheetState) -> SignedSheetState:
-    """Complex-structure action: + sheet -> -, - sheet -> negative + sheet.
+@dataclass(frozen=True)
+class LinearSheetState:
+    """A basis state plus an independent scalar coefficient.
 
-    The scalar minus sign is represented by the SignedSheetState sign. Applying
-    twice returns the same chromatic word with sign reversed, i.e. I^2 = -id.
+    The chromatic sheet is determined by ``word``.  ``coefficient`` belongs to
+    the free module and must not be conflated with the sheet label.  Keeping
+    these coordinates separate is necessary for a faithful I^2 = -id witness.
     """
-    if state.sign == 1:
-        return SignedSheetState(j_map(state.word), -1)
-    return SignedSheetState(j_inv_map(state.word), 1)
+
+    word: ColorWord
+    coefficient: int = 1
+
+    def __post_init__(self) -> None:
+        if self.coefficient not in (1, -1):
+            raise ValueError("coefficient must be +1 or -1")
+        sheet(self.word)
+
+    @property
+    def sheet_index(self) -> int:
+        return sheet(self.word)
+
+
+def imaginary_traversal(state: LinearSheetState) -> LinearSheetState:
+    """Complex-structure action on the two-sheet free module.
+
+    I maps X3 to X4 without changing the scalar and maps X4 back to X3 while
+    negating the scalar.  Therefore applying I twice returns the same basis
+    word with the coefficient negated.
+    """
+    if state.sheet_index == 3:
+        return LinearSheetState(j_map(state.word), state.coefficient)
+    return LinearSheetState(j_inv_map(state.word), -state.coefficient)
 
 
 def imaginary_square(word: ColorWord) -> tuple[ColorWord, int]:
-    """Return the word and scalar after I^2 on a positive-sheet basis state."""
-    first = j_map(word)
-    second = j_inv_map(first)
-    return second, -1
+    """Return the exact I^2 action on a positive X3 basis state."""
+    state = LinearSheetState(word, 1)
+    twice = imaginary_traversal(imaginary_traversal(state))
+    return twice.word, twice.coefficient
+
+
+def frozen_exterior_lift_preserves_edges(
+    before: ColorWord,
+    after: ColorWord,
+    external_constraints: tuple[tuple[int, int], ...],
+) -> bool:
+    """Check the naive lift that recolors only the C5 boundary.
+
+    Each constraint ``(i, color)`` denotes a fixed exterior vertex of ``color``
+    adjacent to boundary position ``i``.  This helper intentionally models the
+    weakest possible graph lift: the exterior is frozen.  A failure is a
+    concrete witness that local J does not extend by identity in general.
+    """
+    if not proper_c5(before) or not proper_c5(after):
+        raise ValueError("boundary words must both be proper C5 colorings")
+    for index, exterior_color in external_constraints:
+        if index < 0 or index >= 5:
+            raise ValueError("boundary index out of range")
+        if before[index] == exterior_color:
+            raise ValueError("external constraint is not valid in the source coloring")
+        if after[index] == exterior_color:
+            return False
+    return True
