@@ -1,7 +1,7 @@
 # Algebraic Four Color Proof — Contract-Preserving Form
 
 **Track:** B — independent of the held-out Rocq proof.  
-**Status:** candidate proof with mechanically exposed closure obligations; no hidden use of 4CT is permitted.
+**Status:** candidate constructive proof with mechanically exposed closure obligations; no hidden use of 4CT is permitted.
 
 ## 1. Fixed theorem species
 
@@ -11,19 +11,11 @@ For a finite planar graph `G=(V,E)`, let
 Q_4=\{0,1,2,3\}
 \]
 
-and let the exact witness boundary be
+and let the exact terminal witness be
 
 \[
 W_G(c):=\bigwedge_{uv\in E} c(u)\ne c(v).
 \]
-
-A Four Color state is
-
-\[
-\mathcal C_4(G)=(G,Q_4,W_G,\Gamma_G),
-\]
-
-where `Gamma_G` carries the declared planar embedding/boundary data. Indexed edge obligations are never replaced by an aggregate scalar.
 
 The theorem to establish is
 
@@ -32,168 +24,205 @@ The theorem to establish is
 \exists c:V(G)\to Q_4\; W_G(c).
 \]
 
+The proof must keep three mathematical species distinct.
+
+### Construction state
+
+A construction state `K` is a partial committed coloring together with the exact graph and edge ledger. Uncolored regions are absent from the committed coloring; they are not assigned a fuzzy terminal value.
+
+For an uncolored region `v`, let
+
+\[
+S_K(v)=\{c(u):u\sim v,\;u\text{ already committed}\}.
+\]
+
+Its directly admissible terminal colors are exactly
+
+\[
+\boxed{A_K(v)=Q_4\setminus S_K(v).}
+\]
+
+Thus adjacency restricts the possible new color space from inside the existing four-color palette.
+
+### Brown observer projection
+
+A bounded observer may see an unresolved or composite state as **brown**. Brown is a projection of construction state, not a construction color:
+
+\[
+B_O:\mathcal K(G)\to\mathcal B_O.
+\]
+
+`B_O` may be many-to-one. Different construction histories may therefore have the same brown observation. Brown cannot determine or authorize the next construction move without additional retained witness information.
+
+### Terminal decode
+
+Only a complete construction state may be decoded to the view-from-nowhere coloring:
+
+\[
+D:\mathcal K_{\mathrm{terminal}}(G)\to\operatorname{Col}_4(G).
+\]
+
+At this level there is no brown and no unresolved traversal. There is only a proper `Q4` coloring satisfying `W_G`.
+
 ## 2. Lipschitz Contract as meta-law
 
-Every proof transformation `T` must preserve the theorem species:
+Every proof transformation must preserve the theorem species and direction of authority:
 
-1. **bounded realization** — in the declared state metric,
+1. **construction first** — traversal acts on `K`, not on its brown projection;
+2. **exact witness preservation** — inherited indexed edge obligations remain explicit and exact;
+3. **bounded realization** — in the declared construction metric,
    \[
-   d(Tz,Tz')\le L_T d(z,z'),\qquad L_T<\infty;
+   d(TK,TK')\le L_T d(K,K'),\qquad L_T<\infty;
    \]
-2. **witness preservation** — inherited indexed edge obligations remain explicit and exact;
-3. **slack accounting** — any observer-relative loss satisfies `ell_O(T) <= r_O`;
-4. **certificate composition** — an existing witness is transported/refined, never silently replaced;
-5. **authority preservation** — no Four Color conclusion, held-out Rocq label, or SRMF chart cardinality may be introduced upstream as proof authority.
+4. **observer non-authority** — no fact derived solely from `B_O(K)` may establish a construction transition unless an explicit witness-preserving map back to construction state is supplied;
+5. **terminal non-circularity** — no property of the completed four-colored map may be used upstream to define the traversal law;
+6. **certificate composition** — an existing construction certificate is transported/refined, never silently replaced;
+7. **authority preservation** — no Four Color conclusion, held-out Rocq label, SRMF chart cardinality, or exhaustive enumeration may be introduced upstream as proof authority.
 
-An objection that changes the problem without a witness-preserving map is itself outside the proof contract.
+## 3. Traversal/coloration algebra
 
-## 3. Algebraic lift
+Let `I` denote the Four-Color construction traversal operator. This is distinct from Principia's ordinary complex phase unit.
 
-Lift a terminal coloring state into a chromatic symbolic state on the Principia manifold. The underlying evolution is the symbolic Fokker--Planck equation
+The proposed chromatic law is exact nilpotency index four:
 
 \[
-\partial_s\rho
-= -\nabla\cdot(\rho D)+\beta^{-1}\Delta_s\rho.
+I^3\ne0,\qquad I^4=0.
 \]
 
-Write `P_s` for the induced drift--diffusion semigroup. The edge ledger `W_G` is transported as an external invariant; diffusion acts on latent chromatic provenance, not on whether an edge obligation exists.
-
-The four terminal colors are not assumed to exhaust the latent state space. Latent states may be mixed, continuous, or composite.
-
-## 4. Brown and browning out
-
-Let `Q_O` be the terminal chromatic decoder for observer `O`.
-
-A state is **brown** when several latent chromatic histories remain represented while no additional independently terminal chromatic value is justified at the decoder. Brown is therefore nonterminal residue:
+Equivalently, the cyclic construction module generated from a seed has four nonzero stages before annihilation:
 
 \[
-\mathrm{brown}\notin Q_4.
+e_0,\; Ie_0,\; I^2e_0,\; I^3e_0,\; I^4e_0=0.
 \]
 
-Browning-out is admissible only when provenance is retained and every indexed edge obligation remains checkable. The following move is forbidden:
+This establishes an algebraic ceiling of four independent traversal levels. It does **not** by itself prove that every graph-level dependency can be realized as a legal recoloring.
 
-```text
-unsatisfied edge -> brown -> erase obligation -> terminal commit
-```
+The construction law therefore consists of both:
 
-The admissible form is
+- the index-four traversal algebra; and
+- the exact adjacency complement `A_K(v)=Q_4\setminus S_K(v)`.
 
-```text
-latent chromatic alternatives
-  -> drift/diffusion/contraction
-  -> existing terminal basin OR nonterminal brown residue
-  -> re-expand/refine if any edge obligation remains unresolved
-  -> terminal commit only in Q4 with W_G true
-```
+## 4. Degree-five surface
 
-## 5. Generator expansion formulation
+In a minimal planar obstruction, a degree-five vertex exposes five separately indexed adjacency obligations.
 
-Fix a complete finite-planar generator calculus `E`. Each generator
+If the five committed neighbors use fewer than four distinct colors, then
 
 \[
-e:G\hookrightarrow G'
+A_K(v)\ne\varnothing
 \]
 
-extends a certified planar object by one admissible construction step.
+and the center extends directly.
 
-The central algebraic object is a family of transformations
+The nontrivial case is a proper `C5` boundary using all four colors. Its multiplicity pattern is necessarily
 
 \[
-T_e:\mathcal C_4(G)\to\mathcal C_4(G')
+2+1+1+1.
+\]
+
+Hence two nonadjacent indexed boundary obligations carry the same terminal color. Algebraically, five indexed obligations map into four terminal modes with a forced kernel dependency.
+
+This dependency is real, but it is not yet a recoloring theorem.
+
+## 5. Nilpotent desaturation obligation
+
+The exact remaining constructive statement is:
+
+### Nilpotent Desaturation Closure
+
+For every saturated degree-five construction state `K` occurring in a finite planar graph, the forced boundary dependency induced by the index-four traversal algebra admits a finite construction rewrite
+
+\[
+K\xrightarrow{T}K'
 \]
 
 such that:
 
-- inherited obligations are preserved;
-- new obligations introduced by `e` are satisfied;
-- terminal values stay in `Q4`;
-- latent reparameterization may use brown residue but brown cannot be terminal;
-- the transformation has finite declared distortion/slack;
-- certificates compose.
+1. the graph is unchanged;
+2. every committed edge obligation remains satisfied;
+3. the center remains uncommitted during the rewrite;
+4. the visible neighbor-color image strictly desaturates:
+   \[
+   |S_{K'}(v)|\le3;
+   \]
+5. therefore
+   \[
+   A_{K'}(v)=Q_4\setminus S_{K'}(v)\ne\varnothing;
+   \]
+6. the rewrite is generated by the declared traversal algebra rather than imported from a completed four-coloring.
 
-If `E` generates every finite planar graph and every `e in E` admits such a `T_e`, then composition proves the Four Color Theorem.
+This is the precise graph-level implication that must be proved. Nilpotency alone, linear dependence alone, brown observation, and finite enumeration are insufficient substitutes.
 
-### Composition proof
+## 6. Brown belongs only to observation
 
-Let
-
-\[
-G_0\xrightarrow{e_1}G_1\xrightarrow{e_2}\cdots\xrightarrow{e_n}G_n=G
-\]
-
-be a generating sequence from a certified base object. Starting with certified `z_0 in C_4(G_0)`, define
-
-\[
-z_i=T_{e_i}(z_{i-1}).
-\]
-
-By contract preservation, `z_i in C_4(G_i)` for every `i`. Since the sequence is finite, `z_n` is a certified four-color state for `G`. Hence `G` is four-colorable. `square`
-
-The proof therefore reduces exactly to completeness of the generator calculus plus existence of the local contract expansions `T_e`.
-
-## 6. Degree-five obstruction as the nontrivial local surface
-
-In the standard minimal planar obstruction surface, a degree-five vertex exposes five separately indexed edge obligations. The five neighbors need not be five mutually conflicting colors; their obligations remain distinct even when color values repeat.
-
-For the immediate boundary cycle `C5`, exhaustive symbolic enumeration yields two classes of proper four-color boundary assignments:
-
-- those using fewer than four colors: the center extends immediately;
-- saturated assignments using all four colors: the center requires a contract-preserving reparameterization of the surrounding state.
-
-The latter class is the exact local surface on which the novel expansion operator must act. It is not licensed to introduce color five.
-
-## 7. Differential realization of reparameterization
-
-A local expansion may be implemented by lifting the saturated boundary state into latent density, evolving under bounded drift--diffusion/contraction, and decoding again:
+Brown remains useful for Principia's bounded-observer account. A construction state may project to brown when provenance or unresolved alternatives are compressed:
 
 \[
-(G,c,W_G)
-\xrightarrow{\mathrm{lift}}
-(G,\rho,W_G)
-\xrightarrow{P_s}
-(G,\rho',W_G)
-\xrightarrow{Q_O}
-(G,c',W_G).
+K\xrightarrow{B_O}\mathrm{brown}.
 \]
 
-The role of Brownian/diffusive dynamics is amortization of microscopic chromatic provenance. It does not add a fifth terminal label. A fifth candidate must survive as a genuinely independent terminal mode after the full bounded evolution and exact witness check; otherwise it browns out or contracts to an existing terminal basin.
+But the constructive proof path is
 
-SRMF appears only after this differential law as its operational chart/factorization. Four SRMF operator names are not a proof of four colors.
+\[
+K_0\xrightarrow{T_1}K_1\xrightarrow{T_2}\cdots\xrightarrow{T_n}K_n,
+\]
 
-## 8. Algebraic closure statement
+not
 
-The candidate local closure theorem is:
+\[
+\mathrm{brown}\to\text{new terminal color}.
+\]
 
-### Contract Expansion Closure
+The observer path and construction path may coexist, but authority flows only from construction witnesses to observer descriptions, not backward.
 
-For every generator-local planar extension state whose inherited boundary lies in `Q4` and satisfies its exact edge ledger, there exists a finite sequence of admissible latent transformations whose terminal decode again lies in `Q4` and satisfies the expanded ledger.
+## 7. Terminal completion
 
-Equivalently, the set of certified Four Color states is closed under the chosen planar generator calculus.
+If construction traversal reaches a complete state `K_T`, terminal decoding is sound exactly when the full edge ledger holds:
 
-This is the only theorem-specific closure statement allowed to carry the global proof. All other machinery supplies representation, boundedness, or verification.
+\[
+D(K_T)=c\in\operatorname{Col}_4(G),
+\qquad W_G(c)=\mathrm{true}.
+\]
+
+The completed four-color map certifies the result. It does not explain or define the traversal that constructed it.
+
+## 8. Global induction once desaturation is proved
+
+Assume Nilpotent Desaturation Closure.
+
+Let `G` be a minimal planar counterexample. By the planar degree bound, `G` has a vertex `v` of degree at most five. Remove `v` and construct a valid four-coloring of `G-v` by minimality.
+
+- If the committed neighbor image of `v` uses at most three colors, `A_K(v)` is nonempty and `v` is committed directly.
+- If `v` has degree five and the boundary uses all four colors, apply Nilpotent Desaturation Closure. The rewrite produces `K'` with at most three visible neighbor colors, so `A_{K'}(v)` is nonempty. Commit `v` with any color in that complement.
+
+The resulting complete construction contradicts minimality. Therefore no minimal counterexample exists.
+
+This induction is valid only after Nilpotent Desaturation Closure is independently established.
 
 ## 9. Mechanical witness lines
 
-The repository must keep at least four independent verification lines:
+The repository must keep independent verification lines:
 
-1. **Dependency witness** — reject any proof DAG in which 4CT, held-out Rocq authority, or the cardinality of SRMF charts is upstream of Contract Expansion Closure.
-2. **Boundary-contract witness** — mechanically verify that every proposed `T_e` preserves inherited edge obligations, satisfies new ones, and terminally decodes only to `Q4`.
-3. **Differential/browning witness** — verify mass preservation/contraction properties of the finite diffusion model and fail closed when the decoder is ambiguous (`brown`).
-4. **Degree-five exhaustive witness** — enumerate all `4^5` assignments on the five-neighbor boundary, retain only proper `C5` assignments, and classify exactly the immediate-extension versus saturated-reparameterization surface.
-5. **Finite graph differential witness** — independently validate returned four-color certificates on a checked-in corpus, including a nonplanar negative control.
+1. **construction-state witness** — partial commits use only `Q4`, preserve committed edge obligations, and compute admissible colors exactly as `Q4 \ S`;
+2. **observer-separation witness** — distinct construction states can project to the same brown observation, proving that brown is not sufficient construction authority;
+3. **terminal-decode witness** — decoding is refused until construction is complete and the full edge ledger is valid;
+4. **nilpotency witness** — `I^3 != 0` and `I^4 = 0`, with four nonzero cyclic stages;
+5. **degree-five kernel witness** — every saturated proper `C5` has multiplicity `2+1+1+1` and a forced indexed dependency;
+6. **desaturation certificate witness** — every proposed graph rewrite must explicitly preserve all committed edges and open at least one terminal color at the focus vertex;
+7. **dependency witness** — brown observation, completed-map facts, held-out Rocq, exhaustive enumeration, SRMF cardinality, and 4CT itself are forbidden upstream of traversal/desaturation authority.
 
-No one witness is proof authority for the others.
+Computation may falsify or certify declared lemmas. It may not replace the missing algebraic implication.
 
 ## 10. Certification boundary
 
-Mechanical success means the checked-in algebra obeys its declared contract and the encoded local witnesses agree. It does not permit a hidden jump over Contract Expansion Closure. A full theorem certificate requires a mechanically accepted complete generator family and a valid `T_e` witness for every generator case.
+Mechanical success means the checked-in construction algebra and species boundaries obey their declared contract. A full theorem certificate additionally requires an algebraic proof of Nilpotent Desaturation Closure for every admissible saturated planar degree-five construction state.
 
-A valid counterexample to this proof route must preserve the theorem species and exhibit either:
+A valid counterexample to this proof route must preserve the theorem species and exhibit one of:
 
-- a planar generator state for which no admissible `T_e` exists;
+- a saturated planar construction state whose forced nilpotent dependency admits no ledger-preserving desaturation;
 - a lost inherited edge obligation;
-- an unavoidable terminal fifth chromatic class;
-- unbounded required distortion/exhausted declared reserve; or
+- an unavoidable fifth independently terminal construction mode;
+- unbounded required construction distortion/exhausted reserve; or
 - circular authority in the proof dependency graph.
 
-Generic representation-changing objections are not blockers.
+Brown projection and completed-map viewpoints remain valuable for Principia Symbolica, but neither is permitted to masquerade as the coloration construction itself.
