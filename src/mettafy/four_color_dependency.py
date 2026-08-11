@@ -7,6 +7,7 @@ FORBIDDEN_UPSTREAM = {
     "HeldOutRocqAuthority",
     "SRMFFourCharts",
     "NoStableFifthClass",
+    "ExhaustiveBoundaryEnumeration",
 }
 
 
@@ -33,21 +34,26 @@ def ancestors(target: str, edges: tuple[ProofEdge, ...]) -> frozenset[str]:
 
 
 def closure_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """Contract Expansion Closure must not be proved by a downstream authority."""
+    """Contract Expansion Closure must not be proved by downstream authority."""
     upstream = ancestors("ContractExpansionClosure", edges)
     return not bool(upstream & FORBIDDEN_UPSTREAM)
 
 
-def holonomy_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """Terminal holonomy cannot be imported from downstream Four Color authority."""
-    upstream = ancestors("TerminalHolonomyClosure", edges)
+def nilpotent_desaturation_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """Legal desaturation cannot be inferred from forbidden theorem authority.
+
+    The index-four nilpotent algebra and exact boundary kernel may be premises,
+    but neither finite enumeration nor the Four Color conclusion may certify
+    the graph-level desaturation step.
+    """
+    upstream = ancestors("NilpotentDesaturationClosure", edges)
     return not bool(upstream & FORBIDDEN_UPSTREAM)
 
 
 def theorem_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """The final theorem must pass through both declared global closure gates."""
+    """The final theorem must pass through the explicit graph-level gate."""
     upstream = ancestors("FourColorTheorem", edges)
     return {
         "ContractExpansionClosure",
-        "TerminalHolonomyClosure",
+        "NilpotentDesaturationClosure",
     } <= upstream
