@@ -8,6 +8,8 @@ FORBIDDEN_UPSTREAM = {
     "SRMFFourCharts",
     "NoStableFifthClass",
     "ExhaustiveBoundaryEnumeration",
+    "BrownObserverProjection",
+    "TerminalCompletedMap",
 }
 
 
@@ -34,26 +36,35 @@ def ancestors(target: str, edges: tuple[ProofEdge, ...]) -> frozenset[str]:
 
 
 def closure_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """Contract Expansion Closure must not be proved by downstream authority."""
+    """Construction closure must not be proved by downstream authority."""
     upstream = ancestors("ContractExpansionClosure", edges)
     return not bool(upstream & FORBIDDEN_UPSTREAM)
 
 
-def nilpotent_desaturation_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """Legal desaturation cannot be inferred from forbidden theorem authority.
+def traversal_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """Traversal law is upstream of both observer projection and final decode."""
+    upstream = ancestors("TraversalConstructionLaw", edges)
+    return not bool(upstream & FORBIDDEN_UPSTREAM)
 
-    The index-four nilpotent algebra and exact boundary kernel may be premises,
-    but neither finite enumeration nor the Four Color conclusion may certify
-    the graph-level desaturation step.
+
+def nilpotent_desaturation_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """Legal desaturation cannot be inferred from observer or theorem authority.
+
+    The index-four nilpotent algebra, exact admissible-color complement, and
+    graph edge ledger may be premises. Brown observation, completed-map facts,
+    exhaustive enumeration, and the Four Color conclusion may not certify the
+    construction rewrite.
     """
     upstream = ancestors("NilpotentDesaturationClosure", edges)
     return not bool(upstream & FORBIDDEN_UPSTREAM)
 
 
 def theorem_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """The final theorem must pass through the explicit graph-level gate."""
+    """The final theorem must pass through construction and graph-level gates."""
     upstream = ancestors("FourColorTheorem", edges)
     return {
+        "TraversalConstructionLaw",
         "ContractExpansionClosure",
         "NilpotentDesaturationClosure",
+        "TerminalDecodeSoundness",
     } <= upstream
