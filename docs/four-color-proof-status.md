@@ -23,7 +23,8 @@ The working discipline is:
 The current independent route is:
 
 ```text
-planar conflict structure
+planar indexed constraint structure
+  -> local five-obligation witness
   -> observer-critical forcing
   -> four-stable / five-routes regime
   -> NoStableFifthClass
@@ -37,16 +38,17 @@ planar conflict structure
 
 A more explicit obligation chain is:
 
-1. represent the planar problem without already assuming four-colorability;
-2. derive an observer-relative conflict/coupling condition from planar structure;
-3. show four channels remain solvent while a fifth cannot persist stably;
-4. show the forced route is an admissible refinement, not an arbitrary recoloring;
-5. show repeated admissible refinement terminates by a well-founded measure;
-6. show the terminal four-channel state carries the required `V4 = Z2^2` algebra;
-7. decode sufficiently controlled fuzzy states into an exact nowhere-zero `V4` flow;
-8. invoke the classical downstream transfer from that exact object to a four-coloring.
+1. represent the planar problem using separately indexed region/vertex parameters without already assuming four-colorability;
+2. obtain a degree-five local obstruction in a minimal-counterexample setting and preserve the identity of its five incident constraints even when assigned values coincide;
+3. construct the local conflict/coupling operator induced by those five distinct obligations and prove a spectral condition sufficient for observer-critical routing;
+4. show four active channels remain solvent while the fifth-obligation representation cannot persist stably;
+5. show the forced route is an admissible refinement, not an arbitrary recoloring;
+6. show repeated admissible refinement terminates by a well-founded measure;
+7. show the terminal four-channel state carries the required `V4 = Z2^2` algebra;
+8. decode sufficiently controlled fuzzy states into an exact nowhere-zero `V4` flow;
+9. invoke the classical downstream transfer from that exact object to a four-coloring.
 
-The proof is **not closed** because obligations 2–5 are not yet all established for the actual planar Four Color problem.
+The proof is **not closed** because obligations 2–6 are not yet all established for the actual planar Four Color problem.
 
 ## 3. Certified pieces
 
@@ -119,7 +121,9 @@ M_5 = 1/5 <= 1/4.
 
 This is the first exact conditional fragment of the intended `NoStableFifthClass` theorem.
 
-It does **not** prove that planarity forces `rho` into this interval, nor that an arbitrary planar conflict structure is captured by one symmetric `rho`.
+**Semantic correction:** the mechanically certified variable `k` should presently be read as a count of separately indexed active constraint channels. It is not yet licensed to mean "number of colors" or "number of terminal semantic classes." The proof still owes the bridge from the local planar coloring obligations to this channel geometry.
+
+The theorem therefore does **not** prove that planarity forces `rho` into this interval, nor that an arbitrary planar conflict structure is captured by one symmetric `rho`.
 
 ### 3.3 Blind recognition convergence on reduction structure
 
@@ -177,19 +181,133 @@ The central unproved bridge remains:
 NoStableFifthClass
 ```
 
-The conditional geometry is already established. The unresolved question is whether the actual planar Four Color problem necessarily supplies the structural conditions that force a putative fifth terminal class to route and then disappear under admissible refinement.
+The conditional geometry is already established. The unresolved question is whether the actual planar Four Color problem supplies the structural conditions that instantiate the five-channel observer geometry and force that representation to route into a terminating four-channel quotient.
 
-The two main bridge obligations are:
+The earlier label `PlanarConflictLowerBound` was too coarse. It conflated two different facts:
 
-### 4.1 PlanarConflictLowerBound
+1. **multiplicity / identity:** how many independently indexed obligations exist;
+2. **coupling / conflict:** how strongly those obligations interact in the geometric operator.
 
-Need a theorem deriving the relevant effective conflict/coupling bound from planar structure without assuming four-colorability.
+These are now separated.
 
-The required statement must be strong enough to put the putative fifth class into the four-stable/five-routes regime, or replace the scalar symmetric model with a more general spectral statement that has the same consequence.
+### 4.1 Parameter identity versus value equality
 
-Euler's degree argument alone is insufficient: degree-at-most-five supports the Five Color theorem but does not eliminate the fifth color.
+Let `P` be a set of indexed parameters and let
 
-### 4.2 AdmissibleRefinementClosure
+```text
+value : P -> X
+```
+
+be their current value assignment. Distinct parameter identity does not require distinct values:
+
+```text
+p_i != p_j
+```
+
+may hold while
+
+```text
+value(p_i) = value(p_j).
+```
+
+Equivalently, if parameters are represented as indexed pairs
+
+```text
+p_i = (i, value_i),
+p_j = (j, value_j),
+```
+
+then `i != j` keeps the parameter objects distinct even when `value_i = value_j`.
+
+For a graph `G = (V,E)`, the incident coloring obligations at a vertex `v` are indexed by distinct edges or distinct neighboring vertices:
+
+```text
+c_(v,u1), ..., c_(v,uk).
+```
+
+If `u_i != u_j`, then
+
+```text
+c_(v,ui) != c_(v,uj)
+```
+
+as obligations, even if the current assignments of `u_i` and `u_j` happen to coincide.
+
+This is the precise form of the "same value, different parameter" observation. It supplies **dimension/multiplicity**, not yet a numerical coupling coefficient.
+
+### 4.2 DistinctIncidentConstraintMultiplicity
+
+The proposed planar bridge now begins with the classical minimal-counterexample route:
+
+```text
+planarity
+  -> some vertex has degree <= 5
+minimal counterexample + reducibility of degree <= 4
+  -> every vertex has degree >= 5
+therefore
+  -> some vertex v has degree exactly 5.
+```
+
+At such a vertex, the five incident edge constraints are five separately indexed obligations:
+
+```text
+c_(v,u1), ..., c_(v,u5).
+```
+
+Their identity survives collisions of assigned values. Thus, if `k` is interpreted as the number of active indexed obligations, the local obstruction genuinely supplies `k = 5` without requiring five numerically distinct values and without calling those obligations five colors.
+
+**Status:** mathematically plausible/classical in outline, but not yet formalized as a Track B theorem. In particular, the degree-`<=4` reducibility step must be stated explicitly rather than hidden inside "minimal counterexample."
+
+### 4.3 SharedConstraintCoupling / spectral bridge
+
+Parameter identity alone does **not** justify the symmetric conflict matrix
+
+```text
+G_k = (1 + rho) I - rho J.
+```
+
+Five named obligations do not automatically become five pairwise antagonistic directions. This is the remaining genuine geometric bridge.
+
+A safer general formulation introduces a nonnegative symmetric local conflict operator `C_v` on the incident constraint channels and writes
+
+```text
+G_v = I - C_v.
+```
+
+The observer soft mode is then controlled by
+
+```text
+M_v = 1 - lambda_max(C_v).
+```
+
+The existing symmetric model is the special case
+
+```text
+C_v = rho (J - I),
+lambda_max(C_v) = rho (k - 1).
+```
+
+So the actual planar obligation is no longer "planarity magically gives rho." It is:
+
+> construct `C_v` from the five separately indexed local coloring obligations and prove a source-independent spectral bound strong enough to cross the observer floor, while an admissible four-channel quotient remains below that threshold.
+
+Schematically, the desired local separation is
+
+```text
+lambda_max(C_5) >= 1 - M_O
+```
+
+while for the admissible four-channel representation
+
+```text
+lambda_max(C_4) < 1 - M_O.
+```
+
+The exact relation between `C_5` and `C_4` is still open. It may be a principal restriction, a quotient, or a certificate-bearing refinement rather than literal deletion of one row and column.
+
+**Status:** open; this replaces the vague `PlanarConflictLowerBound` obligation.
+
+### 4.4 AdmissibleRefinementClosure
 
 Need a theorem that the forced SRMF/refinement move:
 
@@ -281,7 +399,9 @@ This downstream mathematics may be cited as a trust boundary. It must not be smu
 |---|---|---|
 | P1 | Planar representation fidelity | open / partially conventional |
 | P2 | Observer quotient laws | conceptual; needs exact theorem surface |
-| P3 | `NoStableFifthClass` | **open; central gap** |
+| P3a | `DistinctIncidentConstraintMultiplicity` | newly isolated; classical outline, formalization pending |
+| P3b | `SharedConstraintCoupling` / local spectral bound | **open; central geometric gap** |
+| P3c | `NoStableFifthClass` | **open; depends on P3a + P3b + refinement closure** |
 | P4 | Terminal quotient algebra is `V4` | open |
 | P5 | Nonzero separation | open |
 | P6 | Fuzzy-to-exact conservation/decoding | candidate inequality; not full existence proof |
@@ -298,15 +418,21 @@ This downstream mathematics may be cited as a trust boundary. It must not be smu
 
 The next high-value result is **not another generic certificate framework**.
 
-It is one of the following concrete bridges:
+The proof now has a sharper local target:
 
-1. derive a planar spectral/conflict inequality sufficient to force the fifth class into observer-critical routing; or
-2. extract from the actual pinned reducibility machinery a source-neutral transformation object with:
-   - a mechanically defined boundary;
-   - a mechanically defined well-founded measure;
-   - proof that the boundary is preserved;
-   - proof that the measure strictly decreases;
-   - a lift showing a solution of the reduced obligation reconstructs a solution of the source obligation.
+1. formalize the indexed-parameter lemma and the degree-five local obstruction without importing the Four Color conclusion;
+2. define the conflict operator `C_v` induced by the five incident constraints;
+3. prove a spectral/Rayleigh bound on `C_v` that crosses the observer threshold;
+4. define the admissible four-channel quotient/refinement and prove that its corresponding operator falls on the stable side;
+5. connect that transition to a boundary-preserving strict-descent certificate.
+
+An alternative advance would be to extract from the actual pinned reducibility machinery a source-neutral transformation object with:
+
+- a mechanically defined boundary;
+- a mechanically defined well-founded measure;
+- proof that the boundary is preserved;
+- proof that the measure strictly decreases;
+- a lift showing a solution of the reduced obligation reconstructs a solution of the source obligation.
 
 Either result would materially narrow `NoStableFifthClass`.
 
@@ -314,13 +440,15 @@ Either result would materially narrow `NoStableFifthClass`.
 
 A reviewer should currently focus on these questions:
 
-1. Is the symmetric `rho` model merely a useful witness, or can the needed four-vs-five separation be generalized to a spectral condition on arbitrary planar conflict matrices?
-2. Is there a non-circular planar invariant that supplies the required lower bound without encoding four-colorability?
-3. What is the correct observable boundary for a reducibility traversal?
-4. What obstruction measure is both well-founded and genuinely decreased by the reducibility move?
-5. Can the lift obligation be stated independently of the known Four Color theorem?
-6. Is `V4` structurally forced by the terminal refinement algebra, or only one convenient representation?
-7. Does any current step silently import Tait/flow existence rather than only using the downstream equivalence?
+1. Is `k` correctly interpreted as active indexed constraints rather than colors at the observer-critical stage?
+2. Does the minimal-counterexample route to a degree-five vertex introduce any hidden Four Color assumption beyond local degree-`<=4` reducibility?
+3. What is the principled construction of the local conflict operator `C_v` from incident coloring obligations?
+4. Is the symmetric `rho(J-I)` model a justified local special case, or should the proof immediately move to a general spectral/Rayleigh formulation?
+5. What is the correct observable boundary for a reducibility traversal?
+6. What obstruction measure is both well-founded and genuinely decreased by the reducibility move?
+7. Can the lift obligation be stated independently of the known Four Color theorem?
+8. Is `V4` structurally forced by the terminal refinement algebra, or only one convenient representation?
+9. Does any current step silently import Tait/flow existence rather than only using the downstream equivalence?
 
 A negative answer anywhere is useful: this document is intended to expose the proof's exact failure surface, not to defend it rhetorically.
 
@@ -332,24 +460,28 @@ We do have:
 
 - a mechanically certified observer-critical forcing lemma;
 - a mechanically certified conditional four-stable/five-routes theorem;
+- a now-explicit distinction between parameter identity and value equality;
+- a precise local interpretation of `k` as indexed obligation multiplicity rather than color count;
 - a leakage-safe structural-recognition program that independently converges on reduction-like structure in the held-out Rocq proof;
 - a fail-closed interface specifying what an admissible reducibility traversal must prove;
-- a concrete central gap rather than a vague analogy.
+- a narrower central gap: construct and bound the actual local conflict operator induced by the degree-five planar obstruction.
 
 The present proof frontier can be summarized as:
 
 ```text
-conditional fifth-class instability          [proved]
+indexed five-obligation local obstruction        [isolated; formalization pending]
             +
-planarity -> required conflict regime         [open]
+local constraint coupling -> spectral threshold  [open]
             +
-admissible, terminating refinement            [open]
+conditional four-stable/five-routes geometry     [proved]
             +
-terminal V4 construction                      [open]
+admissible, terminating refinement               [open]
             +
-exact decode + classical transfer              [partially specified]
----------------------------------------------------------
-new independent Four Color proof               [not yet closed]
+terminal V4 construction                         [open]
+            +
+exact decode + classical transfer                [partially specified]
+------------------------------------------------------------
+new independent Four Color proof                 [not yet closed]
 ```
 
 This file should be updated whenever one of those statuses changes.
