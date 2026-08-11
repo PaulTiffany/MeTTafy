@@ -46,7 +46,7 @@ def cyclic_terminal_states() -> tuple[Vector4, ...]:
 
 
 def admissible_colors(used_neighbor_colors: frozenset[int]) -> frozenset[int]:
-    """Exact Four-Color complement Q4 \ S."""
+    """Exact Four-Color complement Q4 minus S."""
 
     if not used_neighbor_colors <= frozenset(PALETTE4):
         raise ValueError("neighbor color lies outside Q4")
