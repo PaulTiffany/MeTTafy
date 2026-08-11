@@ -1,7 +1,36 @@
 from __future__ import annotations
 
 from mettafy.c5_lock_witness import AlternatingConnection, LockedC5Witness
-from tests.test_locked_planar_c5 import locked_planar_c5_state
+from mettafy.color_construction import ConstructionState
+
+
+def locked_planar_c5_state() -> ConstructionState:
+    graph = {
+        "v": ("a", "b", "c", "d", "e"),
+        "a": ("v", "b", "e"),
+        "b": ("v", "a", "c", "x", "p"),
+        "c": ("v", "b", "d"),
+        "d": ("v", "c", "e", "y"),
+        "e": ("v", "d", "a", "q"),
+        "x": ("b", "y"),
+        "y": ("x", "d"),
+        "p": ("b", "q"),
+        "q": ("p", "e"),
+    }
+    return ConstructionState(
+        graph,
+        {
+            "a": 0,
+            "b": 1,
+            "c": 0,
+            "d": 2,
+            "e": 3,
+            "x": 2,
+            "y": 1,
+            "p": 3,
+            "q": 1,
+        },
+    )
 
 
 def test_locked_c5_witness_retains_both_exterior_connections() -> None:
