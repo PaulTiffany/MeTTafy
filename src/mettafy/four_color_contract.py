@@ -124,7 +124,10 @@ class FiniteDiffusionStep:
             raise ValueError("density must have unit mass")
         n = len(density)
         return tuple(
-            sum(density[i] * self.transition[i][j] for i in range(n))
+            sum(
+                (density[i] * self.transition[i][j] for i in range(n)),
+                Fraction(0),
+            )
             for j in range(n)
         )
 
