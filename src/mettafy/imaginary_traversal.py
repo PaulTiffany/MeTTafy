@@ -20,7 +20,10 @@ def d5_elements() -> tuple[Dihedral5, ...]:
 
 
 def s4_elements() -> tuple[Permutation4, ...]:
-    return tuple(permutations(range(4)))
+    return tuple(
+        (p[0], p[1], p[2], p[3])
+        for p in permutations(range(4))
+    )
 
 
 def group_elements() -> tuple[GroupElement, ...]:
