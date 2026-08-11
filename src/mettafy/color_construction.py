@@ -71,7 +71,7 @@ class ConstructionState:
         )
 
     def admissible_colors(self, vertex: str) -> frozenset[int]:
-        """The exact construction rule A(S) = Q4 \ S."""
+        """The exact construction rule A(S) = Q4 minus S."""
 
         return PALETTE4 - self.neighbor_color_image(vertex)
 
