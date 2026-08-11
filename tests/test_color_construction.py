@@ -94,7 +94,7 @@ def test_rewrite_certificate_rejects_edge_breaking_state() -> None:
         "x": ("v3",),
     }
     graph["v3"] = graph["v3"] + ("x",)
-    before = ConstructionState(
+    ConstructionState(
         graph,
         {"v0": 0, "v1": 1, "v2": 0, "v3": 2, "v4": 3, "x": 1},
     )
