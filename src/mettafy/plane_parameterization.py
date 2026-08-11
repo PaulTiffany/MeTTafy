@@ -123,3 +123,45 @@ class FixedRegionFrontier:
             raise ValueError("signature is specific to a degree-five frontier")
         counts = sorted(self.mode_counts.values(), reverse=True)
         return (counts[0], counts[1], counts[2])
+
+    @property
+    def degree_five_singleton_edges(self) -> tuple[int, int]:
+        """The two exceptional frontier edges in the degree-five 3-1-1 law."""
+
+        if self.degree_five_signature != (3, 1, 1):
+            raise ValueError("degree-five frontier does not have the 3-1-1 signature")
+        counts = self.mode_counts
+        singletons = tuple(
+            index
+            for index, mode in enumerate(self.tangential_modes)
+            if counts[mode] == 1
+        )
+        if len(singletons) != 2:
+            raise AssertionError("3-1-1 frontier must have exactly two singleton edges")
+        return (singletons[0], singletons[1])
+
+    @property
+    def degree_five_singletons_are_adjacent(self) -> bool:
+        left, right = self.degree_five_singleton_edges
+        return (left - right) % 5 in (1, 4)
+
+    @property
+    def degree_five_exceptional_vertex(self) -> int:
+        """Unique boundary vertex where the two singleton edges meet."""
+
+        left, right = self.degree_five_singleton_edges
+        if (left + 1) % 5 == right:
+            return right
+        if (right + 1) % 5 == left:
+            return left
+        raise ValueError("singleton edges are not adjacent")
+
+    @property
+    def degree_five_dominant_run_edges(self) -> tuple[int, int, int]:
+        """The complementary three-edge run carrying one repeated frontier mode."""
+
+        singleton_set = set(self.degree_five_singleton_edges)
+        dominant = tuple(index for index in range(5) if index not in singleton_set)
+        if len(dominant) != 3:
+            raise AssertionError("degree-five frontier must have three dominant edges")
+        return (dominant[0], dominant[1], dominant[2])
