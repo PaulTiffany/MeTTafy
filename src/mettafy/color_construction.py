@@ -15,7 +15,7 @@ def _edge_set(graph: Graph) -> frozenset[tuple[str, str]]:
         for neighbor in neighbors:
             if neighbor not in graph:
                 raise ValueError(f"unknown neighbor {neighbor!r}")
-            edge = tuple(sorted((vertex, neighbor)))
+            edge = (vertex, neighbor) if vertex < neighbor else (neighbor, vertex)
             if edge[0] != edge[1]:
                 edges.add(edge)
     return frozenset(edges)
