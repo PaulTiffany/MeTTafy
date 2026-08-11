@@ -1,87 +1,103 @@
-; Track B — independent symbolic color proof program
-; This file must not import held-out Four Color proof labels as premises.
+; Track B — independent differential color proof program
+; Dependency discipline: SRMF is downstream of the continuous dynamics.
+; This file must not use four SRMF operators, held-out 4CT labels, or
+; NoStableFifthClass as premises for the terminal-rank theorem.
 
-(Theory BrowningOutColorAlgebra)
+(Theory DifferentialBrowningOutColorAlgebra)
 
-; --- sorts / terminal classes ---
-(TerminalClass q1)
-(TerminalClass q2)
-(TerminalClass q3)
-(TerminalClass q4)
+; --- foundational differential substrate ---
+(: symbolic-density (-> Atom Bool))
+(: drift-field (-> Atom Bool))
+(: laplace-beltrami (-> Atom Bool))
+(: inverse-temperature (-> Atom Bool))
+(: fokker-planck-evolves (-> Atom Bool))
+
+; Conceptual governing equation carried by the proof graph:
+; d rho / ds = - div(rho D) + beta^-1 Delta_s rho
+
+; --- graph boundary obligations ---
+(: planar-conflict-object (-> Atom Bool))
+(: indexed-edge-obligation (-> Atom Bool))
+(: obligation-preserved (-> Atom Atom Bool))
+
+; --- chromatic differential modes ---
+(: chromatic-mode (-> Atom Bool))
+(: terminal-mode (-> Atom Bool))
+(: observer-discriminable (-> Atom Bool))
+(: differential-persistent (-> Atom Bool))
+(: diffusion-survives (-> Atom Bool))
+(: contraction-survives (-> Atom Bool))
+(: boundary-compatible (-> Atom Bool))
+(: independent-mode (-> Atom Bool))
+(: composite-residue (-> Atom Bool))
+
+; Brown is residue, not a terminal color.
 (CompositeClass brown)
+(= (terminal-mode brown) False)
+(= (composite-residue brown) True)
 
-; Brown is explicitly nonterminal.
-(= (Terminal brown) False)
-(= (Composite brown) True)
+; A terminal chromatic mode must survive the upstream dynamics and all
+; external boundary obligations. Naming a mode is never sufficient.
+(= (admissible-terminal-mode $x)
+   (and (chromatic-mode $x)
+        (differential-persistent $x)
+        (diffusion-survives $x)
+        (contraction-survives $x)
+        (observer-discriminable $x)
+        (boundary-compatible $x)))
 
-; --- indexed obligations ---
-; Obligations remain distinct by identity even when endpoint values coincide.
-(: obligation-distinct (-> Atom Atom Bool))
-(= (obligation-distinct $o1 $o2) (not (== $o1 $o2)))
+; --- central theorem surface ---
+(: planar-terminal-rank-at-most-four (-> Atom Bool))
+(: differential-closure-witness (-> Atom Bool))
+(: excess-mode-browns-out (-> Atom Bool))
 
-; --- browning operator ---
-(: brown-step (-> Atom Atom))
+; IMPORTANT: this is a proof target, not an asserted theorem.
+(= (differential-four-color-target $P)
+   (and (planar-conflict-object $P)
+        (differential-closure-witness $P)
+        (planar-terminal-rank-at-most-four $P)))
 
-; Terminal idempotence.
-(= (brown-step q1) q1)
-(= (brown-step q2) q2)
-(= (brown-step q3) q3)
-(= (brown-step q4) q4)
-(= (brown-step brown) brown)
+; A nonterminal excess mode may brown out while its indexed provenance and
+; edge obligations remain auditable.
+(= (admissible-browning $x)
+   (and (chromatic-mode $x)
+        (not (admissible-terminal-mode $x))
+        (excess-mode-browns-out $x)
+        (composite-residue brown)))
 
-; Candidate fifth classes are not licensed merely by naming them.
-; They must exhibit a novel invariant stable under the full SRMF cycle.
-(: fifth-candidate (-> Atom Bool))
-(: novel-invariant (-> Atom Bool))
-(: observer-stable (-> Atom Bool))
-(: obligations-preserved (-> Atom Bool))
-(: terminal-independent (-> Atom Bool))
+; --- constructive falsifier ---
+; A genuine fifth class is a fifth independent differential mode/basin that
+; survives every upstream guard and remains boundary-compatible.
+(: fifth-mode-candidate (-> Atom Bool))
 
-(= (stable-fifth $x)
-   (and (fifth-candidate $x)
-        (novel-invariant $x)
-        (observer-stable $x)
-        (obligations-preserved $x)
-        (terminal-independent $x)))
+(= (falsifies-differential-closure $x)
+   (and (fifth-mode-candidate $x)
+        (independent-mode $x)
+        (admissible-terminal-mode $x)
+        (not (excess-mode-browns-out $x))))
 
-; --- SRMF routing predicates ---
-(: ttcs-explores (-> Atom Bool))
-(: ttpr-refines (-> Atom Bool))
-(: ttie-reexpands (-> Atom Bool))
-(: ttdc-commits (-> Atom Bool))
-(: unresolved-external-conflict (-> Atom Bool))
+; --- downstream SRMF transport only ---
+(: srmf-factorization-witness (-> Atom Bool))
+(: no-stable-fifth-class (-> Atom Bool))
 
-; Brown cannot mask unresolved external conflict.
-(= (admissible-brown $x)
-   (and (== (brown-step $x) brown)
-        (obligations-preserved $x)
-        (or (not (unresolved-external-conflict $x))
-            (ttie-reexpands $x))))
+; NoStableFifthClass may be derived only after the differential closure proof.
+(= (derived-no-stable-fifth-class $P)
+   (and (differential-four-color-target $P)
+        (srmf-factorization-witness $P)
+        (no-stable-fifth-class $P)))
 
-; --- proof target ---
-; The target rule is intentionally conditional on an algebraic closure witness.
-; MeTTa must not assert closure by fiat.
-(: contracts-to-existing (-> Atom Bool))
-(: contracts-to-brown (-> Atom Bool))
-(: algebraic-closure-witness (-> Atom Bool))
-
-(= (no-stable-fifth-class $x)
-   (and (fifth-candidate $x)
-        (algebraic-closure-witness $x)
-        (or (contracts-to-existing $x)
-            (and (contracts-to-brown $x)
-                 (admissible-brown $x)))))
-
-; A genuine counterexample to this proof route must survive every guard.
-(= (falsifies-browning-proof $x)
-   (and (stable-fifth $x)
-        (not (contracts-to-existing $x))
-        (not (contracts-to-brown $x))))
+; Forbidden dependency pattern, recorded for validator implementation:
+;   SRMFFourOperators -> PlanarTerminalRankAtMostFour
+; Forbidden:
+;   NoStableFifthClass -> PlanarTerminalRankAtMostFour
+; Allowed:
+;   FokkerPlanck + PlanarBoundary + DifferentialClosureWitness
+;       -> PlanarTerminalRankAtMostFour
+;       -> BrowningOut
+;       -> SRMFFactorization
+;       -> NoStableFifthClass
 
 ; Intended queries:
-; !(match &self (no-stable-fifth-class $x) $x)
-; !(match &self (falsifies-browning-proof $x) $x)
-;
-; The current file defines the proof surface. Subsequent tranches must supply
-; planar conflict instances and algebraic closure witnesses rather than
-; importing the Four Color conclusion.
+; !(match &self (differential-four-color-target $P) $P)
+; !(match &self (falsifies-differential-closure $x) $x)
+; !(match &self (derived-no-stable-fifth-class $P) $P)
