@@ -1,9 +1,9 @@
-# Algebraic Four Color Proof — Contract-Preserving Form
+# Algebraic Four Color Proof — Direct Construction Form
 
 **Track:** B — independent of the held-out Rocq proof.  
-**Status:** candidate constructive proof with mechanically exposed closure obligations; no hidden use of 4CT is permitted.
+**Status:** candidate algebraic proof program with an explicit unresolved closure theorem. No claim of a completed Four Color proof is made here.
 
-## 1. Fixed theorem species
+## 1. The theorem species
 
 For a finite planar graph `G=(V,E)`, let
 
@@ -11,271 +11,238 @@ For a finite planar graph `G=(V,E)`, let
 Q_4=\{0,1,2,3\}
 \]
 
-and let the exact terminal witness be
+and let
 
 \[
-W_G(c):=\bigwedge_{uv\in E} c(u)\ne c(v).
+W_G(c):=\bigwedge_{uv\in E} c(u)\ne c(v)
 \]
 
-The theorem to establish is
+be the exact terminal edge witness. The target theorem is
 
 \[
 \forall G\in\mathrm{Planar}_{\mathrm{fin}},\quad
 \exists c:V(G)\to Q_4\; W_G(c).
 \]
 
-The proof must keep three mathematical species distinct.
+Construction, bounded observation, and terminal decode are distinct species. Brown observation and completed-map facts are never proof authority for a construction transition.
 
-### Construction state
+## 2. Contract discipline
 
-A construction state `K` is a partial committed coloring together with the exact graph and edge ledger. Uncolored regions are absent from the committed coloring; they are not assigned a fuzzy terminal value.
+Every proposed proof transformation must retain the actual graph, the committed coloring, and the indexed edge ledger. A transformation is not admitted merely because it looks analogous to a Principia operator or because it succeeds on an isolated pentagon.
 
-For an uncolored region `v`, let
+In particular:
 
-\[
-S_K(v)=\{c(u):u\sim v,\;u\text{ already committed}\}.
-\]
+1. local algebra may identify a candidate move but cannot erase exterior connectivity;
+2. a modal transfer from another carrier is proof-relevant only after cyclic order, adjacency, operator action, and required invariants are explicitly preserved;
+3. exact component swaps are valid graph morphisms and may be used as mechanical witnesses/falsifiers;
+4. exhaustive computation may expose or refute a lemma but may not substitute for the missing algebraic implication;
+5. a locked exterior is retained as evidence, not collapsed into a local picture.
 
-Its directly admissible terminal colors are exactly
+This is the Four Color specialization of the Lipschitz Contract: expansion is admissible only when the witness boundary is preserved or explicitly enlarged.
 
-\[
-\boxed{A_K(v)=Q_4\setminus S_K(v).}
-\]
+## 3. The actual degree-five construction state
 
-Thus adjacency restricts the possible new color space from inside the existing four-color palette.
-
-### Brown observer projection
-
-A bounded observer may see an unresolved or composite state as **brown**. Brown is a projection of construction state, not a construction color:
+Let `v` be an uncommitted degree-five vertex after deleting it from a planar triangulation, and let its committed neighbors appear in cyclic order
 
 \[
-B_O:\mathcal K(G)\to\mathcal B_O.
+C=(c_0,c_1,c_2,c_3,c_4).
 \]
 
-`B_O` may be many-to-one. Different construction histories may therefore have the same brown observation. Brown cannot determine or authorize the next construction move without additional retained witness information.
-
-### Terminal decode
-
-Only a complete construction state may be decoded to the view-from-nowhere coloring:
+The center has exactly
 
 \[
-D:\mathcal K_{\mathrm{terminal}}(G)\to\operatorname{Col}_4(G).
+A(v)=Q_4\setminus\{c_0,c_1,c_2,c_3,c_4\}
 \]
 
-At this level there is no brown and no unresolved traversal. There is only a proper `Q4` coloring satisfying `W_G`.
+as its direct admissible color set.
 
-## 2. Lipschitz Contract as meta-law
+If the boundary uses at most three colors, `A(v)` is nonempty and the construction extends immediately. The hard case is therefore a proper `C5` boundary using all four colors.
 
-Every proof transformation must preserve the theorem species and direction of authority:
-
-1. **construction first** — traversal acts on `K`, not on its brown projection;
-2. **exact witness preservation** — inherited indexed edge obligations remain explicit and exact;
-3. **bounded realization** — in the declared construction metric,
-   \[
-   d(TK,TK')\le L_T d(K,K'),\qquad L_T<\infty;
-   \]
-4. **observer non-authority** — no fact derived solely from `B_O(K)` may establish a construction transition unless an explicit witness-preserving map back to construction state is supplied;
-5. **terminal non-circularity** — no property of the completed four-colored map may be used upstream to define the traversal law;
-6. **certificate composition** — an existing construction certificate is transported/refined, never silently replaced;
-7. **authority preservation** — no Four Color conclusion, held-out Rocq label, SRMF chart cardinality, or exhaustive enumeration may be introduced upstream as proof authority.
-
-## 3. Traversal/coloration algebra
-
-Let `I` denote the Four-Color construction traversal operator. This is distinct from Principia's ordinary complex phase unit.
-
-The proposed chromatic law is exact nilpotency index four:
+Every saturated proper `C5` has multiplicity pattern
 
 \[
-I^3\ne0,\qquad I^4=0.
+2+1+1+1.
 \]
 
-Equivalently, the cyclic construction module generated from a seed has four nonzero stages before annihilation:
+After cyclic relabeling it has the role form
 
 \[
-e_0,\; Ie_0,\; I^2e_0,\; I^3e_0,\; I^4e_0=0.
+A\;B\;A\;C\;D.
 \]
 
-This establishes an algebraic ceiling of four independent traversal levels. It does **not** by itself prove that every graph-level dependency can be realized as a legal recoloring.
+The repeated color `A` is not an extra assumption; it is forced by five boundary positions and four terminal colors.
 
-The construction law therefore consists of both:
+## 4. Direct V4 defect calculus on C5
 
-- the index-four traversal algebra; and
-- the exact adjacency complement `A_K(v)=Q_4\setminus S_K(v)`.
-
-## 4. Plane parameterization as a discrete calculus
-
-Fix one already colored region as a local reference state. Relative to that region, every adjacent region must lie in the three-color complement. Encode the four absolute colors as the Klein four group `V4`; then the three admissible relative differences are exactly the three nonzero `V4` elements.
-
-For a cyclic frontier with colors `q_0,...,q_{n-1}`, define the discrete frontier derivative
+Encode the four terminal colors by the Klein four group `V4`. For the actual boundary `C`, define the discrete derivative
 
 \[
-\delta_i=q_i-q_{i+1}\in V_4\setminus\{0\}.
+\delta_i=c_{i+1}-c_i\in V_4\setminus\{0\},
+\qquad i\pmod 5.
 \]
 
-Closure of the frontier gives the telescoping integrability law
+Because the cycle closes,
 
 \[
-\sum_i \delta_i=0.
+\sum_{i=0}^{4}\delta_i=0.
 \]
 
-If `n_1,n_2,n_3` count the three nonzero frontier modes, then `V4` closure implies
+If the three nonzero `V4` modes occur with multiplicities `n_1,n_2,n_3`, closure implies
 
 \[
 n_1\equiv n_2\equiv n_3\pmod 2.
 \]
 
-This is the first layer of the discrete calculus: local state change is not arbitrary; it is parameterized by a closed planar frontier.
-
-### Degree-five corner law
-
-For a degree-five frontier, the parity law and `n_1+n_2+n_3=5` force
+Since their total is five,
 
 \[
-(n_1,n_2,n_3)=(3,1,1)
+\boxed{(n_1,n_2,n_3)=(3,1,1)}
 \]
 
-up to permutation.
+for every proper `C5`, not merely for a fixed colored-center surrogate.
 
-Moreover, on every proper three-color `C5` frontier, the two singleton transition edges are adjacent. Therefore there is a unique boundary vertex where the two exceptional transition modes meet, and the remaining three frontier edges carry one dominant mode.
-
-This gives a canonical local shape without recoloring search:
-
-```text
-three-edge dominant continuation run
-        +
-one exceptional two-edge corner
-```
-
-The exceptional corner is a geometrically distinguished **inspection locus**. It is not yet a proven recoloring locus.
-
-## 5. Bounded planar continuation
-
-The second layer of the calculus is integrability of proposed state continuations in the plane.
-
-Consider two simple continuation arcs inside a disk whose endpoints lie on one cyclic boundary. If their endpoint pairs alternate in cyclic order, then the arcs are forced to intersect. If the endpoint pairs do not alternate, cyclic order alone does not force an intersection.
-
-Thus a primitive obstruction can be expressed without metric geometry:
+The position of the two singleton derivative modes exactly distinguishes the two boundary species:
 
 \[
-\boxed{\text{alternating boundary endpoints}\Rightarrow\text{forbidden intersection}.}
+\boxed{\text{singleton derivative edges adjacent}\iff |\operatorname{im}(C)|=3}
 \]
 
-A continuation is therefore operationally admissible only while it preserves the existing cyclic order/incidence relations and does not force an intersection with an already retained trajectory.
-
-This matches the red-team model:
-
-- a state may continue arbitrarily far when nothing constrains it;
-- deflection is admissible while cyclic order remains integrable;
-- obstruction occurs when the demanded continuation would violate bounded planar coexistence.
-
-Length itself is not the scarce resource. Planar incidence is.
-
-## 6. Exact component traversals remain verification tools
-
-A two-color component traversal is an exact graph morphism on construction state. Choose two terminal colors `a,b`, take one connected component of the subgraph induced by vertices colored `a` or `b`, and exchange `a<->b` on that entire component.
-
-Every committed edge remains valid, so such traversals compose exactly. They remain useful as mechanical witnesses and falsifiers.
-
-However, component traversal search is no longer the source calculus. The source calculus is now:
+and
 
 \[
-\text{frontier derivative}
-+\text{cyclic closure}
-+\text{noncrossing integrability}.
+\boxed{\text{singleton derivative edges separated}\iff |\operatorname{im}(C)|=4}.
 \]
 
-A graph-level component move is admissible as proof authority only when it is derived from, or explicitly mapped back to, that planar continuation structure.
-
-## 7. Remaining constructive obligation
-
-The theorem-specific missing map is now more precise.
-
-### Planar Continuation Closure
-
-For every saturated degree-five construction state `K` occurring in a finite planar graph, let its fixed-region frontier induce the `3,1,1` transition signature and unique exceptional corner. The planar continuation calculus must determine a finite ledger-preserving construction rewrite
+Thus the degree-five extension problem can be written as a defect-transport problem:
 
 \[
-K\xrightarrow{T}K'
+\text{separated singleton derivative modes}
+\longrightarrow
+\text{adjacent singleton derivative modes}.
+\]
+
+When the singletons become adjacent, the boundary is automatically a three-color `C5`, so the center has exactly one available terminal color.
+
+This is an algebraic reparameterization of the real hard boundary, not a completed proof of transport.
+
+## 5. The two candidate one-step openings
+
+For a saturated role word
+
+\[
+A\;B\;A\;C\;D,
+\]
+
+there are two distinguished two-color separations at the boundary level:
+
+\[
+\{B,C\}
+\qquad\text{and}\qquad
+\{B,D\}.
+\]
+
+If `B` and `C` lie in different connected components of the subgraph induced by colors `{B,C}`, swapping the component containing `B` opens the center. Likewise for `{B,D}`.
+
+Therefore the one-step branch is exact:
+
+- if at least one candidate pair is exterior-disconnected, there is a ledger-preserving opening component traversal;
+- if both candidate pairs are exterior-connected, the local pentagon is **locked** against every one-step opening of this type.
+
+The repository contains both positive and negative mechanical witnesses for this distinction.
+
+## 6. Genuine planar lock and why local flattening is invalid
+
+A planar saturated degree-five construction can realize both required exterior continuations simultaneously. In that state the center has no direct color and no one-step two-color component swap opens one.
+
+This matters mathematically. It refutes the flat claim that cyclic order around the pentagon alone forces defect coalescence.
+
+The exterior connectivity is part of the proof witness. When both candidate continuations exist, the admissible proof state must expand from the five-edge boundary to include the continuation paths that certify the lock.
+
+This is the constructive meaning of bounded witness expansion:
+
+\[
+\boxed{\text{local lock}\Rightarrow\text{enlarge the retained boundary witness}.}
+\]
+
+A proof that discards those paths and reasons only on the pentagon violates the contract.
+
+## 7. Principia machinery that survives direct transfer
+
+The relevant Principia structure is directional transformation followed by bounded refinement:
+
+\[
+E_\lambda=R_\lambda\circ D_\lambda.
+\]
+
+For Four Color construction this can only be used as an architecture, not as imported theorem authority:
+
+- `D` corresponds to extending a currently legal continuation of the retained coloring relation;
+- `R` corresponds to a refinement forced when continuation meets an already retained planar relation;
+- the refinement must preserve the graph ledger and cyclic incidence exactly.
+
+Principia's chromatic transference result is useful only for its explicit invariant discipline: cyclic order and adjacency must survive carrier changes. Its imaginary traversal and observer-bounded curvature remain heuristic/research machinery unless an exact map to graph construction states is supplied.
+
+Accordingly, the fixed-colored-region model is retained only as a red-team visualization. It is not a premise of the hard degree-five proof.
+
+## 8. The remaining theorem: Witness-Expansion Closure
+
+The missing theorem is now more exact than the earlier desaturation or coalescence slogans.
+
+### Witness-Expansion Closure
+
+Let `K` be a saturated degree-five construction state with boundary role word `A B A C D`.
+
+Either:
+
+1. one of the two candidate exterior separations `{B,C}` or `{B,D}` is disconnected, yielding an exact one-step opening; or
+2. both are connected, yielding a retained planar lock witness.
+
+In the locked branch, there must exist a finite sequence of witness expansions and exact ledger-preserving construction transformations
+
+\[
+(K,W_0)\to(K_1,W_1)\to\cdots\to(K_m,W_m)
 \]
 
 such that:
 
-1. the graph is unchanged;
-2. every committed edge obligation remains satisfied;
-3. the center remains uncommitted during the rewrite;
-4. `T` is justified by the frontier derivative and noncrossing continuation law, not by search over completed colorings;
-5. the final neighbor-color image satisfies
-   \[
-   |S_{K'}(v)|\le3;
-   \]
-   and hence `A_{K'}(v)` is nonempty;
-6. the construction distortion is finite and explicitly bounded.
+- every `W_i` contains the boundary and every continuation relation used to justify the next step;
+- no step removes an inherited edge obligation;
+- no step imports a completed four-coloring as authority;
+- expansion is finite and bounded by an explicit planar/algebraic measure;
+- the terminal construction state has a three-color neighbor image at the original focus vertex.
 
-The new ingredients narrow the target substantially, but they do **not** yet prove this closure theorem. In particular:
+This theorem is **not yet proved**.
 
-- `3,1,1` alone does not imply recolorability;
-- adjacency of the singleton modes alone does not imply recolorability;
-- non-alternating endpoints alone do not construct the required graph rewrite;
-- component-swap availability cannot be imported as proof authority unless tied back to the continuation calculus.
+Its hard content is the locked branch. The problem is no longer to invent a local recoloring; it is to identify the planar/algebraic quantity that makes indefinite witness expansion impossible.
 
-The next proof step is exactly the map from the exceptional corner plus surrounding planar continuation relations to a legal construction rewrite.
+## 9. What a successful algebraic proof still needs
 
-## 8. Brown belongs only to observation
+A completed Track-B proof requires all of the following:
 
-Brown remains useful for Principia's bounded-observer account. A construction state may project to brown when provenance or unresolved alternatives are compressed:
+1. the direct `V4` C5 calculus above;
+2. the exact one-step opening criterion;
+3. a classification of the retained continuation structure in the locked branch;
+4. a monotone or nilpotent quantity on witness expansion that cannot cycle forever;
+5. a proof that termination opens the original center rather than merely moving the obstruction;
+6. global minimal-counterexample induction once Witness-Expansion Closure is established;
+7. a no-hidden-4CT dependency audit.
 
-\[
-K\xrightarrow{B_O}\mathrm{brown}.
-\]
+The index-four nilpotent construction algebra remains a candidate for item 4, but it is not promoted until its action on the **expanded planar witness**, rather than on a four-state toy module, is explicitly defined.
 
-But the constructive proof path is
+## 10. Certification boundary
 
-\[
-K_0\xrightarrow{T_1}K_1\xrightarrow{T_2}\cdots\xrightarrow{T_n}K_n,
-\]
+The repository may currently certify:
 
-not
+- exact construction-state edge preservation;
+- direct admissible-color complement;
+- direct proper-C5 `V4` derivative closure;
+- the `3,1,1` derivative law;
+- exact X3/X4 classification by singleton-defect adjacency;
+- the two candidate one-step opening pairs;
+- positive opening witnesses;
+- a genuinely planar one-step locked negative witness;
+- observer/terminal/dependency separation.
 
-\[
-\mathrm{brown}\to\text{new terminal color}.
-\]
+It may **not** yet certify a Four Color proof.
 
-The observer path and construction path may coexist, but authority flows only from construction witnesses to observer descriptions, not backward.
-
-## 9. Terminal completion
-
-If construction traversal reaches a complete state `K_T`, terminal decoding is sound exactly when the full edge ledger holds:
-
-\[
-D(K_T)=c\in\operatorname{Col}_4(G),
-\qquad W_G(c)=\mathrm{true}.
-\]
-
-The completed four-color map certifies the result. It does not explain or define the traversal that constructed it.
-
-## 10. Global induction once continuation closure is proved
-
-Assume Planar Continuation Closure.
-
-Let `G` be a minimal planar counterexample. By the planar degree bound, `G` has a vertex `v` of degree at most five. Remove `v` and construct a valid four-coloring of `G-v` by minimality.
-
-- If the committed neighbor image of `v` uses at most three colors, `A_K(v)` is nonempty and `v` is committed directly.
-- If `v` has degree five and the boundary uses all four colors, apply Planar Continuation Closure. The rewrite produces `K'` with at most three visible neighbor colors, so `A_{K'}(v)` is nonempty. Commit `v` with any color in that complement.
-
-The resulting complete construction contradicts minimality. Therefore no minimal counterexample exists.
-
-This induction is valid only after Planar Continuation Closure is independently established.
-
-## 11. Certification boundary
-
-Mechanical success means the checked-in construction algebra and species boundaries obey their declared contract. A full theorem certificate additionally requires an algebraic proof of Planar Continuation Closure for every admissible saturated planar degree-five construction state.
-
-A valid counterexample to this proof route must preserve the theorem species and exhibit one of:
-
-- a saturated planar construction state whose exceptional-corner continuation structure admits no ledger-preserving desaturation;
-- a lost inherited edge obligation;
-- an unavoidable fifth independently terminal construction mode;
-- unbounded required construction distortion/exhausted reserve; or
-- circular authority in the proof dependency graph.
-
-Brown projection and completed-map viewpoints remain valuable for Principia Symbolica, but neither is permitted to masquerade as the coloration construction itself.
+A full theorem certificate begins only when Witness-Expansion Closure is proved for the locked branch without erasing the exterior continuation witness.
