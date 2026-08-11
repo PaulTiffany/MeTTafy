@@ -30,6 +30,18 @@ def test_every_proper_degree_five_three_color_frontier_has_311_mode_signature() 
     assert signatures == {(3, 1, 1)}
 
 
+def test_degree_five_singleton_modes_always_meet_at_one_exceptional_vertex() -> None:
+    for boundary in product((1, 2, 3), repeat=5):
+        if not plane.proper_cycle(boundary):
+            continue
+        frontier = plane.FixedRegionFrontier(center_color=0, boundary=boundary)
+        left, right = frontier.degree_five_singleton_edges
+        assert frontier.degree_five_singletons_are_adjacent
+        vertex = frontier.degree_five_exceptional_vertex
+        assert vertex in {(left + 1) % 5, (right + 1) % 5}
+        assert len(frontier.degree_five_dominant_run_edges) == 3
+
+
 def test_forbidden_degree_five_mode_splits_do_not_occur() -> None:
     forbidden = {(5, 0, 0), (4, 1, 0), (3, 2, 0), (2, 2, 1)}
     observed: set[tuple[int, int, int]] = set()
