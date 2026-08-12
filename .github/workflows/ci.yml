@@ -42,6 +42,9 @@ jobs:
           python scripts/validate_witness_registry.py
           python scripts/validate_audience_interface_program.py
 
+      - name: Enforce Four Color ontology boundary
+        run: python scripts/validate_four_color_ontology.py
+
       - name: Lint
         run: ruff check .
 

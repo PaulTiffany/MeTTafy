@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping
+from typing import ClassVar, Mapping
+
+from mettafy.four_color_ontology import FOUR_COLOR_SURFACE_GENUS, FOUR_COLOR_SURFACE_NAME
 
 PALETTE4 = frozenset({0, 1, 2, 3})
 Graph = Mapping[str, tuple[str, ...]]
@@ -23,13 +25,15 @@ def _edge_set(graph: Graph) -> frozenset[tuple[str, str]]:
 
 @dataclass(frozen=True)
 class ConstructionState:
-    """A partial *construction* state, not an observer projection.
+    """A partial construction state in the fixed Four Color surface species.
 
-    ``coloring`` contains only assignments already committed by the
-    construction.  Every committed edge obligation is exact.  Uncolored
-    vertices remain absent from ``coloring`` rather than being represented by
-    a fuzzy or brown terminal value.
+    The surface species is fixed at genus zero and is intentionally not a state
+    parameter. ``coloring`` contains only assignments already committed by the
+    construction. Every committed edge obligation is exact.
     """
+
+    surface_name: ClassVar[str] = FOUR_COLOR_SURFACE_NAME
+    surface_genus: ClassVar[int] = FOUR_COLOR_SURFACE_GENUS
 
     graph: Graph
     coloring: Coloring
@@ -71,7 +75,7 @@ class ConstructionState:
         )
 
     def admissible_colors(self, vertex: str) -> frozenset[int]:
-        """The exact construction rule A(S) = Q4 minus S."""
+        """The exact construction observable A(v) = Q4 minus c(N(v))."""
 
         return PALETTE4 - self.neighbor_color_image(vertex)
 
@@ -87,12 +91,7 @@ class ConstructionState:
 
 @dataclass(frozen=True)
 class BrownObservation:
-    """A deliberately coarse bounded-observer projection.
-
-    This object is many-to-one by design: it records support and resolution
-    counts, not construction provenance.  Consequently it may describe what
-    an observer sees, but it cannot authorize a construction transition.
-    """
+    """A deliberately coarse bounded-observer projection."""
 
     terminal_support: frozenset[int]
     committed_vertices: int
@@ -111,7 +110,7 @@ def brown_projection(state: ConstructionState) -> BrownObservation:
 
 
 def terminal_decode(state: ConstructionState) -> dict[str, int]:
-    """Return the view-from-nowhere four-color map only at completion."""
+    """Return the four-color map only after every vertex is committed."""
 
     if not state.complete:
         raise ValueError("terminal decode requires a completed construction")
@@ -122,13 +121,7 @@ def terminal_decode(state: ConstructionState) -> dict[str, int]:
 
 @dataclass(frozen=True)
 class TraversalRewriteCertificate:
-    """A graph-level construction rewrite, independent of brown observation.
-
-    The rewrite may recolor already committed vertices, but it must preserve
-    the graph, the committed vertex set, and every exact edge obligation.  Its
-    specific purpose here is to expose whether a saturated focus vertex gains
-    at least one admissible terminal color after the rewrite.
-    """
+    """A graph-level construction rewrite certified by exact observables."""
 
     before: ConstructionState
     after: ConstructionState
@@ -147,11 +140,11 @@ class TraversalRewriteCertificate:
         return self.focus not in self.before.coloring and self.focus not in self.after.coloring
 
     @property
-    def source_saturated(self) -> bool:
+    def source_has_zero_focus_slack(self) -> bool:
         return not self.before.admissible_colors(self.focus)
 
     @property
-    def target_open(self) -> bool:
+    def target_has_focus_slack(self) -> bool:
         return bool(self.after.admissible_colors(self.focus))
 
     @property
@@ -162,6 +155,6 @@ class TraversalRewriteCertificate:
             and self.focus_uncommitted
             and self.before.committed_edges_valid
             and self.after.committed_edges_valid
-            and self.source_saturated
-            and self.target_open
+            and self.source_has_zero_focus_slack
+            and self.target_has_focus_slack
         )
