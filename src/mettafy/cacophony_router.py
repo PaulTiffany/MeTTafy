@@ -228,10 +228,10 @@ def route_focus_slack_within_two_stages(
     for parameter in current:
         stage = apply_graph_native_dual_stage(parameter, history)
         if stage.target_has_focus_slack:
-            route = OneStageFocusSlackRoute(embedding, history, stage)
-            if not route.valid:
+            direct_route = OneStageFocusSlackRoute(embedding, history, stage)
+            if not direct_route.valid:
                 raise AssertionError("direct focus-slack route failed certification")
-            return route
+            return direct_route
 
     # Pivot regime: current controls are lawful but none directly changes the
     # focus observable.  Execute only one simulated/current pivot at a time,
@@ -257,16 +257,16 @@ def route_focus_slack_within_two_stages(
             )
             if not second.target_has_focus_slack:
                 continue
-            route = TwoStageFocusSlackRoute(
+            staged_route = TwoStageFocusSlackRoute(
                 embedding=embedding,
                 before_history=history,
                 first=first,
                 rebased=rebased,
                 second=second,
             )
-            if not route.valid:
+            if not staged_route.valid:
                 raise AssertionError("two-stage focus-slack route failed certification")
-            return route
+            return staged_route
 
     return None
 
