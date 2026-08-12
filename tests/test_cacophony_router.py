@@ -39,6 +39,18 @@ def _add_edge(adjacency: dict[str, set[str]], left: str, right: str) -> None:
     adjacency[right].add(left)
 
 
+def _boundary_colors_fit_triangulation(
+    disk_faces: tuple[Face, Face, Face],
+    boundary_colors: tuple[int, int, int, int, int],
+) -> bool:
+    coloring = dict(zip(BOUNDARY, boundary_colors))
+    return all(
+        coloring[vertex] != coloring[face[(index + 1) % 3]]
+        for face in disk_faces
+        for index, vertex in enumerate(face)
+    )
+
+
 def pentagon_embedding(
     disk_faces: tuple[Face, Face, Face],
     boundary_colors: tuple[int, int, int, int, int],
@@ -88,13 +100,13 @@ def test_boundary_only_triangulated_disks_route_in_at_most_two_stages() -> None:
 
     for disk_faces in PENTAGON_TRIANGULATIONS:
         for boundary_colors in saturated_boundary_words():
-            embedding = pentagon_embedding(disk_faces, boundary_colors)
             # A saturated C5 word need not satisfy the two diagonals of this
-            # particular triangulation. Only exact committed colorings belong
-            # to the construction species for this embedded carrier.
-            if not embedding.state.committed_edges_valid:
+            # particular triangulation. Reject it before ConstructionState so
+            # the exact edge-ledger invariant remains fail-fast everywhere.
+            if not _boundary_colors_fit_triangulation(disk_faces, boundary_colors):
                 continue
 
+            embedding = pentagon_embedding(disk_faces, boundary_colors)
             assert embedding.valid
             compatible += 1
             history = graph_native_witness_state(embedding.state)
