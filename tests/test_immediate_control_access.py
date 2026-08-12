@@ -11,7 +11,6 @@ from mettafy.construction_control_surface import (
 )
 from mettafy.plane_parameterization import proper_cycle
 
-
 BOUNDARY = ("a", "b", "c", "d", "e")
 
 
