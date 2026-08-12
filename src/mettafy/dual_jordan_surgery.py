@@ -8,13 +8,23 @@ from mettafy.c5_defect_calculus import C5DefectState
 from mettafy.dual_path_switching import (
     AlternatingPathSwitchCertificate,
     certify_alternating_path_switch,
-    dual_pairing_signature,
     disk_primal_edges,
+    dual_pairing_signature,
     selected_dual_primal_edges,
 )
-from mettafy.plane_dual_control import DegreeFiveTriangulatedEmbedding, DualDomainParameter, Edge, Pair
+from mettafy.plane_dual_control import (
+    DegreeFiveTriangulatedEmbedding,
+    DualDomainParameter,
+    Edge,
+    Pair,
+)
 from mettafy.plane_dual_pairing import DegreeFiveDualPairing
-from mettafy.plane_parameterization import NONZERO_MODES, V4, color_difference, frontier_modes
+from mettafy.plane_parameterization import (
+    NONZERO_MODES,
+    V4,
+    color_difference,
+    frontier_modes,
+)
 
 SurgeryCase: TypeAlias = Literal["endpoint_slide", "interlaced_pair"]
 
