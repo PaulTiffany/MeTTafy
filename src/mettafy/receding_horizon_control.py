@@ -117,10 +117,10 @@ def audit_control_component(
     if focus in initial.coloring:
         raise ValueError("focus must remain uncommitted during control audit")
     if initial.admissible_colors(focus):
-        certificate = FocusSlackPathCertificate(initial, focus, ())
-        if not certificate.valid:
+        path_certificate = FocusSlackPathCertificate(initial, focus, ())
+        if not path_certificate.valid:
             raise AssertionError("initial focus slack failed exact certification")
-        return certificate
+        return path_certificate
 
     initial_key = state_key(initial)
     states: dict[StateKey, ConstructionState] = {initial_key: initial}
@@ -141,21 +141,21 @@ def audit_control_component(
                 parent[target_key] = (source_key, move)
                 if after.admissible_colors(focus):
                     moves = _reconstruct_moves(initial_key, target_key, parent)
-                    certificate = FocusSlackPathCertificate(initial, focus, moves)
-                    if not certificate.valid:
+                    path_certificate = FocusSlackPathCertificate(initial, focus, moves)
+                    if not path_certificate.valid:
                         raise AssertionError("reconstructed focus-slack path is invalid")
-                    return certificate
+                    return path_certificate
                 queue.append(target_key)
 
-    certificate = SlacklessControlComponentCertificate(
+    component_certificate = SlacklessControlComponentCertificate(
         initial=initial,
         focus=focus,
         states=tuple(states.values()),
         transitions=tuple(transitions),
     )
-    if not certificate.valid:
+    if not component_certificate.valid:
         raise AssertionError("exhaustive slackless control component is invalid")
-    return certificate
+    return component_certificate
 
 
 def _reconstruct_moves(
