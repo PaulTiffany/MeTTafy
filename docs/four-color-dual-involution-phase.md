@@ -167,3 +167,51 @@ The candidate survives this first adversarial witness. It is **not yet a
 general planar theorem**. The next work is to derive or kill the boxed
 existential statement on arbitrary trivalent dual disks, using how a matching
 path switch conjugates/rewires the ordered partial involutions.
+
+## 6. Proper-color-preserving flip-family falsifier
+
+To attack the candidate beyond a single hand-selected carrier, the mechanical
+suite now traverses the complete color-preserving diagonal-flip component of
+the three-interior witness coloring.
+
+The flips are used **only to generate distinct planar theorem instances**.
+They are not coloration construction controls and do not enlarge the allowed
+state transition vocabulary.
+
+That component contains exactly
+
+\[
+154
+\]
+
+valid triangulated pentagonal disks with the same committed coloring. Their
+current control regimes split as
+
+\[
+128\text{ direct},\qquad 26\text{ pivot}.
+\]
+
+The 26 pivot instances have phase-fragment ranks
+
+\[
+\{9^{\times 12},\,
+  11^{\times 6},\,
+  12^{\times 3},\,
+  13^{\times 2},\,
+  10^{\times 2},\,
+  14^{\times 1}\}.
+\]
+
+For every one of those 26 pivot instances, exhaustive evaluation of all four
+current graph-derived dual parameters found at least one certified successor
+satisfying
+
+\[
+\operatorname{Direct}(Tz)
+\quad\text{or}\quad
+\Phi(Tz)<\Phi(z).
+\]
+
+Thus the candidate survives an entire nontrivial flip-connected family that
+includes the original pivot-to-pivot counterexample. This is stronger
+falsification evidence, not a substitute for the universal planar derivation.
