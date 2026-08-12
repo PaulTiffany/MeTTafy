@@ -1,13 +1,15 @@
 {
   "schema": "mettafy-four-color-algebraic-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "track": "B-independent",
   "canonical_proof": "docs/four-color-algebraic-proof.md",
   "governing_contract": "docs/four-color-lipschitz-contract.md",
-  "claim_boundary": "The checked-in algebraic proof surface fixes the Four Color theorem species, exposes Contract Expansion Closure as the sole theorem-specific global closure obligation, and provides multiple independent mechanical witnesses for dependency hygiene, boundary preservation, finite diffusion/browning behavior, and exhaustive degree-five boundary classification.",
+  "claim_boundary": "The checked-in algebraic proof surface fixes the Four Color theorem species, exposes Contract Expansion Closure as the sole theorem-specific global closure obligation, and provides independent mechanical witnesses for dependency hygiene, boundary preservation, finite diffusion/browning behavior, exhaustive degree-five boundary classification, and compelled finite staging without promoting stage exhaustion into theorem closure.",
   "non_claims": [
     "The certification manifest alone proves the Four Color Theorem",
     "Finite-instance enumeration substitutes for Contract Expansion Closure",
+    "A supplied finite stage universe is complete for every locked planar state",
+    "Stage exhaustion implies that the original degree-five center opens",
     "Four SRMF operators imply four colors",
     "Held-out Rocq proof authority is used upstream",
     "Brown is a fifth terminal color"
@@ -61,6 +63,19 @@
       }
     },
     {
+      "id": "WIT-COMPELLED-STAGING",
+      "kind": "finite-witness-expansion-progress",
+      "implementation": "src/mettafy/witness_expansion.py",
+      "tests": ["tests/test_witness_expansion.py"],
+      "checks": [
+        "each progress stage preserves and strictly enlarges the retained witness",
+        "each progress stage consumes exactly one fresh certificate from a caller-supplied finite stage universe",
+        "replaying a consumed reversible stage is rejected as progress",
+        "stage exhaustion is reported without asserting center opening or theorem closure"
+      ],
+      "claim": "Conditional on a supplied finite universe of concrete admissible stage certificates, compelled staging has a well-founded remaining-stage rank. Completeness and non-stranding of that universe remain theorem obligations."
+    },
+    {
       "id": "WIT-FOUR-STABLE-FIVE-ROUTES",
       "kind": "observer-critical-exact-arithmetic",
       "implementation": "src/mettafy/fifth_class.py",
@@ -78,11 +93,13 @@
       "diffusion_mass_preserved": true,
       "dependency_guard_examples": "pass"
     },
-    "limitation": "The current runtime could not resolve github.com for a fresh git clone, so exact branch pytest execution remains pending; no GitHub Actions run was triggered."
+    "limitation": "The compelled-staging tranche is committed for CI validation; its new tests are designed to certify only the conditional finite-stage progress law, not Witness-Expansion Closure."
   },
   "promotion_gate": {
     "required_for_full_theorem_certificate": [
       "complete finite-planar generator calculus",
+      "graph-derived complete stage universe for every locked witness-expansion state",
+      "fresh-stage availability or equivalent nilpotent action until the original center opens",
       "mechanically accepted contract-preserving local T_e witness for every generator case",
       "composition/termination proof",
       "exact final coloring certificate validation",
