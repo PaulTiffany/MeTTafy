@@ -11,7 +11,7 @@ from mettafy.graph_native_staging import (
 from mettafy.plane_dual_control import DualDomainParameter
 from mettafy.witness_expansion import GraphNativeWitnessExpansionState
 
-DecisionKind: TypeAlias = Literal["change_direction", "stop"]
+DecisionKind: TypeAlias = Literal["change_direction", "commit_focus"]
 
 
 def construction_hamming_distance(
@@ -31,12 +31,7 @@ def construction_hamming_distance(
 
 @dataclass(frozen=True)
 class ChangeDirectionAction:
-    """One chosen nonzero dual control and exactly one realized successor state.
-
-    Counterfactual siblings are not coordinates of this object.  A state may
-    have several currently permitted parameters, but one realized choice acts
-    on exactly one affected construction state.
-    """
+    """One chosen nonzero dual control and exactly one realized successor state."""
 
     parameter: DualDomainParameter
     before_history: GraphNativeWitnessExpansionState
@@ -112,8 +107,13 @@ def realize_change_direction(
 
 
 @dataclass(frozen=True)
-class StopAction:
-    """Commit one currently admissible focus color and end the local traversal."""
+class CommitFocusAction:
+    """Commit one currently admissible focus color.
+
+    Focus commitment is not a stop action.  It is the ordinary Four Color
+    construction step available when the exact admissible-color complement is
+    nonempty.
+    """
 
     before: ConstructionState
     focus: str
@@ -122,7 +122,7 @@ class StopAction:
 
     @property
     def decision(self) -> DecisionKind:
-        return "stop"
+        return "commit_focus"
 
     @property
     def affected_state(self) -> ConstructionState:
@@ -158,17 +158,17 @@ class StopAction:
         )
 
 
-def realize_stop(
+def realize_focus_commit(
     before: ConstructionState,
     focus: str,
     color: int,
-) -> StopAction:
-    """Realize one stop choice only when the chosen focus color is admissible now."""
+) -> CommitFocusAction:
+    """Commit one chosen color only when it is admissible at the focus now."""
 
     if color not in before.admissible_colors(focus):
-        raise ValueError("stop color is not currently admissible at the focus")
+        raise ValueError("focus color is not currently admissible")
     after = before.commit(focus, color)
-    action = StopAction(before=before, focus=focus, color=color, after=after)
+    action = CommitFocusAction(before=before, focus=focus, color=color, after=after)
     if not action.valid:
-        raise AssertionError("chosen stop action failed certification")
+        raise AssertionError("chosen focus commit failed certification")
     return action

@@ -26,9 +26,9 @@ class OpportunityHandoffCertificate:
     opportunity carrier.  Each of the other two directional carriers is
     retyped by symmetric difference with the one realized physical path P.
 
-    If focus slack is now positive, the local construction may stop and no
-    successor direction is asserted.  If zero focus slack persists, sigma is
-    still singleton and exactly one of the two modes in O_sigma is the other
+    If a focus color is admissible now, the construction may commit it and no
+    successor dual direction is asserted.  If zero focus slack persists, sigma
+    is still singleton and exactly one of the two modes in O_sigma is the other
     singleton direction currently applicable at the successor.
     """
 
@@ -51,7 +51,7 @@ class OpportunityHandoffCertificate:
         return self.transport.path_edges
 
     @property
-    def stop_available(self) -> bool:
+    def focus_commit_available(self) -> bool:
         embedding = self.transport.after_embedding
         return bool(embedding.state.admissible_colors(embedding.focus))
 
@@ -69,7 +69,7 @@ class OpportunityHandoffCertificate:
 
     @property
     def resulting_other_singleton_mode(self) -> V4 | None:
-        if self.stop_available:
+        if self.focus_commit_available:
             return None
         defects = C5DefectState(self.transport.after_embedding.boundary_colors)
         modes = tuple(
@@ -116,7 +116,7 @@ class OpportunityHandoffCertificate:
             ):
                 return False
 
-        if self.stop_available:
+        if self.focus_commit_available:
             return self.resulting_other_singleton_mode is None
 
         after = self.transport.after_embedding
@@ -137,7 +137,7 @@ class OpportunityHandoffCertificate:
 def certify_opportunity_handoff(
     parameter: DualDomainParameter,
 ) -> OpportunityHandoffCertificate:
-    """Certify stop-or-current-handoff after one chosen present action."""
+    """Certify focus-commit-or-current-handoff after one chosen present action."""
 
     certificate = OpportunityHandoffCertificate(
         transport=certify_shared_opportunity_transport(parameter)
@@ -149,7 +149,7 @@ def certify_opportunity_handoff(
 
 @dataclass(frozen=True)
 class CurrentOpportunityTotalityCertificate:
-    """Either stop is available now, or four current dual controls exist now.
+    """Either focus commitment is available now, or four current controls exist.
 
     No route or future destination is stored.  When zero focus slack persists,
     the actual successor is reparameterized at its own zero-point and the two
@@ -165,7 +165,7 @@ class CurrentOpportunityTotalityCertificate:
             return False
         after = self.handoff.transport.after_embedding
 
-        if self.handoff.stop_available:
+        if self.handoff.focus_commit_available:
             return (
                 bool(after.state.admissible_colors(after.focus))
                 and not self.current_parameters
@@ -208,11 +208,11 @@ class CurrentOpportunityTotalityCertificate:
 def certify_current_opportunity_totality(
     parameter: DualDomainParameter,
 ) -> CurrentOpportunityTotalityCertificate:
-    """Certify present stop-or-four-control totality after one current action."""
+    """Certify present focus-commit-or-four-control totality after one action."""
 
     handoff = certify_opportunity_handoff(parameter)
     after = handoff.transport.after_embedding
-    if handoff.stop_available:
+    if handoff.focus_commit_available:
         current: tuple[DualDomainParameter, ...] = ()
     else:
         defects = C5DefectState(after.boundary_colors)

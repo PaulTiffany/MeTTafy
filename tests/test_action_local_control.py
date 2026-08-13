@@ -6,9 +6,9 @@ import pytest
 
 from mettafy.action_local_control import (
     ChangeDirectionAction,
-    StopAction,
+    CommitFocusAction,
     realize_change_direction,
-    realize_stop,
+    realize_focus_commit,
 )
 from mettafy.color_construction import ConstructionState
 from mettafy.graph_native_staging import (
@@ -78,7 +78,7 @@ def test_action_certificates_have_one_affected_state_and_no_sibling_coordinates(
         "before_history",
         "stage",
     )
-    assert tuple(field.name for field in fields(StopAction)) == (
+    assert tuple(field.name for field in fields(CommitFocusAction)) == (
         "before",
         "focus",
         "color",
@@ -95,7 +95,7 @@ def test_action_certificates_have_one_affected_state_and_no_sibling_coordinates(
         "targets",
     }
     assert forbidden.isdisjoint(field.name for field in fields(ChangeDirectionAction))
-    assert forbidden.isdisjoint(field.name for field in fields(StopAction))
+    assert forbidden.isdisjoint(field.name for field in fields(CommitFocusAction))
 
 
 def test_one_chosen_direction_change_realizes_exactly_one_successor() -> None:
@@ -115,7 +115,7 @@ def test_one_chosen_direction_change_realizes_exactly_one_successor() -> None:
     assert action.after.committed_edges_valid
 
 
-def test_successor_rederives_its_own_choice_then_can_stop() -> None:
+def test_successor_rederives_its_own_choice_then_can_commit_focus() -> None:
     embedding = persistent_embedding()
     history = graph_native_witness_state(embedding.state)
     first = realize_change_direction(first_current_choice(embedding), history)
@@ -139,19 +139,19 @@ def test_successor_rederives_its_own_choice_then_can_stop() -> None:
     assert second.affected_state_count == 1
     assert second.after.admissible_colors("v") == frozenset({0})
 
-    stop = realize_stop(second.after, "v", 0)
-    assert stop.valid
-    assert stop.decision == "stop"
-    assert stop.affected_state_count == 1
-    assert stop.affected_state is stop.after
-    assert stop.displacement == 1
-    assert stop.after.complete
-    assert stop.after.committed_edges_valid
+    commit = realize_focus_commit(second.after, "v", 0)
+    assert commit.valid
+    assert commit.decision == "commit_focus"
+    assert commit.affected_state_count == 1
+    assert commit.affected_state is commit.after
+    assert commit.displacement == 1
+    assert commit.after.complete
+    assert commit.after.committed_edges_valid
 
 
-def test_stop_is_not_available_at_zero_focus_slack() -> None:
+def test_focus_commit_is_not_available_at_zero_focus_slack() -> None:
     embedding = persistent_embedding()
     assert embedding.state.admissible_colors("v") == frozenset()
 
     with pytest.raises(ValueError, match="not currently admissible"):
-        realize_stop(embedding.state, "v", 0)
+        realize_focus_commit(embedding.state, "v", 0)
