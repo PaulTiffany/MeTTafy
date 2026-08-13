@@ -21,7 +21,7 @@ def test_ordered_surface_is_structurally_sound_and_frozen() -> None:
 def test_surface_exposes_current_mechanical_coverage_voids() -> None:
     surface = four_color_ordered_surface()
 
-    assert surface.unwitnessed_claims() == ("C0", "C1", "C6")
+    assert surface.unwitnessed_claims() == ("C0", "C1")
     assert surface.unmutated_claims() == ()
     assert surface.unexecuted_mutations() == (
         "M0-DropMinimality",
@@ -35,16 +35,20 @@ def test_surface_exposes_current_mechanical_coverage_voids() -> None:
     )
 
 
-def test_m6_is_implemented_without_masking_c6_coverage_void() -> None:
+def test_m6_and_theseus_witness_separate_negative_and_positive_c6_coverage() -> None:
     surface = four_color_ordered_surface()
     mutation = next(item for item in surface.mutations if item.id == "M6-ReplayResolvedShape")
+    witness = next(item for item in surface.witnesses if item.id == "W-TheseusShapeOrder")
 
     assert mutation.status == "implemented"
     assert mutation.artifact == (
         "tests/test_ordered_shape_progress.py::"
-        "test_m6_exact_inverse_replay_is_not_fresh_progress"
+        "test_m6_exact_inverse_replay_is_an_inconsequential_label_change"
     )
-    assert "C6" in surface.unwitnessed_claims()
+    assert witness.status == "ci-passed"
+    assert witness.covers == frozenset({"C6"})
+    assert witness.artifact == "tests/test_ordered_shape_progress.py"
+    assert "C6" not in surface.unwitnessed_claims()
 
 
 def test_degree_five_extension_sees_the_entire_upstream_surface() -> None:

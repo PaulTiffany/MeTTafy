@@ -328,6 +328,12 @@ def four_color_ordered_surface() -> ProofSurface:
             "ci-passed",
         ),
         MechanicalWitness(
+            "W-TheseusShapeOrder",
+            frozenset({"C6"}),
+            "tests/test_ordered_shape_progress.py",
+            "ci-passed",
+        ),
+        MechanicalWitness(
             "W-GeneratedDisks5000",
             frozenset({"C2", "C4", "C5", "C7"}),
             "docs/four-color-proof-status.md#5-mechanical-red-team",
@@ -377,7 +383,10 @@ def four_color_ordered_surface() -> ProofSurface:
             "Count an exact inverse replay of an already resolved physical component as fresh construction progress and require progress certification to fail.",
             "ExpectedFailure",
             status="implemented",
-            artifact="tests/test_ordered_shape_progress.py::test_m6_exact_inverse_replay_is_not_fresh_progress",
+            artifact=(
+                "tests/test_ordered_shape_progress.py::"
+                "test_m6_exact_inverse_replay_is_an_inconsequential_label_change"
+            ),
         ),
         DestructiveMutation(
             "M7-AllowSaturatedExhaustion",

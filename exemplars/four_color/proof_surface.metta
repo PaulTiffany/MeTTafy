@@ -77,6 +77,9 @@
 (Covers W-FlipFamily4620 C5)
 (Covers W-FlipFamily4620 C7)
 (Covers W-FlipFamily4620 C8)
+(Witness W-TheseusShapeOrder ci-passed)
+; W-TheseusShapeOrder artifact: tests/test_ordered_shape_progress.py
+(Covers W-TheseusShapeOrder C6)
 (Witness W-GeneratedDisks5000 local-passed)
 ; W-GeneratedDisks5000 artifact: docs/four-color-proof-status.md#5-mechanical-red-team
 (Covers W-GeneratedDisks5000 C2)
@@ -99,7 +102,7 @@
 ; M5-StoreFutureRoute: Inject future-route information into present-state continuation and require ontology/flow certification to fail.
 (Mutation M6-ReplayResolvedShape C6 ExpectedFailure implemented)
 ; M6-ReplayResolvedShape: Count an exact inverse replay of an already resolved physical component as fresh construction progress and require progress certification to fail.
-; M6-ReplayResolvedShape artifact: tests/test_ordered_shape_progress.py::test_m6_exact_inverse_replay_is_not_fresh_progress
+; M6-ReplayResolvedShape artifact: tests/test_ordered_shape_progress.py::test_m6_exact_inverse_replay_is_an_inconsequential_label_change
 (Mutation M7-AllowSaturatedExhaustion C7 ExpectedFailure planned)
 ; M7-AllowSaturatedExhaustion: Declare termination at a saturated frontier while a clean unresolved continuation remains and require closure certification to fail.
 (Mutation M8-CorruptRestoredEdge C8 ExpectedFailure planned)
