@@ -10,6 +10,12 @@ from mettafy.action_local_control import (
     realize_change_direction,
     realize_stop,
 )
+from mettafy.plane_parameterization import COLOR_TO_V4, NONZERO_MODES
+from mettafy.v4_action_lipschitz import (
+    apply_palette_choice,
+    changed_partner,
+    palette_choice_is_lipschitz_one,
+)
 
 
 def main() -> None:
@@ -44,6 +50,18 @@ def main() -> None:
     forbidden_imports = ("cacophony_router", "staged_cacophony_search")
     if any(name in source for name in forbidden_imports):
         raise SystemExit("action-local proof surface may not import counterfactual routers")
+
+    for mode in NONZERO_MODES:
+        if not palette_choice_is_lipschitz_one(mode, 0):
+            raise SystemExit("stay choice lost the exact L=1 palette bound")
+        if not palette_choice_is_lipschitz_one(mode, 1):
+            raise SystemExit("change-direction choice lost the exact L=1 palette bound")
+        for color in COLOR_TO_V4:
+            partner = changed_partner(color, mode)
+            if partner == color:
+                raise SystemExit("nonzero direction must have one distinct palette partner")
+            if apply_palette_choice(partner, mode, 1) != color:
+                raise SystemExit("nonzero palette direction must remain involutive")
 
     print("Four Color action-local control boundary: PASS")
 
