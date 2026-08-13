@@ -97,8 +97,9 @@
 ; M4-BreakRepeatedPair: Force one repeated occurrence into the complementary locked component and require pair certification to fail.
 (Mutation M5-StoreFutureRoute C5 ExpectedFailure planned)
 ; M5-StoreFutureRoute: Inject future-route information into present-state continuation and require ontology/flow certification to fail.
-(Mutation M6-ReplayResolvedShape C6 ExpectedFailure planned)
+(Mutation M6-ReplayResolvedShape C6 ExpectedFailure implemented)
 ; M6-ReplayResolvedShape: Count an exact inverse replay of an already resolved physical component as fresh construction progress and require progress certification to fail.
+; M6-ReplayResolvedShape artifact: tests/test_ordered_shape_progress.py::test_m6_exact_inverse_replay_is_not_fresh_progress
 (Mutation M7-AllowSaturatedExhaustion C7 ExpectedFailure planned)
 ; M7-AllowSaturatedExhaustion: Declare termination at a saturated frontier while a clean unresolved continuation remains and require closure certification to fail.
 (Mutation M8-CorruptRestoredEdge C8 ExpectedFailure planned)

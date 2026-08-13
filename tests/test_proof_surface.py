@@ -15,6 +15,7 @@ def test_ordered_surface_is_structurally_sound_and_frozen() -> None:
     assert surface.bare_claims() == ()
     assert surface.dependency_cycles() == ()
     assert surface.reference_errors() == ()
+    assert surface.mutation_errors() == ()
 
 
 def test_surface_exposes_current_mechanical_coverage_voids() -> None:
@@ -29,10 +30,21 @@ def test_surface_exposes_current_mechanical_coverage_voids() -> None:
         "M3-DirtyFrontierTurn",
         "M4-BreakRepeatedPair",
         "M5-StoreFutureRoute",
-        "M6-ReplayResolvedShape",
         "M7-AllowSaturatedExhaustion",
         "M8-CorruptRestoredEdge",
     )
+
+
+def test_m6_is_implemented_without_masking_c6_coverage_void() -> None:
+    surface = four_color_ordered_surface()
+    mutation = next(item for item in surface.mutations if item.id == "M6-ReplayResolvedShape")
+
+    assert mutation.status == "implemented"
+    assert mutation.artifact == (
+        "tests/test_ordered_shape_progress.py::"
+        "test_m6_exact_inverse_replay_is_not_fresh_progress"
+    )
+    assert "C6" in surface.unwitnessed_claims()
 
 
 def test_degree_five_extension_sees_the_entire_upstream_surface() -> None:

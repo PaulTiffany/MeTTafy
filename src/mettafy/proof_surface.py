@@ -45,6 +45,7 @@ class DestructiveMutation:
     description: str
     expected: str
     status: MutationStatus = "planned"
+    artifact: str | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,14 @@ class ProofSurface:
         for mutation in self.mutations:
             if mutation.target not in ids:
                 errors.append(f"unknown mutation target: {mutation.id}->{mutation.target}")
+        return tuple(sorted(errors))
+
+    def mutation_errors(self) -> tuple[str, ...]:
+        errors = [
+            f"implemented mutation has no evidence artifact: {mutation.id}"
+            for mutation in self.mutations
+            if mutation.status == "implemented" and not mutation.artifact
+        ]
         return tuple(sorted(errors))
 
     def dependency_cycles(self) -> tuple[str, ...]:
@@ -147,7 +156,7 @@ class ProofSurface:
         return frozenset(seen)
 
     def assert_structurally_sound(self) -> None:
-        errors = self.reference_errors()
+        errors = self.reference_errors() + self.mutation_errors()
         if errors:
             raise AssertionError("; ".join(errors))
         cycles = self.dependency_cycles()
@@ -207,6 +216,8 @@ class ProofSurface:
                 f"(Mutation {mutation.id} {mutation.target} {mutation.expected} {mutation.status})"
             )
             lines.append(f"; {mutation.id}: {mutation.description}")
+            if mutation.artifact:
+                lines.append(f"; {mutation.id} artifact: {mutation.artifact}")
 
         lines.extend(
             [
@@ -365,6 +376,8 @@ def four_color_ordered_surface() -> ProofSurface:
             "C6",
             "Count an exact inverse replay of an already resolved physical component as fresh construction progress and require progress certification to fail.",
             "ExpectedFailure",
+            status="implemented",
+            artifact="tests/test_ordered_shape_progress.py::test_m6_exact_inverse_replay_is_not_fresh_progress",
         ),
         DestructiveMutation(
             "M7-AllowSaturatedExhaustion",
