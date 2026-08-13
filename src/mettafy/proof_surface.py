@@ -74,9 +74,9 @@ class ProofSurface:
             if fiber.claim not in ids:
                 errors.append(f"unknown evidence claim: {fiber.claim}")
         for witness in self.witnesses:
-            for claim in witness.covers:
-                if claim not in ids:
-                    errors.append(f"unknown witness claim: {witness.id}->{claim}")
+            for covered_claim in witness.covers:
+                if covered_claim not in ids:
+                    errors.append(f"unknown witness claim: {witness.id}->{covered_claim}")
         for mutation in self.mutations:
             if mutation.target not in ids:
                 errors.append(f"unknown mutation target: {mutation.id}->{mutation.target}")
@@ -104,8 +104,8 @@ class ProofSurface:
             visiting.remove(node)
             visited.add(node)
 
-        for claim in sorted(requires):
-            visit(claim)
+        for claim_id in sorted(requires):
+            visit(claim_id)
         return tuple(sorted(cycles))
 
     def bare_claims(self) -> tuple[str, ...]:
@@ -179,9 +179,11 @@ class ProofSurface:
             "",
             "; --- typed claims ---",
         ]
-        for claim in self.claims:
-            lines.append(f"(Claim {claim.id} {claim.label} {claim.layer})")
-            lines.append(f"; {claim.id} artifact: {claim.artifact}")
+        for surface_claim in self.claims:
+            lines.append(
+                f"(Claim {surface_claim.id} {surface_claim.label} {surface_claim.layer})"
+            )
+            lines.append(f"; {surface_claim.id} artifact: {surface_claim.artifact}")
 
         lines.extend(["", "; --- dependency surface ---"])
         for dependency in self.dependencies:
@@ -196,8 +198,8 @@ class ProofSurface:
         for witness in self.witnesses:
             lines.append(f"(Witness {witness.id} {witness.status})")
             lines.append(f"; {witness.id} artifact: {witness.artifact}")
-            for claim in sorted(witness.covers):
-                lines.append(f"(Covers {witness.id} {claim})")
+            for covered_claim in sorted(witness.covers):
+                lines.append(f"(Covers {witness.id} {covered_claim})")
 
         lines.extend(["", "; --- destructive mutation program ---"])
         for mutation in self.mutations:
