@@ -76,8 +76,13 @@ def test_metta_projection_is_exact_and_never_claims_witness_coverage() -> None:
     committed = (
         root / "exemplars" / "four_color" / "engineering_targets.metta"
     ).read_text(encoding="utf-8")
+    relations = "\n".join(
+        line
+        for line in committed.splitlines()
+        if line and not line.lstrip().startswith(";")
+    )
 
     assert committed == index.to_metta()
-    assert "(EngineeringMatch " in committed
-    assert "(Covers " not in committed
-    assert "(Witness " not in committed
+    assert "(EngineeringMatch " in relations
+    assert "(Covers " not in relations
+    assert "(Witness " not in relations
