@@ -16,6 +16,8 @@ from mettafy.v4_action_lipschitz import (
     apply_palette_choice,
     certify_dual_domain_binary_choice,
     changed_partner,
+    complementary_palette_opportunity,
+    edge_opportunity_modes,
     palette_choice_is_lipschitz_one,
 )
 from mettafy.zero_point_correspondence import dual_defect_parameterization
@@ -67,6 +69,25 @@ def test_each_palette_choice_is_exactly_lipschitz_one() -> None:
             assert apply_palette_choice(partner, mode, 1) == color
 
 
+def test_one_active_pair_leaves_two_states_sharing_one_opportunity() -> None:
+    palette = set(COLOR_TO_V4)
+    for mode in NONZERO_MODES:
+        for color in COLOR_TO_V4:
+            partner = changed_partner(color, mode)
+            opportunity = complementary_palette_opportunity(color, mode)
+
+            assert {color, partner}.isdisjoint(opportunity)
+            assert {color, partner, *opportunity} == palette
+            assert changed_partner(opportunity[0], mode) == opportunity[1]
+            assert changed_partner(opportunity[1], mode) == opportunity[0]
+
+        edge_opportunity = edge_opportunity_modes(mode)
+        assert len(edge_opportunity) == 2
+        assert mode not in edge_opportunity
+        assert v4_add(edge_opportunity[0], mode) == edge_opportunity[1]
+        assert v4_add(edge_opportunity[1], mode) == edge_opportunity[0]
+
+
 def test_domain_action_is_pointwise_binary_and_edge_local() -> None:
     embedding = persistent_embedding()
     chart = dual_defect_parameterization(embedding.state, embedding.focus)
@@ -102,6 +123,7 @@ def test_domain_action_is_pointwise_binary_and_edge_local() -> None:
                 )
 
             crossed = frozenset(parameter.path.crossed_edges)
+            opportunity = frozenset(edge_opportunity_modes(mode))
             for vertex, neighbors in certificate.before.graph.items():
                 if vertex not in certificate.before.coloring:
                     continue
@@ -124,6 +146,7 @@ def test_domain_action_is_pointwise_binary_and_edge_local() -> None:
                         assert before_mode != mode
                         assert after_mode == v4_add(before_mode, mode)
                         assert after_mode != ZERO
+                        assert frozenset({before_mode, after_mode}) == opportunity
                     else:
                         assert after_mode == before_mode
 
