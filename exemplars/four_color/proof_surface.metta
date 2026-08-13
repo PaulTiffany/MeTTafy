@@ -3,7 +3,7 @@
 ; Mechanical witnesses are falsifiers; they are not theorem premises.
 
 (ProofSurface FourColorOrderedV1)
-(FrozenProof FourColorOrderedV1 7a5c5a0735108d2bdc4fff57f7ed9a0c300af28b)
+(FrozenProof FourColorOrderedV1 sha-7a5c5a0735108d2bdc4fff57f7ed9a0c300af28b)
 ; frozen proof artifact: docs/four-color-ordered-construction-proof.md
 
 ; --- typed claims ---
