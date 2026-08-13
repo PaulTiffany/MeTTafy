@@ -121,24 +121,14 @@ class ProofGenealogy:
     def to_metta(self) -> str:
         lines = [
             "; Four Color proof genealogy",
-            "; Generated from mettafy.proof_genealogy.four_color_proof_genealogy().",
-            "; Findings never rewrite the frozen hypothesis; successor candidates are not promotion.",
-            "",
             f"(ProofGenealogy {self.name})",
-            f"(Hypothesis {self.frozen_hypothesis} Frozen sha-{self.surface.frozen_commit})",
-            f"; frozen artifact: {self.surface.frozen_proof}",
-            "",
-            "; --- frozen-hypothesis findings ---",
+            f"(Hypothesis {self.frozen_hypothesis} Frozen)",
         ]
         for finding in self.findings:
             status = "Supported" if finding.status == "supported" else "Falsified"
             lines.append(
                 f"(Finding {finding.id} {finding.hypothesis} {finding.claim} {status})"
             )
-            lines.append(f"; {finding.id} artifact: {finding.artifact}")
-            lines.append(f"; {finding.id} note: {finding.note}")
-
-        lines.extend(["", "; --- successor candidates ---"])
         for successor in self.successors:
             status = (
                 "MechanicallyPassed"
@@ -149,17 +139,7 @@ class ProofGenealogy:
                 f"(SuccessorCandidate {successor.id} {successor.parent_hypothesis} "
                 f"{successor.target_claim} {status})"
             )
-            lines.append(f"; {successor.id} artifact: {successor.artifact}")
-
-        lines.extend(
-            [
-                "",
-                "; A green successor candidate does not erase a frozen falsification.",
-                "; Promotion requires an explicit successor hypothesis and regenerated surface.",
-                "",
-            ]
-        )
-        return "\n".join(lines)
+        return "\n".join(lines) + "\n"
 
 
 def four_color_proof_genealogy() -> ProofGenealogy:
