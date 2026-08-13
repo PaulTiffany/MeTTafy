@@ -3,7 +3,10 @@ from __future__ import annotations
 from collections import Counter, defaultdict, deque
 from typing import TypeAlias
 
+from mettafy.cacophony_router import current_dual_parameters
 from mettafy.color_construction import ConstructionState
+from mettafy.dual_control_topology_delta import certify_dual_control_topology_delta
+from mettafy.dual_path_switching import dual_pairing_signature
 from mettafy.dual_phase_topology import certify_phase_topology
 from mettafy.plane_dual_control import (
     DegreeFiveTriangulatedEmbedding,
@@ -184,3 +187,50 @@ def test_topological_identity_survives_complete_flip_family() -> None:
     assert saw_cycle
     assert saw_short_circuit
     assert sum(rank_counts.values()) == 154
+
+
+def test_all_flip_family_pivot_controls_have_exact_present_delta() -> None:
+    family = _flip_family()
+    pivot_sources = 0
+    certified_controls = 0
+    realized_deltas: set[tuple[int, int, int]] = set()
+
+    for faces in family:
+        embedding = _disk_embedding(faces)
+        if dual_pairing_signature(embedding).regime != "pivot":
+            continue
+        pivot_sources += 1
+
+        outcomes: list[tuple[str, int]] = []
+        parameters = current_dual_parameters(embedding)
+        assert len(parameters) == 4
+        for parameter in parameters:
+            certificate = certify_dual_control_topology_delta(parameter)
+            assert certificate.valid
+            certified_controls += 1
+            realized_deltas.add(
+                (
+                    certificate.delta_cycles,
+                    certificate.delta_two_edge_terminal_paths,
+                    certificate.delta_phase_rank,
+                )
+            )
+            outcomes.append(
+                (
+                    dual_pairing_signature(certificate.after.embedding).regime,
+                    certificate.delta_phase_rank,
+                )
+            )
+
+        # Reachability is represented by the controls that are applicable now.
+        # Across this falsifier family, every pivot source has a present choice
+        # that either exposes direct geometry or lowers the exact topological
+        # phase account; no future-route coordinate participates in the test.
+        assert any(
+            regime == "direct" or delta_phase < 0
+            for regime, delta_phase in outcomes
+        )
+
+    assert pivot_sources == 26
+    assert certified_controls == 104
+    assert len(realized_deltas) > 1
