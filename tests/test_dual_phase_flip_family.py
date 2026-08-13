@@ -7,12 +7,12 @@ from mettafy.cacophony_router import current_dual_parameters
 from mettafy.color_construction import ConstructionState
 from mettafy.dual_involution_phase import dual_involution_phase_signature
 from mettafy.dual_path_switching import dual_pairing_signature
+from mettafy.opportunity_handoff import certify_opportunity_handoff
 from mettafy.plane_dual_control import (
     DegreeFiveTriangulatedEmbedding,
     Edge,
     canonical_edge,
 )
-from mettafy.shared_opportunity_transport import certify_shared_opportunity_transport
 
 Face: TypeAlias = tuple[str, str, str]
 DiskFaces: TypeAlias = tuple[Face, ...]
@@ -172,12 +172,17 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
         embedding = _disk_embedding(faces)
         parameters = current_dual_parameters(embedding)
         assert len(parameters) == 4
-        opportunity_certificates = tuple(
-            certify_shared_opportunity_transport(parameter)
-            for parameter in parameters
-        )
-        assert all(certificate.valid for certificate in opportunity_certificates)
-        opportunity_transitions += len(opportunity_certificates)
+        handoffs = tuple(certify_opportunity_handoff(parameter) for parameter in parameters)
+        assert all(certificate.valid for certificate in handoffs)
+        opportunity_transitions += len(handoffs)
+
+        for certificate in handoffs:
+            if certificate.stop_available:
+                assert certificate.resulting_other_singleton_mode is None
+                assert certificate.direction_changed is None
+            else:
+                assert certificate.resulting_other_singleton_mode in certificate.opportunity_modes
+                assert certificate.direction_changed in (False, True)
 
         source_regime = dual_pairing_signature(embedding).regime
         regimes[source_regime] += 1
@@ -190,8 +195,8 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
         pivot_ranks[source_rank] += 1
 
         outcomes: list[tuple[str, int]] = []
-        for certificate in opportunity_certificates:
-            successor = certificate.after_embedding
+        for certificate in handoffs:
+            successor = certificate.transport.after_embedding
             successor_regime = dual_pairing_signature(successor).regime
             successor_rank = dual_involution_phase_signature(
                 successor
