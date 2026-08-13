@@ -11,10 +11,12 @@ fs.mkdirSync(outDir, { recursive: true });
 const targetPath = path.join(root, "exemplars", "four_color", "high_level_strategy.metta");
 const surfacePath = path.join(root, "exemplars", "four_color", "proof_surface.metta");
 const engineeringPath = path.join(root, "exemplars", "four_color", "engineering_targets.metta");
+const genealogyPath = path.join(root, "exemplars", "four_color", "proof_genealogy.metta");
 const demoPath = path.join(root, "_site", "four-color-demo.metta");
 const target = fs.readFileSync(targetPath, "utf8");
 const surface = fs.readFileSync(surfacePath, "utf8");
 const engineering = fs.readFileSync(engineeringPath, "utf8");
+const genealogy = fs.readFileSync(genealogyPath, "utf8");
 const demo = fs.readFileSync(demoPath, "utf8");
 
 const failures = [];
@@ -49,6 +51,17 @@ if (parsedEngineering.length < 25) {
   failures.push(`engineering target search parsed only ${parsedEngineering.length} atoms`);
 }
 
+const genealogyParser = new MeTTa();
+let parsedGenealogy = [];
+try {
+  parsedGenealogy = genealogyParser.parseAll(genealogy);
+} catch (error) {
+  failures.push(`proof genealogy parse failed: ${String(error)}`);
+}
+if (parsedGenealogy.length < 5) {
+  failures.push(`proof genealogy parsed only ${parsedGenealogy.length} atoms`);
+}
+
 const runtime = new MeTTa();
 let reduction = [];
 try {
@@ -65,10 +78,11 @@ if (!rendered.some((value) => value.includes("compactness-extension"))) {
 const evidence = {
   witness: "WIT-METTA-RUNTIME",
   audience: "MeTTa ecosystem integrator",
-  claim: "The checked Four Color semantic artifact, frozen Track-B proof surface, and pinned flat-Python engineering-target index parse under the pinned MeTTaScript Hyperon runtime, and the executable teaching projection reduces.",
+  claim: "The checked Four Color semantic artifact, frozen proof surface, proof genealogy, and pinned engineering-target index parse under the pinned MeTTaScript Hyperon runtime, and the executable teaching projection reduces.",
   non_claims: [
     "semantic annotations are correct",
     "engineering target matches are proof witnesses",
+    "successor candidates erase frozen falsifications",
     "retrieved Python implementations establish theorem validity",
     "the proof surface establishes theorem validity",
     "MeTTaScript is the only supported MeTTa runtime",
@@ -78,6 +92,7 @@ const evidence = {
   parsed_atom_count: parsed.length,
   proof_surface_atom_count: parsedSurface.length,
   engineering_target_atom_count: parsedEngineering.length,
+  proof_genealogy_atom_count: parsedGenealogy.length,
   reduction_results: rendered,
   failures,
   result: failures.length === 0 ? "pass" : "fail",
@@ -92,5 +107,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `MeTTa runtime witness passed: ${parsed.length} strategy atoms; ${parsedSurface.length} proof-surface atoms; ${parsedEngineering.length} engineering-target atoms; reduction reached compactness-extension.`,
+  `MeTTa runtime witness passed: ${parsed.length} strategy atoms; ${parsedSurface.length} proof-surface atoms; ${parsedEngineering.length} engineering-target atoms; ${parsedGenealogy.length} genealogy atoms; reduction reached compactness-extension.`,
 );
