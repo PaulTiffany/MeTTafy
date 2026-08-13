@@ -30,8 +30,9 @@ class SharedOpportunityTransportCertificate:
 
     A sigma-domain action realizes one path P inside that carrier.  Along P the
     two opportunity labels exchange; outside P they do not change.  The physical
-    opportunity carrier itself, its local degree-two passage through every disk
-    triangle, and its two exact continuation paths are therefore retained.
+    opportunity carrier and its local degree-two passage through every disk
+    triangle are retained.  If zero focus slack persists, the same two exact
+    sigma continuation paths are retained as current permission geometry.
     """
 
     parameter: DualDomainParameter
@@ -87,14 +88,19 @@ class SharedOpportunityTransportCertificate:
         if not self.path_edges <= self.opportunity_carrier_before:
             return False
 
-        before_continuation = self.parameter.continuation
-        after_continuation = derive_embedded_dual_continuation(
-            self.after_embedding,
-            self.sigma,
-        )
-        if after_continuation.terminal_pairing != before_continuation.terminal_pairing:
-            return False
-        if after_continuation.paths != before_continuation.paths:
+        if after_defects.is_saturated_four_color_boundary:
+            before_continuation = self.parameter.continuation
+            after_continuation = derive_embedded_dual_continuation(
+                self.after_embedding,
+                self.sigma,
+            )
+            if after_continuation.terminal_pairing != before_continuation.terminal_pairing:
+                return False
+            if after_continuation.paths != before_continuation.paths:
+                return False
+        elif not self.after_embedding.state.admissible_colors(
+            self.after_embedding.focus
+        ):
             return False
 
         disk_edges = disk_primal_edges(self.before_embedding)

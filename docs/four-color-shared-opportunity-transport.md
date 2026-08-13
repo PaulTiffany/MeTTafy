@@ -46,18 +46,18 @@ No edge enters or leaves the opportunity class. Therefore
 \boxed{\mathcal O_\sigma(T_Pz)=\mathcal O_\sigma(z).}
 \]
 
-This is stronger than mere cardinality preservation. The retained embedding has
-the same physical opportunity carrier, the same degree-two passage through
-every disk triangle, the same boundary terminal pairing, and the same two exact
-`sigma` continuation paths. The realized action retypes one path; it does not
-consume or duplicate the shared opportunity itself.
+The retained embedding therefore has the same physical opportunity carrier and
+the same degree-two passage through every disk triangle. The selected `sigma`
+edge count on the degree-five boundary is also unchanged, so `sigma` remains a
+singleton derivative mode.
 
-For the degree-five boundary, the selected `sigma` edge count is also unchanged.
-A current singleton `sigma` therefore remains singleton after the action,
-whether the successor already has positive focus slack or remains saturated.
+If the successor still has zero focus slack, the same physical carrier gives
+the same boundary terminal pairing and the same two exact `sigma` continuation
+paths. If the successor already has positive focus slack, no further dual
+continuation is proof-relevant: the focus can be committed immediately.
 
-`SharedOpportunityTransportCertificate` verifies all of these identities from
-the actual before/after colorings and retained physical embedding. The complete
+`SharedOpportunityTransportCertificate` verifies these identities from the
+actual before/after colorings and retained physical embedding. The complete
 154-member proper-color-preserving flip family contributes 616 current dual
 transitions (four per member); every one is required to satisfy the certificate.
 
