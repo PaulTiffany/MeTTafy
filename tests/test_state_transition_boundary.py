@@ -3,7 +3,11 @@ from __future__ import annotations
 from mettafy.color_construction import ConstructionState
 from mettafy.ordered_shape import OrderedShapeLedger, certify_shape_progress
 from mettafy.sequential_frontier import clean_frontier_turns
-from mettafy.state_transition_boundary import PublicRewriteObservation, RealizedStateIdentity, realized_state_identities
+from mettafy.state_transition_boundary import (
+    PublicRewriteObservation,
+    RealizedStateIdentity,
+    realized_state_identities,
+)
 
 BOUNDARY = ("a", "b", "c", "d", "e")
 FOCUS = "v"
@@ -25,7 +29,8 @@ def _state() -> ConstructionState:
 
 def _turn(state: ConstructionState, other_color: int):
     matches = tuple(
-        turn for turn in clean_frontier_turns(state, FOCUS, BOUNDARY)
+        turn
+        for turn in clean_frontier_turns(state, FOCUS, BOUNDARY)
         if turn.move.seed == "a" and turn.move.other_color == other_color
     )
     assert len(matches) == 1
