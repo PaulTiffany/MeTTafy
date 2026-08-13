@@ -4,166 +4,166 @@
 **Branch:** `agent/ordered-state-construction`  
 **Status:** active independent proof program; not yet a closed proof of the Four Color Theorem
 
-## 1. Canonical simplification
+## 1. Canonical proof species
 
-The current Track-B proof object is **ordered state construction**.
+Track B is now an **ordered state construction**.
 
-The four states do not inspect simultaneous futures and do not alternate through
-a micro-action game.  A state gets its turn, continues until the planar shape
-relevant to the construction is determined, and that realized shape becomes a
-constraint inherited by later states.
+A turn is not one micro-action and not a simultaneous future branch.  A turn
+traces one complete graph-native bichromatic component until its physical shape
+is known, applies that whole component transformation once, and only then
+derives the next turn from the realized successor.
 
-```text
-state 1 establishes shape
--> state 2 inherits shape 1 and establishes shape 2
--> state 3 inherits shapes 1,2 and establishes shape 3
--> state 4 inherits shapes 1,2,3 and establishes shape 4
-```
-
-Length is irrelevant.  The proof-relevant data are incidence, cyclic order,
-side relation, permitted shared boundary contact, and forbidden crossing or
-alteration of an already established continuation.
-
-The detailed definition is in `docs/four-color-ordered-state-construction.md`.
-
-## 2. Fixed theorem species
-
-The construction remains on one fixed finite closed genus-zero planar carrier.
-The graph, indexed edge obligations, and terminal palette
+The fixed theorem species remains one finite closed genus-zero planar carrier,
+one exact edge ledger, and the four terminal states
 
 \[
-Q_4=\{0,1,2,3\}
+Q_4=\{0,1,2,3\}.
 \]
 
-are fixed.  No future route, theorem verdict, opening/closure flag, observer
-state, or held-out Four Color label is a construction coordinate.
+No future route, theorem verdict, opening/closure flag, observer state, or
+held-out Four Color label is a construction coordinate.
 
-A proper coloring still means only
+## 2. Easy facts now isolated
 
-\[
-uv\in E\Longrightarrow c(u)\neq c(v).
-\]
+- adjacency is definitionally the pairwise conflict relation;
+- a minimum planar counterexample reduces to the degree-five local case;
+- a saturated proper degree-five frontier has role word `A B A C D` up to
+  cyclic/color symmetry;
+- the fifth indexed obligation must reuse one of four states by pigeonhole;
+- the hard issue is the planar geometry of that reuse, not interaction order or
+  palette arithmetic.
 
-Thus every primitive conflict is pairwise and indexed by one edge.
+Principia quadratic sufficiency, V4 derivatives, SRMF, observer quotients,
+Bellman values, phase ranks, holonomy, and browning-out are therefore not
+premises of the current theorem.
 
-## 3. Easy mathematics now kept easy
+## 3. New direct planar theorem
 
-### 3.1 Pairwise interaction
+`docs/four-color-clean-turn-lemma.md` proves:
 
-No higher-order primitive is required to represent graph coloring.  Apparent
-higher-order difficulty comes from composition of inherited pairwise planar
-constraints.
+### Clean Frontier Turn Existence — PROVED
 
-Principia quadratic sufficiency may witness that fact, but it is not proof
-authority for fourness.
+For every saturated planar degree-five frontier `A B A C D`, at least one
+bichromatic connected component meets the frontier in exactly one vertex.
+Swapping that entire component therefore changes exactly one frontier state
+while preserving all other indexed frontier obligations.
 
-### 3.2 Degree-five reduction
+The proof is a direct planar separation argument.  Assuming no such component
+forces one `{A,D}` component to span the three boundary terminals `a,c,e` and
+one disjoint `{B,C}` component to connect `b,d`; a crosscut extracted from the
+first separates the endpoints of the second, contradiction.
 
-For a minimum planar counterexample, elementary reduction leaves the only local
-nontrivial focus at degree five.  The five incident edges are five separately
-indexed obligations.
+## 4. Stronger turn law
 
-### 3.3 Four states, five indexed obligations
+`docs/four-color-clean-turn-dynamics.md` proves:
 
-By the fifth indexed obligation, reuse of one of four state classes is
-unavoidable.  This is pigeonhole arithmetic, not the Four Color theorem.
+### Repeated-Turn Pair Lemma — PROVED
 
-The hard issue is whether the reused state can continue lawfully in the already
-constricted planar geometry.
+If no singleton-colored frontier vertex has a clean terminal turn, then **both**
+occurrences of the repeated state have clean turns.
 
-## 4. Central theorem gap
+Therefore after any persistent clean turn, if the focus is still saturated:
 
-The canonical open target is now:
+1. the just-used component supplies the inverse turn;
+2. the other occurrence of the new repeated state supplies a current clean
+   noninverse turn.
 
-### Sequential Planar Reuse Lemma — OPEN
-
-On a fixed closed genus-zero planar construction, after predecessor state shapes
-have been established turn by turn with their incidence and cyclic order
-retained, a fifth degree-five obligation admits reuse of at least one of the
-four existing states without forcing a forbidden crossing or alteration of an
-earlier established relation.
-
-A valid falsifier must therefore exhibit all of:
-
-1. a finite genus-zero carrier;
-2. four lawfully established predecessor state shapes;
-3. a fifth indexed obligation;
-4. and proof that every reuse continuation violates retained planarity.
-
-This is the theorem to prove or kill.
-
-## 5. What existing machinery is for
-
-The repository contains substantially more machinery than the canonical proof
-now assumes.  It remains useful as a falsifier/witness bank.
-
-- `ConstructionState` — fixed graph, partial commitments, exact edge ledger.
-- C5/V4 derivative calculus — exact local differences on the degree-five ring.
-- plane-dual continuation — graph-native physical continuation witnesses.
-- locked planar C5 witnesses — prevent us from flattening away exterior shape.
-- graph-native nonreplay history — prevents reversible symmetry from being
-  mislabeled as progress.
-- staged and handoff experiments — evidence about what happens when the simple
-  reuse claim is sliced into micro-actions.
-- held-out Rocq extraction — post-hoc comparison only; never Track-B authority.
-
-Bellman values, scalar phase ranks, holonomy, SRMF, browning-out, observer
-quotients, V4-flow decoding, and similar layers are **not premises of the
-central theorem**.  They are retained only if the direct planar argument later
-requires them.
-
-## 6. Existing exact local facts retained
-
-The following remain banked and useful:
-
-- adjacency is definitionally the conflict relation;
-- a saturated proper degree-five C5 boundary using Q4 has role form
-  `A B A C D` up to symmetry;
-- its V4 derivative has multiplicity pattern `(3,1,1)`;
-- exterior connectivity can genuinely lock naive one-step Kempe openings;
-- actual dual path switches preserve the fixed graph and exact edge ledger;
-- a legal local move need not monotonically decrease any scalar;
-- future controls must be derived from the realized successor, not imported as
-  counterfactual coordinates.
-
-These facts constrain a proof.  They do not replace Sequential Planar Reuse.
-
-## 7. Immediate research program
+No future search is required.  The present-state rule is:
 
 ```text
-fixed planar carrier
--> identify one predecessor state shape exactly
--> anchor its incidence/cyclic-order data
--> derive the next state only inside the inherited admissible geometry
--> repeat through four states
--> present the fifth indexed obligation
--> prove lawful state reuse OR bank the exact planar falsifier
+if a singleton clean turn exists:
+    take it and commit the freed state
+else:
+    take the repeated clean turn at the occurrence not used on the preceding turn
 ```
 
-The next mechanical work should therefore test ordered predecessor shapes
-directly on the existing hard planar witnesses, rather than inventing another
-global progress potential.
+## 5. Exact boundary calculus
 
-## 8. Trust boundary
+Under the hypothetical condition that no singleton clean turn ever appears,
+the noninverse rule is forced.
+
+Choosing one orientation, seed positions follow
+
+\[
+0,3,1,4,2,0,\ldots
+\]
+
+with period five, while the repeated-state transitions follow
+
+\[
+A\to C\to B\to D\to A\to\cdots
+\]
+
+with period four.
+
+Hence the nominal saturated boundary phase has exact period
+
+\[
+\boxed{\operatorname{lcm}(5,4)=20.}
+\]
+
+After twenty persistent noninverse turns the boundary coloring returns exactly
+to its starting word.  This is arithmetic on the fixed planar boundary, not a
+change of surface topology.
+
+## 6. Mechanical enforcement
+
+`src/mettafy/sequential_frontier.py` now certifies a **clean frontier turn** as
+one whole two-color component whose frontier intersection is exactly its seed.
+It also provides a bounded exhaustive audit helper; enumeration remains a
+falsifier/witness layer and is not part of the proof-state semantics.
+
+`tests/test_sequential_frontier.py` banks two hard instances:
+
+- the persistent double lock resolves in two clean turns;
+- the retained three-interior kill witness has no clean route within two turns
+  but has an exact three-turn route.
+
+Thus the simplified calculus does not erase the known hard witness.
+
+## 7. Current central theorem gap
+
+The remaining proof target is no longer a global search/descent theorem.
+
+### Persistent-Orbit Shape Growth — OPEN
+
+Assume one full 20-turn persistent noninverse boundary orbit occurs with zero
+focus slack throughout.  When the same boundary seed and same bichromatic pair
+recur, prove that the newly derived physical component contains strictly more
+retained planar shape than at the preceding occurrence.
+
+If this holds, repeated 20-turn blocks would force an infinite strict growth
+chain inside one finite planar carrier, impossible.  A singleton clean turn
+must therefore appear after finitely many turns, freeing a state for the focus.
+
+This statement should be proved or killed directly.  No substitute progress
+scalar is needed.
+
+## 8. Existing machinery retained only as witness bank
+
+The repository's older dual, V4, staged, handoff, phase, holonomy, SRMF, and
+observer constructions remain available to falsify or illuminate the small
+turn theorem.  They are no longer in the canonical proof dependency chain.
 
 Track A remains the pinned held-out Rocq Four Color development and may be used
-only after Track-B claims are frozen for structural comparison.
-
-Track B may use ordinary graph theory and planar topology, but it may not import
-an equivalent Four Color existence theorem under another name.
+only for post-hoc structural comparison after Track-B claims are frozen.
 
 ## 9. Bottom line
 
 We do **not** yet have a new proof of the Four Color Theorem.
 
-We have reduced the independent proof attempt to a substantially smaller
-question:
+We do now have a materially smaller proof spine:
 
-\[
-\boxed{
-\text{Does ordered planar state formation force a lawful reuse among four
-states at the degree-five fifth obligation?}
-}
-\]
+```text
+degree-five saturated frontier
+-> clean whole-component turn exists                  [PROVED]
+-> if no singleton finishes, both repeated turns clean [PROVED]
+-> noninverse present-state continuation exists       [PROVED]
+-> persistent boundary phase has period 20            [PROVED]
+-> recurring physical component strictly grows        [OPEN]
+-> finite carrier forces a singleton finishing turn
+-> commit focus
+```
 
-Everything else is secondary until that statement is proved or falsified.
+The one open arrow is now physical shape growth under a completely explicit
+turn law.
