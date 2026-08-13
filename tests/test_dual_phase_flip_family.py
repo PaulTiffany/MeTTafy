@@ -7,7 +7,7 @@ from mettafy.cacophony_router import current_dual_parameters
 from mettafy.color_construction import ConstructionState
 from mettafy.dual_involution_phase import dual_involution_phase_signature
 from mettafy.dual_path_switching import dual_pairing_signature
-from mettafy.opportunity_handoff import certify_opportunity_handoff
+from mettafy.opportunity_handoff import certify_current_opportunity_totality
 from mettafy.plane_dual_control import (
     DegreeFiveTriangulatedEmbedding,
     Edge,
@@ -131,9 +131,7 @@ def _proper_color_preserving_flips(faces: DiskFaces) -> tuple[DiskFaces, ...]:
                 (first_opposite, second_opposite, right),
             )
         )
-        candidate = tuple(
-            sorted(updated, key=lambda face: tuple(sorted(face)))
-        )
+        candidate = tuple(sorted(updated, key=lambda face: tuple(sorted(face))))
         key = _face_key(candidate)
         generated[key] = candidate
 
@@ -158,9 +156,6 @@ def _flip_family() -> tuple[DiskFaces, ...]:
 
 
 def test_phase_descent_candidate_survives_full_flip_family() -> None:
-    # This is a falsifier family of distinct planar theorem instances. Diagonal
-    # flips are used only to generate embeddings; they are not admitted as
-    # coloration construction controls.
     family = _flip_family()
     assert len(family) == 154
 
@@ -172,35 +167,37 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
         embedding = _disk_embedding(faces)
         parameters = current_dual_parameters(embedding)
         assert len(parameters) == 4
-        handoffs = tuple(certify_opportunity_handoff(parameter) for parameter in parameters)
-        assert all(certificate.valid for certificate in handoffs)
-        opportunity_transitions += len(handoffs)
+        totalities = tuple(
+            certify_current_opportunity_totality(parameter)
+            for parameter in parameters
+        )
+        assert all(certificate.valid for certificate in totalities)
+        opportunity_transitions += len(totalities)
 
-        for certificate in handoffs:
-            if certificate.stop_available:
-                assert certificate.resulting_other_singleton_mode is None
-                assert certificate.direction_changed is None
+        for certificate in totalities:
+            handoff = certificate.handoff
+            if handoff.stop_available:
+                assert handoff.resulting_other_singleton_mode is None
+                assert handoff.direction_changed is None
+                assert certificate.current_parameters == ()
             else:
-                assert certificate.resulting_other_singleton_mode in certificate.opportunity_modes
-                assert certificate.direction_changed in (False, True)
+                assert handoff.resulting_other_singleton_mode in handoff.opportunity_modes
+                assert handoff.direction_changed in (False, True)
+                assert len(certificate.current_parameters) == 4
 
         source_regime = dual_pairing_signature(embedding).regime
         regimes[source_regime] += 1
         if source_regime != "pivot":
             continue
 
-        source_rank = dual_involution_phase_signature(
-            embedding
-        ).phase_fragment_rank
+        source_rank = dual_involution_phase_signature(embedding).phase_fragment_rank
         pivot_ranks[source_rank] += 1
 
         outcomes: list[tuple[str, int]] = []
-        for certificate in handoffs:
-            successor = certificate.transport.after_embedding
+        for certificate in totalities:
+            successor = certificate.handoff.transport.after_embedding
             successor_regime = dual_pairing_signature(successor).regime
-            successor_rank = dual_involution_phase_signature(
-                successor
-            ).phase_fragment_rank
+            successor_rank = dual_involution_phase_signature(successor).phase_fragment_rank
             outcomes.append((successor_regime, successor_rank))
 
         assert any(

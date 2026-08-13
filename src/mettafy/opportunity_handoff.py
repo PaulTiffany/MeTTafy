@@ -7,6 +7,7 @@ from mettafy.dual_path_switching import selected_dual_primal_edges
 from mettafy.plane_dual_control import (
     DualDomainParameter,
     Edge,
+    derive_dual_domain_parameters,
     derive_embedded_dual_continuation,
 )
 from mettafy.plane_parameterization import NONZERO_MODES, V4
@@ -14,6 +15,7 @@ from mettafy.shared_opportunity_transport import (
     SharedOpportunityTransportCertificate,
     certify_shared_opportunity_transport,
 )
+from mettafy.zero_point_correspondence import dual_defect_parameterization
 
 
 @dataclass(frozen=True)
@@ -105,13 +107,9 @@ class OpportunityHandoffCertificate:
         ):
             return False
 
-        # Continue in the same direction: the physical permission carrier is
-        # unchanged by the realized consequence.
         if self.carrier_after(sigma) != self.carrier_before(sigma):
             return False
 
-        # Change direction: either complementary directional carrier is the old
-        # carrier retyped only on the one realized path.
         for mode in self.opportunity_modes:
             if self.carrier_after(mode) != self.carrier_before(mode).symmetric_difference(
                 self.path_edges
@@ -132,16 +130,8 @@ class OpportunityHandoffCertificate:
         if resulting is None or resulting not in self.opportunity_modes:
             return False
 
-        # Applicability is checked at the actual successor, not guessed at the
-        # source: the resulting singleton direction has an embedding-derived
-        # current continuation now.
         continuation = derive_embedded_dual_continuation(after, resulting)
-        if not continuation.valid:
-            return False
-        if continuation.translation_mode != resulting:
-            return False
-
-        return True
+        return continuation.valid and continuation.translation_mode == resulting
 
 
 def certify_opportunity_handoff(
@@ -154,4 +144,91 @@ def certify_opportunity_handoff(
     )
     if not certificate.valid:
         raise AssertionError("cross-direction opportunity handoff failed certification")
+    return certificate
+
+
+@dataclass(frozen=True)
+class CurrentOpportunityTotalityCertificate:
+    """Either stop is available now, or four current dual controls exist now.
+
+    No route or future destination is stored.  When zero focus slack persists,
+    the actual successor is reparameterized at its own zero-point and the two
+    singleton directions each yield their two embedding-derived path controls.
+    """
+
+    handoff: OpportunityHandoffCertificate
+    current_parameters: tuple[DualDomainParameter, ...]
+
+    @property
+    def valid(self) -> bool:
+        if not self.handoff.valid:
+            return False
+        after = self.handoff.transport.after_embedding
+
+        if self.handoff.stop_available:
+            return (
+                bool(after.state.admissible_colors(after.focus))
+                and not self.current_parameters
+            )
+
+        if after.state.admissible_colors(after.focus):
+            return False
+        defects = C5DefectState(after.boundary_colors)
+        if not defects.is_saturated_four_color_boundary:
+            return False
+
+        singleton_modes = frozenset(
+            mode for mode, count in defects.mode_counts.items() if count == 1
+        )
+        resulting = self.handoff.resulting_other_singleton_mode
+        if resulting is None:
+            return False
+        if singleton_modes != frozenset({self.handoff.source_mode, resulting}):
+            return False
+        if len(self.current_parameters) != 4:
+            return False
+        if any(not parameter.valid for parameter in self.current_parameters):
+            return False
+        if any(
+            parameter.continuation.embedding != after
+            for parameter in self.current_parameters
+        ):
+            return False
+
+        mode_counts = {
+            mode: sum(
+                parameter.translation_mode == mode
+                for parameter in self.current_parameters
+            )
+            for mode in singleton_modes
+        }
+        return set(mode_counts.values()) == {2}
+
+
+def certify_current_opportunity_totality(
+    parameter: DualDomainParameter,
+) -> CurrentOpportunityTotalityCertificate:
+    """Certify present stop-or-four-control totality after one current action."""
+
+    handoff = certify_opportunity_handoff(parameter)
+    after = handoff.transport.after_embedding
+    if handoff.stop_available:
+        current: tuple[DualDomainParameter, ...] = ()
+    else:
+        defects = C5DefectState(after.boundary_colors)
+        singleton_modes = tuple(
+            sorted(mode for mode, count in defects.mode_counts.items() if count == 1)
+        )
+        chart = dual_defect_parameterization(after.state, after.focus)
+        parameters: list[DualDomainParameter] = []
+        for mode in singleton_modes:
+            parameters.extend(derive_dual_domain_parameters(chart, after, mode))
+        current = tuple(parameters)
+
+    certificate = CurrentOpportunityTotalityCertificate(
+        handoff=handoff,
+        current_parameters=current,
+    )
+    if not certificate.valid:
+        raise AssertionError("current opportunity totality failed certification")
     return certificate
