@@ -1,19 +1,19 @@
 # Present-Control Falsifier Family
 
-**Status:** bounded mechanical evidence for the local control-selection law.
+**Status:** bounded counterfactual audit evidence; not a proof-relevant choice law.
 
 The complete proper-color-preserving diagonal-flip component of the retained
 three-interior disk contains 154 certified planar theorem instances. Exactly 26
 of those instances have current pivot geometry.
 
-For each pivot instance the machine derives exactly four currently applicable
+For each pivot instance the audit derives exactly four currently applicable
 dual controls. The suite therefore certifies
 
 \[
 26\times 4 = 104
 \]
 
-actual present-control transitions.
+exact counterfactual present-control transitions.
 
 Every one of the 104 transitions is independently checked against the local
 topological accounting law
@@ -22,8 +22,8 @@ topological accounting law
 \boxed{\Delta\Phi = 2\Delta C - \Delta S}.
 \]
 
-At each of the 26 pivot sources, exhaustive inspection of the four controls
-finds at least one present choice satisfying
+Across each group of four counterfactual transitions, the audit finds at least
+one satisfying
 
 \[
 \boxed{
@@ -33,7 +33,7 @@ finds at least one present choice satisfying
 }
 \]
 
-Equivalently, using the exact phase identity,
+Equivalently,
 
 \[
 \operatorname{Direct}(Tz)
@@ -41,12 +41,23 @@ Equivalently, using the exact phase identity,
 2\Delta C(T)-\Delta S(T)<0.
 \]
 
-This is deliberately a **present-state** falsifier. It does not add a future
-route, destination, or eventual-reachability coordinate. The current carrier
-derives the controls that exist now; their exact consequences are certified;
-after action, the successor derives its own current controls.
+That existential result is useful falsification evidence about the transition
+algebra, but it is **not** the construction state's decision procedure.  A
+proof-relevant state does not realize four successors, inspect their outcomes,
+and then choose the favorable one.
 
-The family result is not promoted to a universal planar theorem. It is banked
-as 104 contract-preserving attempts to kill the local selection law on a
-nontrivial connected family that already contains the earlier pivot-to-pivot
-counterexample.
+The action-local execution contract is instead
+
+\[
+\boxed{z\xrightarrow{a}z_a,\qquad |\operatorname{Affected}(z,a)|=1.}
+\]
+
+The current carrier may expose a permission surface containing several legal
+parameters. One chosen parameter realizes one successor; after that action the
+actual successor derives its own current permissions. Exhaustive enumeration
+belongs only to the mechanical red-team/audit layer.
+
+The 104 transitions therefore remain banked as contract-preserving attempts to
+kill algebraic claims on a nontrivial connected family that already contains
+the earlier pivot-to-pivot counterexample. They are not authorization for a
+lookahead router.

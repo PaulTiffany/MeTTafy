@@ -45,6 +45,9 @@ jobs:
       - name: Enforce Four Color ontology boundary
         run: python scripts/validate_four_color_ontology.py
 
+      - name: Enforce action-local Four Color control
+        run: python scripts/validate_action_local_control.py
+
       - name: Lint
         run: ruff check .
 
