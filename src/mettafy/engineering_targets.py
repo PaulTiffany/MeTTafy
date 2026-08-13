@@ -13,7 +13,22 @@ _SEMANTIC_ALIASES: dict[SemanticConcept, tuple[str, ...]] = {
     "closure": ("termination", "terminate", "success", "complete", "validation", "unresolved", "exhaust", "stops"),
     "temporal-locality": ("present state", "current state", "compile-time state", "future route", "future information", "later verification", "before the notebook"),
     "provenance": ("provenance", "audit", "certificate", "source sha", "source_sha", "commit", "trace"),
-    "growth": ("grow", "growth", "enlarge", "enlargement", "strictly larger", "new carrier", "new vertices"),
+    "strict-refinement": (
+        "strict refinement",
+        "strictly refine",
+        "strict extension",
+        "strictly larger",
+        "new carrier",
+        "new vertices",
+        "increase complexity",
+        "increased complexity",
+        "growth of complexity",
+        "emergent complexity",
+        "emergence",
+        "consequential refinement",
+        "constrain downstream",
+        "fewer admissible",
+    ),
     "projection": ("projection", "manifest", "render", "translate"),
 }
 
@@ -178,7 +193,9 @@ def four_color_engineering_index() -> EngineeringIndex:
             "C6",
             "Replay or reversible relabeling of an already resolved component must not count as "
             "fresh progress; retained structural identity must survive irrelevant representation "
-            "changes, while structural enlargement or a genuinely new resolved shape may count.",
+            "changes, while a strict refinement may count only when it adds emergent complexity: "
+            "new relational structure that preserves prior resolved facts and constrains downstream "
+            "admissible continuations.",
         ),
         EngineeringNeed(
             "N-C7-FiniteClosure",
