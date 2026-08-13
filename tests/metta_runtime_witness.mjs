@@ -10,9 +10,11 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const targetPath = path.join(root, "exemplars", "four_color", "high_level_strategy.metta");
 const surfacePath = path.join(root, "exemplars", "four_color", "proof_surface.metta");
+const engineeringPath = path.join(root, "exemplars", "four_color", "engineering_targets.metta");
 const demoPath = path.join(root, "_site", "four-color-demo.metta");
 const target = fs.readFileSync(targetPath, "utf8");
 const surface = fs.readFileSync(surfacePath, "utf8");
+const engineering = fs.readFileSync(engineeringPath, "utf8");
 const demo = fs.readFileSync(demoPath, "utf8");
 
 const failures = [];
@@ -36,6 +38,17 @@ if (parsedSurface.length < 50) {
   failures.push(`proof surface parsed only ${parsedSurface.length} atoms`);
 }
 
+const engineeringParser = new MeTTa();
+let parsedEngineering = [];
+try {
+  parsedEngineering = engineeringParser.parseAll(engineering);
+} catch (error) {
+  failures.push(`engineering target parse failed: ${String(error)}`);
+}
+if (parsedEngineering.length < 25) {
+  failures.push(`engineering target search parsed only ${parsedEngineering.length} atoms`);
+}
+
 const runtime = new MeTTa();
 let reduction = [];
 try {
@@ -52,9 +65,11 @@ if (!rendered.some((value) => value.includes("compactness-extension"))) {
 const evidence = {
   witness: "WIT-METTA-RUNTIME",
   audience: "MeTTa ecosystem integrator",
-  claim: "The checked Four Color semantic artifact and frozen Track-B proof surface parse under the pinned MeTTaScript Hyperon runtime, and the executable teaching projection reduces.",
+  claim: "The checked Four Color semantic artifact, frozen Track-B proof surface, and pinned flat-Python engineering-target index parse under the pinned MeTTaScript Hyperon runtime, and the executable teaching projection reduces.",
   non_claims: [
     "semantic annotations are correct",
+    "engineering target matches are proof witnesses",
+    "retrieved Python implementations establish theorem validity",
     "the proof surface establishes theorem validity",
     "MeTTaScript is the only supported MeTTa runtime",
     "the teaching projection is the Four Color proof",
@@ -62,6 +77,7 @@ const evidence = {
   runtime_source_commit: "abe13439196bccdb48b6636773a46ec9772a7aaf",
   parsed_atom_count: parsed.length,
   proof_surface_atom_count: parsedSurface.length,
+  engineering_target_atom_count: parsedEngineering.length,
   reduction_results: rendered,
   failures,
   result: failures.length === 0 ? "pass" : "fail",
@@ -76,5 +92,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `MeTTa runtime witness passed: ${parsed.length} strategy atoms; ${parsedSurface.length} proof-surface atoms; reduction reached compactness-extension.`,
+  `MeTTa runtime witness passed: ${parsed.length} strategy atoms; ${parsedSurface.length} proof-surface atoms; ${parsedEngineering.length} engineering-target atoms; reduction reached compactness-extension.`,
 );
