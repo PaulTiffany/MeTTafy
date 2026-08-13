@@ -6,15 +6,13 @@ from typing import TypeAlias
 from mettafy.cacophony_router import current_dual_parameters
 from mettafy.color_construction import ConstructionState
 from mettafy.dual_involution_phase import dual_involution_phase_signature
-from mettafy.dual_path_switching import (
-    certify_alternating_path_switch,
-    dual_pairing_signature,
-)
+from mettafy.dual_path_switching import dual_pairing_signature
 from mettafy.plane_dual_control import (
     DegreeFiveTriangulatedEmbedding,
     Edge,
     canonical_edge,
 )
+from mettafy.shared_opportunity_transport import certify_shared_opportunity_transport
 
 Face: TypeAlias = tuple[str, str, str]
 DiskFaces: TypeAlias = tuple[Face, ...]
@@ -168,9 +166,19 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
 
     regimes: Counter[str] = Counter()
     pivot_ranks: Counter[int] = Counter()
+    opportunity_transitions = 0
 
     for faces in family:
         embedding = _disk_embedding(faces)
+        parameters = current_dual_parameters(embedding)
+        assert len(parameters) == 4
+        opportunity_certificates = tuple(
+            certify_shared_opportunity_transport(parameter)
+            for parameter in parameters
+        )
+        assert all(certificate.valid for certificate in opportunity_certificates)
+        opportunity_transitions += len(opportunity_certificates)
+
         source_regime = dual_pairing_signature(embedding).regime
         regimes[source_regime] += 1
         if source_regime != "pivot":
@@ -181,13 +189,9 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
         ).phase_fragment_rank
         pivot_ranks[source_rank] += 1
 
-        parameters = current_dual_parameters(embedding)
-        assert len(parameters) == 4
         outcomes: list[tuple[str, int]] = []
-        for parameter in parameters:
-            successor = certify_alternating_path_switch(
-                parameter
-            ).after_embedding
+        for certificate in opportunity_certificates:
+            successor = certificate.after_embedding
             successor_regime = dual_pairing_signature(successor).regime
             successor_rank = dual_involution_phase_signature(
                 successor
@@ -199,5 +203,6 @@ def test_phase_descent_candidate_survives_full_flip_family() -> None:
             for regime, rank in outcomes
         )
 
+    assert opportunity_transitions == 616
     assert regimes == Counter({"direct": 128, "pivot": 26})
     assert pivot_ranks == Counter({9: 12, 11: 6, 12: 3, 13: 2, 10: 2, 14: 1})
