@@ -174,7 +174,7 @@ class ProofSurface:
             "; Mechanical witnesses are falsifiers; they are not theorem premises.",
             "",
             f"(ProofSurface {self.name})",
-            f"(FrozenProof {self.name} {self.frozen_commit})",
+            f"(FrozenProof {self.name} sha-{self.frozen_commit})",
             f"; frozen proof artifact: {self.frozen_proof}",
             "",
             "; --- typed claims ---",
