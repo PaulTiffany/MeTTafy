@@ -337,5 +337,8 @@ def test_ordered_construction_survives_all_saturated_flip_family_colorings() -> 
     assert immediate_finishes == 3534
     assert nonterminal_orientations == 2172
     assert persistent_depths == Counter({1: 2052, 2: 60, 3: 60})
-    assert strict_refinement_events > 0
+    # The proof's noninverse traversal never needs to revisit a lineage in this
+    # exhaustive family.  The dedicated three-interior shortest-route witness
+    # exercises the strict-refinement branch separately.
+    assert strict_refinement_events == 0
     assert rejected_label_replays > 0
