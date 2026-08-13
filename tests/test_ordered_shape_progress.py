@@ -5,6 +5,7 @@ import pytest
 from mettafy.color_construction import ConstructionState
 from mettafy.ordered_shape import (
     OrderedShapeLedger,
+    PhysicalComponentShape,
     certify_shape_progress,
     resolved_component_shape,
 )
@@ -71,12 +72,14 @@ def _clean_turn(state: ConstructionState, seed: str, other_color: int):
     return matches[0]
 
 
-def test_m6_exact_inverse_replay_is_not_fresh_progress() -> None:
+def test_m6_exact_inverse_replay_is_an_inconsequential_label_change() -> None:
     state = three_interior_lock_state()
     first = _clean_turn(state, "a", 2)
 
     first_certificate = certify_shape_progress(OrderedShapeLedger(), first)
     assert first_certificate.valid
+    assert first_certificate.new_lineage
+    assert first_certificate.consequential
     ledger = first_certificate.commit()
 
     inverse = _clean_turn(first.after, "a", 0)
@@ -84,13 +87,16 @@ def test_m6_exact_inverse_replay_is_not_fresh_progress() -> None:
 
     assert resolved_component_shape(inverse) == resolved_component_shape(first)
     assert inverse_certificate.derived_shape_matches
+    assert inverse_certificate.equivalent_replay
     assert not inverse_certificate.fresh
+    assert not inverse_certificate.strict_refinement
+    assert not inverse_certificate.consequential
     assert not inverse_certificate.valid
-    with pytest.raises(ValueError, match="not fresh ordered progress"):
+    with pytest.raises(ValueError, match="label-only replay"):
         inverse_certificate.commit()
 
 
-def test_same_color_pair_is_fresh_when_physical_component_shape_grows() -> None:
+def test_same_lineage_is_a_move_only_when_physical_shape_strictly_refines() -> None:
     state = three_interior_lock_state()
     route = shortest_clean_frontier_audit_route(
         state,
@@ -104,14 +110,42 @@ def test_same_color_pair_is_fresh_when_physical_component_shape_grows() -> None:
     assert len(route.turns) == 3
 
     ledger = OrderedShapeLedger()
+    certificates = []
     for turn in route.turns:
         certificate = certify_shape_progress(ledger, turn)
         assert certificate.valid
+        assert certificate.consequential
+        certificates.append(certificate)
         ledger = certificate.commit()
 
     first_shape = resolved_component_shape(route.turns[0])
     third_shape = resolved_component_shape(route.turns[2])
-    assert first_shape.color_pair == third_shape.color_pair == frozenset({0, 2})
+    third_certificate = certificates[2]
+
+    assert first_shape.lineage == third_shape.lineage
     assert first_shape.vertices < third_shape.vertices
-    assert first_shape != third_shape
+    assert first_shape.edges <= third_shape.edges
+    assert third_shape.strictly_refines(first_shape)
+    assert third_certificate.prior_lineage_shapes == frozenset({first_shape})
+    assert third_certificate.strict_refinement
+    assert not third_certificate.new_lineage
     assert len(ledger.resolved) == 3
+
+
+def test_incompatible_same_lineage_rewrite_is_not_growth() -> None:
+    earlier = PhysicalComponentShape(
+        color_pair=frozenset({0, 2}),
+        vertices=frozenset({"a", "x0"}),
+        edges=frozenset({("a", "x0")}),
+        frontier_hits=frozenset({"a"}),
+    )
+    rewrite = PhysicalComponentShape(
+        color_pair=frozenset({0, 2}),
+        vertices=frozenset({"a", "x1"}),
+        edges=frozenset({("a", "x1")}),
+        frontier_hits=frozenset({"a"}),
+    )
+
+    assert rewrite.same_lineage(earlier)
+    assert not rewrite.retains(earlier)
+    assert not rewrite.strictly_refines(earlier)

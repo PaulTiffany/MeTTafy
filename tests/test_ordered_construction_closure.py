@@ -4,6 +4,7 @@ from collections import Counter, defaultdict, deque
 from typing import TypeAlias
 
 from mettafy.color_construction import PALETTE4, ConstructionState
+from mettafy.ordered_shape import OrderedShapeLedger, certify_shape_progress
 from mettafy.sequential_frontier import CleanFrontierTurn, clean_frontier_turns
 
 Face: TypeAlias = tuple[str, str, str]
@@ -203,40 +204,36 @@ def _singleton_and_repeated_turns(
     return singleton, repeated
 
 
-def _turn_signature(turn: CleanFrontierTurn) -> tuple[frozenset[int], frozenset[str]]:
-    return (
-        frozenset(
-            {
-                turn.before.coloring[turn.move.seed],
-                turn.move.other_color,
-            }
-        ),
-        turn.component,
-    )
-
-
 def _apply_finishing_turn(turn: CleanFrontierTurn) -> None:
     assert turn.valid
     assert turn.after.admissible_colors(FOCUS)
 
 
-def _audit_noninverse_orientation(first: CleanFrontierTurn) -> int:
-    """Return persistent turns consumed before a singleton finishing turn.
+def _audit_noninverse_orientation(first: CleanFrontierTurn) -> tuple[int, int, int]:
+    """Return persistent depth, strict refinements, and rejected label replays.
 
     The bound is an audit guard only.  The proof does not depend on `20`.
     """
 
     assert first.valid
+    ledger = OrderedShapeLedger()
+    first_certificate = certify_shape_progress(ledger, first)
+    assert first_certificate.valid
+    assert first_certificate.new_lineage
+    assert first_certificate.consequential
+    ledger = first_certificate.commit()
+
     current = first.after
     previous_seed = first.move.seed
-    signatures = {_turn_signature(first)}
     persistent_turns = 1
+    strict_refinements = 0
+    replay_rejections = 0
 
     for _ in range(19):
         singleton, repeated = _singleton_and_repeated_turns(current)
         if singleton:
             _apply_finishing_turn(singleton[0])
-            return persistent_turns
+            return persistent_turns, strict_refinements, replay_rejections
 
         repeated_color = next(
             color
@@ -253,14 +250,32 @@ def _audit_noninverse_orientation(first: CleanFrontierTurn) -> int:
         clean_repeated_seeds = {turn.move.seed for turn in repeated}
         assert repeated_positions <= clean_repeated_seeds
 
+        replay_certificates = []
+        for candidate in repeated:
+            certificate = certify_shape_progress(ledger, candidate)
+            if certificate.equivalent_replay:
+                replay_certificates.append(certificate)
+        assert replay_certificates
+        for certificate in replay_certificates:
+            assert not certificate.fresh
+            assert not certificate.consequential
+            assert not certificate.valid
+        replay_rejections += len(replay_certificates)
+
         noninverse = tuple(
             turn for turn in repeated if turn.move.seed != previous_seed
         )
         assert noninverse
         turn = noninverse[0]
-        signature = _turn_signature(turn)
-        assert signature not in signatures
-        signatures.add(signature)
+        certificate = certify_shape_progress(ledger, turn)
+        assert certificate.valid
+        assert certificate.fresh
+        assert certificate.consequential
+        assert certificate.retains_prior_lineage
+        if certificate.prior_lineage_shapes:
+            assert certificate.strict_refinement
+            strict_refinements += 1
+        ledger = certificate.commit()
 
         current = turn.after
         previous_seed = turn.move.seed
@@ -276,6 +291,8 @@ def test_ordered_construction_survives_all_saturated_flip_family_colorings() -> 
     theorem_instances = 0
     immediate_finishes = 0
     nonterminal_orientations = 0
+    strict_refinement_events = 0
+    rejected_label_replays = 0
     persistent_depths: Counter[int] = Counter()
 
     for faces in family:
@@ -311,9 +328,14 @@ def test_ordered_construction_survives_all_saturated_flip_family_colorings() -> 
             # Attack both possible initial orientations.
             for first in repeated:
                 nonterminal_orientations += 1
-                persistent_depths[_audit_noninverse_orientation(first)] += 1
+                depth, refinements, replays = _audit_noninverse_orientation(first)
+                persistent_depths[depth] += 1
+                strict_refinement_events += refinements
+                rejected_label_replays += replays
 
     assert theorem_instances == 4620
     assert immediate_finishes == 3534
     assert nonterminal_orientations == 2172
     assert persistent_depths == Counter({1: 2052, 2: 60, 3: 60})
+    assert strict_refinement_events > 0
+    assert rejected_label_replays > 0
