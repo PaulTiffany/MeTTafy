@@ -166,6 +166,14 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
     handed_pairs = 0
     handed_controls = 0
     pivot_handoff_checks = 0
+    non_descent_witnesses: list[
+        tuple[
+            tuple[int, int, int, int, int],
+            tuple[int, int],
+            int,
+            tuple[tuple[bool, str | None, int | None], ...],
+        ]
+    ] = []
 
     for faces in family:
         embedding = _disk_embedding(faces)
@@ -186,7 +194,9 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
                 assert certificate.handed_parameters == ()
                 continue
 
-            assert certificate.handed_mode in handoff.opportunity_modes
+            handed_mode = certificate.handed_mode
+            assert handed_mode is not None
+            assert handed_mode in handoff.opportunity_modes
             assert handoff.direction_changed in (False, True)
             assert len(certificate.totality.current_parameters) == 4
             assert len(certificate.handed_parameters) == 2
@@ -214,17 +224,21 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
                     )
                 )
 
-            assert any(
+            favorable = any(
                 commit_available
                 or regime == "direct"
                 or (rank is not None and rank < current_rank)
                 for commit_available, regime, rank in outcomes
-            ), (
-                current.boundary_colors,
-                certificate.handed_mode,
-                current_rank,
-                outcomes,
             )
+            if not favorable:
+                non_descent_witnesses.append(
+                    (
+                        current.boundary_colors,
+                        handed_mode,
+                        current_rank,
+                        tuple(outcomes),
+                    )
+                )
 
         source_regime = dual_pairing_signature(embedding).regime
         regimes[source_regime] += 1
@@ -236,5 +250,11 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
     assert handed_pairs > 0
     assert handed_controls == 2 * handed_pairs
     assert pivot_handoff_checks > 0
+    assert (
+        (3, 1, 0, 2, 0),
+        (1, 0),
+        10,
+        ((False, "pivot", 12), (False, "pivot", 12)),
+    ) in non_descent_witnesses
     assert regimes == Counter({"direct": 128, "pivot": 26})
     assert pivot_ranks == Counter({9: 12, 11: 6, 12: 3, 13: 2, 10: 2, 14: 1})
