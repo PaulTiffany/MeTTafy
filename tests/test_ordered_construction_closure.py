@@ -4,11 +4,11 @@ from collections import Counter, defaultdict, deque
 from typing import TypeAlias
 
 from mettafy.color_construction import PALETTE4, ConstructionState
-from mettafy.plane_dual_control import Edge, canonical_edge
 from mettafy.sequential_frontier import CleanFrontierTurn, clean_frontier_turns
 
 Face: TypeAlias = tuple[str, str, str]
 DiskFaces: TypeAlias = tuple[Face, ...]
+Edge: TypeAlias = tuple[str, str]
 
 BOUNDARY = ("a", "b", "c", "d", "e")
 FOCUS = "v"
@@ -33,6 +33,10 @@ BASE_COLORING = {
     "x1": 3,
     "x2": 1,
 }
+
+
+def _canonical_edge(left: str, right: str) -> Edge:
+    return (left, right) if left < right else (right, left)
 
 
 def _add_edge(adjacency: dict[str, set[str]], left: str, right: str) -> None:
@@ -67,11 +71,11 @@ def _proper_color_preserving_flips(faces: DiskFaces) -> tuple[DiskFaces, ...]:
     for face_index, face in enumerate(faces):
         for index in range(3):
             edge_faces[
-                canonical_edge(face[index], face[(index + 1) % 3])
+                _canonical_edge(face[index], face[(index + 1) % 3])
             ].append(face_index)
 
     boundary_edges = frozenset(
-        canonical_edge(BOUNDARY[index], BOUNDARY[(index + 1) % 5])
+        _canonical_edge(BOUNDARY[index], BOUNDARY[(index + 1) % 5])
         for index in range(5)
     )
     all_edges = frozenset(edge_faces)
@@ -92,7 +96,7 @@ def _proper_color_preserving_flips(faces: DiskFaces) -> tuple[DiskFaces, ...]:
         if first_opposite == second_opposite:
             continue
 
-        replacement = canonical_edge(first_opposite, second_opposite)
+        replacement = _canonical_edge(first_opposite, second_opposite)
         if replacement in all_edges:
             continue
         if BASE_COLORING[first_opposite] == BASE_COLORING[second_opposite]:
