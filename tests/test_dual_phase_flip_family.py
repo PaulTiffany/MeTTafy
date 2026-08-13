@@ -8,6 +8,7 @@ from mettafy.color_construction import ConstructionState
 from mettafy.dual_involution_phase import dual_involution_phase_signature
 from mettafy.dual_path_switching import dual_pairing_signature
 from mettafy.handed_opportunity_pair import certify_handed_off_opportunity_pair
+from mettafy.handed_pair_dynamics import certify_handed_opportunity_pair_dynamics
 from mettafy.opportunity_handoff import certify_opportunity_handoff
 from mettafy.plane_dual_control import (
     DegreeFiveTriangulatedEmbedding,
@@ -165,6 +166,9 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
     first_actions = 0
     handed_pairs = 0
     handed_controls = 0
+    pair_dynamics = 0
+    persistent_pair_completions = 0
+    focus_commit_pairs = 0
     pivot_handoff_checks = 0
     non_descent_witnesses: list[
         tuple[
@@ -202,6 +206,19 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
             assert len(certificate.handed_parameters) == 2
             handed_pairs += 1
             handed_controls += 2
+
+            dynamics = certify_handed_opportunity_pair_dynamics(handoff.parameter)
+            assert dynamics is not None
+            assert dynamics.valid
+            assert dynamics.homogeneous_focus_response
+            pair_dynamics += 1
+            if dynamics.persistent:
+                assert len(dynamics.completions) == 2
+                persistent_pair_completions += 1
+            else:
+                assert dynamics.focus_commit_flags == (True, True)
+                assert dynamics.completions == ()
+                focus_commit_pairs += 1
 
             current = handoff.transport.after_embedding
             if dual_pairing_signature(current).regime != "pivot":
@@ -249,6 +266,9 @@ def test_handed_opportunity_pair_survives_full_flip_family() -> None:
     assert first_actions == 616
     assert handed_pairs > 0
     assert handed_controls == 2 * handed_pairs
+    assert pair_dynamics == handed_pairs
+    assert persistent_pair_completions > 0
+    assert focus_commit_pairs > 0
     assert pivot_handoff_checks > 0
     assert (
         (3, 1, 0, 2, 0),
