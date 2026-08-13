@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
+from mettafy import plane_parameterization as pp
 from mettafy.color_construction import ConstructionState
 from mettafy.plane_dual_control import (
     DualDomainNonzeroCertificate,
@@ -10,48 +11,39 @@ from mettafy.plane_dual_control import (
     apply_dual_nonzero_parameter,
     canonical_edge,
 )
-from mettafy.plane_parameterization import (
-    COLOR_TO_V4,
-    NONZERO_MODES,
-    ZERO,
-    Color,
-    V4,
-    color_difference,
-    v4_add,
-)
 
 ChoiceBit: TypeAlias = Literal[0, 1]
-V4_TO_COLOR = {mode: color for color, mode in COLOR_TO_V4.items()}
+V4_TO_COLOR = {mode: color for color, mode in pp.COLOR_TO_V4.items()}
 
 
-def palette_distance(left: Color, right: Color) -> int:
+def palette_distance(left: pp.Color, right: pp.Color) -> int:
     """Discrete metric on the four terminal palette states."""
 
-    if left not in COLOR_TO_V4 or right not in COLOR_TO_V4:
+    if left not in pp.COLOR_TO_V4 or right not in pp.COLOR_TO_V4:
         raise ValueError("palette distance is defined only on Q4")
     return 0 if left == right else 1
 
 
-def apply_palette_choice(color: Color, mode: V4, choice: ChoiceBit) -> Color:
+def apply_palette_choice(color: pp.Color, mode: pp.V4, choice: ChoiceBit) -> pp.Color:
     """Apply one local binary choice: 0 stays put, 1 takes the unique V4 partner."""
 
-    if color not in COLOR_TO_V4:
+    if color not in pp.COLOR_TO_V4:
         raise ValueError("color lies outside Q4")
-    if mode not in NONZERO_MODES:
+    if mode not in pp.NONZERO_MODES:
         raise ValueError("choice direction must be a nonzero V4 mode")
     if choice not in (0, 1):
         raise ValueError("choice must be binary")
     if choice == 0:
         return color
-    return V4_TO_COLOR[v4_add(COLOR_TO_V4[color], mode)]
+    return V4_TO_COLOR[pp.v4_add(pp.COLOR_TO_V4[color], mode)]
 
 
-def palette_choice_is_lipschitz_one(mode: V4, choice: ChoiceBit) -> bool:
+def palette_choice_is_lipschitz_one(mode: pp.V4, choice: ChoiceBit) -> bool:
     """Exhaustively certify that one fixed local choice is an L=1 palette isometry."""
 
-    if mode not in NONZERO_MODES or choice not in (0, 1):
+    if mode not in pp.NONZERO_MODES or choice not in (0, 1):
         return False
-    colors = tuple(sorted(COLOR_TO_V4))
+    colors = tuple(sorted(pp.COLOR_TO_V4))
     return all(
         palette_distance(
             apply_palette_choice(left, mode, choice),
@@ -63,7 +55,7 @@ def palette_choice_is_lipschitz_one(mode: V4, choice: ChoiceBit) -> bool:
     )
 
 
-def changed_partner(color: Color, mode: V4) -> Color:
+def changed_partner(color: pp.Color, mode: pp.V4) -> pp.Color:
     """The unique other palette state reached by changing direction along ``mode``."""
 
     partner = apply_palette_choice(color, mode, 1)
@@ -103,7 +95,7 @@ class DualDomainBinaryChoiceCertificate:
         return self.realization.after
 
     @property
-    def mode(self) -> V4:
+    def mode(self) -> pp.V4:
         return self.parameter.translation_mode
 
     def choice(self, vertex: str) -> ChoiceBit:
@@ -156,17 +148,17 @@ class DualDomainBinaryChoiceCertificate:
             for neighbor in neighbors:
                 if neighbor not in self.before.coloring or vertex >= neighbor:
                     continue
-                before_mode = color_difference(
+                before_mode = pp.color_difference(
                     self.before.coloring[vertex],
                     self.before.coloring[neighbor],
                 )
-                after_mode = color_difference(
+                after_mode = pp.color_difference(
                     self.after.coloring[vertex],
                     self.after.coloring[neighbor],
                 )
                 choices_differ = self.choice(vertex) ^ self.choice(neighbor)
                 expected_mode = (
-                    v4_add(before_mode, self.mode)
+                    pp.v4_add(before_mode, self.mode)
                     if choices_differ
                     else before_mode
                 )
@@ -175,7 +167,7 @@ class DualDomainBinaryChoiceCertificate:
                 if choices_differ:
                     if canonical_edge(vertex, neighbor) not in expected_cut:
                         return False
-                    if before_mode == self.mode or after_mode == ZERO:
+                    if before_mode == self.mode or after_mode == pp.ZERO:
                         return False
                 elif after_mode != before_mode:
                     return False
