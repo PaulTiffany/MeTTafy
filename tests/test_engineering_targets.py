@@ -43,11 +43,11 @@ def test_c6_fuzzy_search_recovers_three_old_python_patterns() -> None:
     }
 
 
-def test_c6_search_keeps_unimplemented_growth_behavior_visible() -> None:
+def test_c6_search_keeps_unimplemented_emergent_refinement_visible() -> None:
     index = four_color_engineering_index()
 
     assert index.concept_voids() == {
-        "N-C6-FreshShapeProgress": ("growth",),
+        "N-C6-FreshShapeProgress": ("strict-refinement",),
     }
 
 
@@ -68,6 +68,14 @@ def test_semantic_aliases_bridge_math_and_engineering_vocabulary() -> None:
     )
 
     assert math & engineering == frozenset({"identity", "novelty", "persistence", "replay"})
+
+
+def test_growth_of_complexity_maps_to_strict_emergent_refinement() -> None:
+    signature = semantic_signature(
+        "growth of complexity through emergence must strictly refine the retained state"
+    )
+
+    assert "strict-refinement" in signature
 
 
 def test_metta_projection_is_exact_and_never_claims_witness_coverage() -> None:
