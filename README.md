@@ -138,18 +138,29 @@ The checker or independently verifiable artifact remains authoritative.
 
 ## Implementation status
 
-The repository contains an early Python bootstrap analyzer and Strategy IR. That code began with ordinary graph-coloring programs as a small test bed. The active research program is now the historical-exemplar curriculum, beginning with the Four Color Theorem.
+MeTTafy now has a mechanically witnessed research pipeline rather than only a bootstrap analyzer. The current Sprint 01 surface includes:
 
-The current Sprint 01 foundation includes:
+- **Pinned formal authority.** `formal_artifact_green` replays the exact `rocq-community/fourcolor` artifact under a pinned immutable checker/toolchain. This certifies checker acceptance of that upstream artifact only; it does not certify MeTTafy's interpretation.
+- **Leakage-safe structural recovery.** Rocq structure is extracted into a blind, source-neutral view before semantic recognition; held-out Four Color labels are joined only after recognition for evaluation.
+- **Mechanistic recognition traces.** Promotions and abstentions expose their observed premises, missing premises, confidence gate, and typed provenance rather than post-hoc explanation.
+- **Provenance through emission.** Promoted RuleTrace → Strategy relations survive as typed MeTTa provenance atoms and are separately checked at the deterministic artifact boundary.
+- **Fail-closed reducibility contracts.** Stronger reduction claims require explicit boundary preservation, strict descent, and a verified lift; the Four Color admissible-traversal gate can stop at `certificate_required` rather than inventing missing evidence.
+- **A falsification-preserving Four Color genealogy.** The earlier independent Track-B proof attempt is retained as a frozen hypothesis. Its degree-four C0 shortcut is explicitly falsified; a successor Kempe repair can pass its own mechanical checks without silently upgrading the failed ancestor or promoting a new theorem.
+- **Actual Hyperon execution witnesses.** A pinned Hyperon 0.2.10 lane records query results, final Atomspace state, and per-form state deltas from one witnessed execution sequence.
+- **Operational-liveness probes.** MeTTafy can derive a probe from a recovered `authorized_by` dependency, execute a separately hashed instrumented artifact, and distinguish `live`, `not_demonstrated`, `inconsistent`, `insufficient`, and `unavailable` without calling a failed perturbation "dead semantics."
+- **Bounded source-distinction correspondence.** One current witness removes the source-side `composition` distinction, observes the recovered dependency disappear in executable MeTTa, restores the source exactly, and observes the byte-identical target behavior return.
+- **Bounded differential execution.** The frozen finite graph corpus runs independently through the checked-in Python implementation and pinned MeTTaScript runtime, with zero tolerated colorability mismatches and independent validation of returned colorings.
+- **Brown Goo micro-witness.** Lean checks the narrower architecture theorem that collapsing a source distinction needed by an admissible future continuation can prevent exact downstream factorization.
 
-- pinned upstream proof provenance;
-- historical and learner-facing documentation;
-- held-out semantic annotations;
-- leakage-safe benchmark projection;
-- an initial hand-annotated MeTTa strategy graph;
-- explicit checker/interpretation authority boundaries.
+These witness classes are intentionally not flattened into one success flag:
 
-Next engineering work is to extract structural evidence from the pinned Rocq proof and compare recovered strategy structure against the held-out exemplar annotations.
+```text
+valid target ≠ executed target ≠ live target ≠ faithful transcode
+```
+
+The current open research problem is the last relation: **general source-to-target strategy faithfulness remains unproved.** Existing witnesses certify only their declared bounded claims. Likewise, the repository does **not** claim a new proof of the Four Color Theorem; the independent Track-B proof genealogy remains unresolved where its frozen claim was falsified.
+
+See [`certification/witness-registry-v1.json`](certification/witness-registry-v1.json) for the machine-readable witness ledger and [`docs/four-color-proof-status.md`](docs/four-color-proof-status.md) for the current Four Color research frontier.
 
 ## Prior art and community
 
