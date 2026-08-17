@@ -176,14 +176,14 @@ That contrast is the point.
 
 Ben Goertzel's August 17, 2026 essay [*The Folly of Statistically Watermarking LLM-Gen Text*](https://bengoertzel.substack.com/p/the-folly-of-statistically-watermarking) provides a useful contemporary motivation for the same distinction, without serving as proof evidence for this Lean witness.
 
-A statistical watermark can be designed so that small lexical choices are intended to be nearly irrelevant to the text's ordinary semantic content while remaining deliberately observable to a detector. This means the same perturbation can be:
+A statistical watermark can be designed so that small lexical choices are nearly irrelevant to the text's ordinary semantic content while remaining deliberately observable to a detector. This means the same perturbation can be:
 
 - arbitrary relative to a continuation family that asks only for semantic content or task capability; and
 - non-arbitrary relative to a continuation family containing watermark detection, governance decisions, provenance inference, or later adversarial adaptation.
 
 So "semantically incidental" does **not** imply "arbitrary in every admissible future context." The continuation family determines the claim.
 
-Goertzel also emphasizes a separate distinction that matters here: a statistical detector may provide evidence about one generation path without recovering the full causal history of ideas, reasoning, or authorship. In Brown Goo terms, **detection signal, signed provenance, semantic content, and causal history are different objects and should not be silently flattened into one another.**
+Goertzel also emphasizes a separate distinction that matters here: a statistical detector may provide evidence about one generation path without recovering the full causal history of ideas, reasoning, or authorship; and he contrasts statistical watermarking with signed provenance mechanisms. In Brown Goo terms, **detection signal, signed provenance, semantic content, and causal history are different objects and should not be silently flattened into one another.**
 
 This example is intentionally documentary. The Lean theorems above stand or fall on their own checker-visible definitions and proofs.
 
