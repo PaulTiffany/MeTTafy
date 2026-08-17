@@ -1,0 +1,45 @@
+name: Lean micro-witnesses
+
+on:
+  pull_request:
+    paths:
+      - "examples/brown_goo/**"
+      - "lean-toolchain"
+      - ".github/workflows/lean-micro.yml"
+  push:
+    branches: [main]
+    paths:
+      - "examples/brown_goo/**"
+      - "lean-toolchain"
+      - ".github/workflows/lean-micro.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brown-goo:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Lean toolchain with Elan
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            https://raw.githubusercontent.com/leanprover/elan/464c9d28395000a2a0128e07081e4956d50eced2/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          export PATH="$HOME/.elan/bin:$PATH"
+          elan toolchain install "$(cat lean-toolchain)"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check distinction-preservation witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          lean --version
+          lean examples/brown_goo/BrownGoo.lean
