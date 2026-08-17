@@ -12,6 +12,7 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/differential_execution_witness.mjs"
       - "tests/human_interface_witness.py"
       - "tests/metta_runtime_witness.mjs"
       - "tests/site_size_witness.py"
@@ -29,6 +30,7 @@ on:
       - "scripts/stamp_site_integrity.py"
       - "tests/accessibility_witness.py"
       - "tests/browser_smoke.py"
+      - "tests/differential_execution_witness.mjs"
       - "tests/human_interface_witness.py"
       - "tests/metta_runtime_witness.mjs"
       - "tests/site_size_witness.py"
@@ -102,6 +104,9 @@ jobs:
 
       - name: MeTTa ecosystem runtime witness
         run: node tests/metta_runtime_witness.mjs
+
+      - name: Differential source to MeTTa execution witness
+        run: node tests/differential_execution_witness.mjs
 
       - name: Browser, accessibility, and human operability witnesses
         run: |
