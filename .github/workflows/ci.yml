@@ -41,6 +41,7 @@ jobs:
           python scripts/validate_certification_program.py --status
           python scripts/validate_witness_registry.py
           python scripts/validate_audience_interface_program.py
+          python scripts/validate_formal_artifact_program.py
 
       - name: Lint
         run: ruff check .

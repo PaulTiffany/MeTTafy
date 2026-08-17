@@ -1,0 +1,46 @@
+{
+  "program": "MeTTafy Formal Artifact Certification",
+  "version": "1.0.0",
+  "schema_version": 1,
+  "principle": "Formal authority belongs to the pinned checker over the pinned formal artifact; semantic interpretation remains a separate claim.",
+  "grade": "formal_artifact_green",
+  "status": "implemented",
+  "requires": ["WIT-ROCQ-REPLAY"],
+  "witness": {
+    "id": "WIT-ROCQ-REPLAY",
+    "strength": "formal",
+    "command": "bash scripts/replay_four_color_proof.sh",
+    "evidence": "artifacts/witnesses/rocq-four-color-replay.json",
+    "metric": "formal_replay_failures",
+    "threshold": {"op": "eq", "value": 0},
+    "claim": "The pinned rocq-community/fourcolor artifact is accepted through its upstream package contract by the pinned checker/toolchain.",
+    "non_claims": [
+      "MeTTafy's semantic interpretation is correct",
+      "MeTTafy's extracted dependency graph is correct",
+      "the historical narrative is correct",
+      "the teaching MeTTa artifact is formally equivalent to the Rocq proof"
+    ],
+    "source": {
+      "repository": "rocq-community/fourcolor",
+      "commit": "f2fcc837b817632f334f9c7d7fbb0195ad4ba4e2",
+      "license": "CeCILL-B"
+    },
+    "toolchain": {
+      "container": "coqorg/coq@sha256:e50d77c4c5a9aa0d76ae1b343d79c5f922da3a75054b79c5dc635895438e4674",
+      "coq": "8.20.1",
+      "ocaml": "4.13.1",
+      "opam": "2.3.0"
+    }
+  },
+  "composition": {
+    "no_implicit_authority_promotion": true,
+    "does_not_imply": [
+      "audience_green",
+      "engineering_green",
+      "exemplar_green",
+      "accessibility_green",
+      "product_green"
+    ],
+    "semantic_claims_require_independent_witnesses": true
+  }
+}

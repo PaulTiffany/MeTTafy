@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -84,7 +84,7 @@
     {
       "id": "WIT-ROCQ-REPLAY",
       "name": "Formal proof replay witness",
-      "status": "planned",
+      "status": "implemented",
       "kind": "formal_verification",
       "strength": "formal",
       "claim": "The pinned Four Color formal artifact is accepted by the pinned Rocq checker/toolchain.",
