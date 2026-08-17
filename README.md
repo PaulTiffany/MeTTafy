@@ -109,6 +109,8 @@ The formal claim is narrower. If a translation collapses two source objects that
 
 This closes a subtle loophole in ordinary lossy abstraction: a distinction is not genuinely arbitrary merely because the **current** layer does not inspect it. A later policy, action, provenance query, verifier, reward, or composed consequence may make it operationally real. The Lean witness distinguishes **contextually arbitrary** from **pseudo-arbitrary** distinctions and proves the corresponding factorization failure.
 
+A timely documentary example is Ben Goertzel's August 17, 2026 essay [*The Folly of Statistically Watermarking LLM-Gen Text*](https://bengoertzel.substack.com/p/the-folly-of-statistically-watermarking): lexical perturbations can be nearly irrelevant to semantic content while remaining deliberately observable to a watermark detector and consequential to governance. That is precisely why "irrelevant here" must not silently become "arbitrary everywhere." The essay is motivation, not theorem evidence; the Lean witness remains checker-authoritative for its own claims.
+
 This micro-witness is MeTTafy-original architecture work, not part of the Four Color benchmark corpus and not evidence for Four Color theorem validity.
 
 ## Why MeTTa?
