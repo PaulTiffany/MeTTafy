@@ -4,7 +4,7 @@ This is a small **MeTTafy-original Lean witness**, not a historical proof exempl
 
 It formalizes a deliberately silly phrase with a non-silly boundary condition:
 
-> **Brown goo is undeclared collapse of a distinction the transport contract required us to preserve.**
+> **Brown goo is collapse of a distinction that the representation still needs to support faithfully—either now, or under an admissible future continuation.**
 
 The motivating shorthand is:
 
@@ -14,9 +14,9 @@ and the sharper epistemic gloss is:
 
 > **Brown goo = lost distinction disguised as knowledge.**
 
-The Lean theorem does **not** attempt to formalize `knowledge`, `bullshit`, or aesthetic slop. It formalizes the mechanical core underneath that language.
+The Lean theorem does **not** attempt to formalize `knowledge`, `bullshit`, intent, or aesthetic slop. It formalizes the transport conditions underneath that language.
 
-## The contract
+## First-order Brown Goo
 
 A source type `α` carries a `DistinctionContract α`. The contract identifies pairs `x, y` that must remain distinguishable after transport.
 
@@ -36,12 +36,6 @@ MeTTafy calls it faithful to the contract when every required pair remains unequ
   ∧ transport x = transport y
 ```
 
-So brown goo is **not the same thing as non-injectivity**.
-
-A quotient, compression, abstraction, or projection may intentionally identify source objects. That can be honest if the declared transport contract does not promise to preserve the erased distinction. The failure is collapsing a distinction while still claiming a fidelity level that requires it.
-
-## The teeth
-
 `ExactRecovery recover transport` says `recover` is a left inverse:
 
 ```text
@@ -50,7 +44,7 @@ recover (transport x) = x
 
 for every source object `x`.
 
-The main theorem is:
+The first teethed theorem is:
 
 ```text
 brownGoo_forbids_exactRecovery
@@ -61,6 +55,122 @@ In plain language:
 > If two source objects that were required to remain distinguishable become the same target object, no exact decoder can recover every source object.
 
 That is the irreversible part. Once the required distinction is actually gone from the transported representation, rhetoric cannot restore it.
+
+## The pseudo-arbitrary loophole
+
+Non-injectivity by itself is not automatically Brown Goo. Quotients, compression, abstraction, and projections may intentionally identify source objects.
+
+But an **empty immediate contract is not enough to prove that a distinction was genuinely arbitrary**.
+
+A distinction is genuinely arbitrary only relative to the future operations the representation is expected to support. The Lean witness therefore introduces a family of admissible continuations:
+
+```text
+contexts : (α → γ) → Prop
+```
+
+An admitted continuation can stand for a later observer, policy, action, provenance query, reward function, or a long second-/third-order causal chain summarized by its eventual observable result.
+
+Two objects are contextually distinct when at least one admissible continuation gives different results:
+
+```text
+ContextuallyDistinct contexts x y
+```
+
+They are contextually arbitrary when **every** admissible continuation treats them identically:
+
+```text
+ContextuallyArbitrary contexts x y
+```
+
+The witness calls a pair **pseudo-arbitrary** when the immediate contract does not require the distinction, but an admissible continuation still distinguishes it.
+
+That is the key correction:
+
+> **A distinction is not arbitrary merely because the current layer does not care about it.**
+
+If a later admissible behavior cares, the distinction is operationally real.
+
+## The higher-order teeth
+
+For an admissible continuation
+
+```text
+observe : α → γ
+```
+
+`FactorsThrough transport observe` means there is some downstream function
+
+```text
+downstream : β → γ
+```
+
+that reproduces `observe` exactly using only the transported representation:
+
+```text
+downstream (transport x) = observe x
+```
+
+for every source object.
+
+Lean proves:
+
+```text
+contextualDifference_forbids_factorization
+```
+
+If `transport x = transport y` while `observe x ≠ observe y`, then `observe` cannot factor through `transport`.
+
+And therefore:
+
+```text
+contextualBrownGoo_exhibits_unfactorable_context
+```
+
+> **Whenever a transport collapses a pair that some admissible future continuation can distinguish, at least one promised future behavior becomes impossible to reconstruct exactly from the transported state.**
+
+This is the second-/third-order form of Brown Goo. The distinction may look irrelevant at the immediate boundary, yet become actual through later composition.
+
+## Blob → goo, twice
+
+The first concrete witness uses:
+
+```text
+BlobKind
+├── binaryImage
+├── text
+└── receipt
+```
+
+and the bad transport
+
+```text
+smearBlobKind : BlobKind → Unit
+```
+
+which maps every kind to `()`.
+
+Under a contract requiring different blob kinds to remain distinct, Lean proves this is ordinary first-order Brown Goo and that no exact recovery function exists.
+
+The second witness deliberately gives `smearBlobKind` an **empty immediate contract**. First-order checking therefore accepts it as faithful.
+
+Then we add a later admissible routing intent:
+
+```text
+routeBlob : BlobKind → Bool
+```
+
+which routes images differently from text.
+
+Now image-vs-text is revealed as pseudo-arbitrary. Lean proves that the same total smear is `ContextualBrownGoo`, and that an admissible downstream routing behavior cannot factor through the smeared `Unit` representation.
+
+So both statements are mechanically present at once:
+
+```text
+first-order empty contract:     accepted
+future routing continuation:    impossible after collapse
+```
+
+That contrast is the point.
 
 ## Why this belongs near MeTTafy
 
@@ -73,12 +183,18 @@ MeTTafy's architecture already depends on preserving distinctions across boundar
 - descriptive MeTTa atoms versus executable MeTTa;
 - checker authority versus plausible explanation.
 
-Flattening any distinction that the declared verification/audit contract still relies on is exactly the failure represented here.
+The contextual extension adds a harder requirement: a projection should not be called harmless merely because the **current** consumer cannot see what was erased. If an admissible later consumer, verifier, policy, or composition requires that distinction, the projection has already destroyed capability.
 
-The tiny `BlobKind` example makes the joke literal. `binaryImage`, `text`, and `receipt` are distinct at the boundary. `smearBlobKind` maps all of them to `Unit`. Lean proves that this witnessed collapse admits no exact recovery function.
+That is why this matters for semantic translation rather than only file handling.
 
 ## Checker boundary
 
 The file uses Lean core only—no mathlib dependency—and is checked by the dedicated `Lean micro-witnesses` workflow against the exact version pinned in the repository's `lean-toolchain`.
 
-The witness proves only the stated transport/recoverability facts. It does not establish that every lossy abstraction is bad, that every non-injective mapping is misleading, or that the informal phrase "brown goo" has a unique philosophical meaning.
+The witness proves only the stated transport, factorization, and recoverability facts. It does not establish that every lossy abstraction is bad, that every possible future context should be admitted, or that the informal phrase "brown goo" has a unique philosophical meaning.
+
+The scientifically important choice is therefore explicit:
+
+> **What continuation family are we promising the representation will support?**
+
+Once that family is declared, genuinely arbitrary and pseudo-arbitrary distinctions can be separated mechanically.
