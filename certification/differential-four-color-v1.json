@@ -1,0 +1,63 @@
+{
+  "schema": "mettafy-differential-four-color-v1",
+  "version": "1.0.0",
+  "claim_boundary": "For these exact finite graphs, the checked-in Python graph-coloring source and the pinned MeTTa runtime agree on whether a 4-coloring exists; every returned coloring is independently validated against the graph.",
+  "non_claims": [
+    "equivalence outside this corpus",
+    "Four Color theorem validity",
+    "semantic strategy classification correctness",
+    "planarity of every corpus graph"
+  ],
+  "colors": ["red", "green", "blue", "yellow"],
+  "max_vertices": 5,
+  "cases": [
+    {
+      "id": "empty",
+      "graph": {}
+    },
+    {
+      "id": "single",
+      "graph": {"A": []}
+    },
+    {
+      "id": "edge",
+      "graph": {"A": ["B"], "B": ["A"]}
+    },
+    {
+      "id": "triangle",
+      "graph": {"A": ["B", "C"], "B": ["A", "C"], "C": ["A", "B"]}
+    },
+    {
+      "id": "square-cycle",
+      "graph": {"A": ["B", "D"], "B": ["A", "C"], "C": ["B", "D"], "D": ["A", "C"]}
+    },
+    {
+      "id": "k4",
+      "graph": {
+        "A": ["B", "C", "D"],
+        "B": ["A", "C", "D"],
+        "C": ["A", "B", "D"],
+        "D": ["A", "B", "C"]
+      }
+    },
+    {
+      "id": "bootstrap-example",
+      "graph": {
+        "A": ["B", "C"],
+        "B": ["A", "C", "D"],
+        "C": ["A", "B", "D"],
+        "D": ["B", "C"]
+      }
+    },
+    {
+      "id": "k5-negative-control",
+      "graph": {
+        "A": ["B", "C", "D", "E"],
+        "B": ["A", "C", "D", "E"],
+        "C": ["A", "B", "D", "E"],
+        "D": ["A", "B", "C", "E"],
+        "E": ["A", "B", "C", "D"]
+      }
+    }
+  ]
+}
