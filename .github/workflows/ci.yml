@@ -66,6 +66,44 @@ jobs:
             | xargs -0 sha256sum > /tmp/rocq-structural-second.sha256
           diff -u /tmp/rocq-structural-first.sha256 /tmp/rocq-structural-second.sha256
 
+      - name: Observer-critical collapse witness
+        if: matrix.python-version == '3.14'
+        run: python tests/observer_critical_witness.py
+
+      - name: Four-stable five-routes witness
+        if: matrix.python-version == '3.14'
+        run: python tests/fifth_class_witness.py
+
+      - name: Mechanistic interpretability trace witness
+        if: matrix.python-version == '3.14'
+        run: python tests/interpretability_trace_witness.py
+
+      - name: Provenance fold collapse witness
+        if: matrix.python-version == '3.14'
+        run: python tests/provenance_fold_witness.py
+
+      - name: Runtime provenance fold witness
+        if: matrix.python-version == '3.14'
+        run: python tests/runtime_provenance_witness.py
+
+      - name: Traced reducibility witness
+        if: matrix.python-version == '3.14'
+        run: python tests/reducibility_witness.py
+
+      - name: Upload observer and interpretability evidence
+        if: always() && matrix.python-version == '3.14'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: observer-interpretability-evidence
+          path: |
+            artifacts/witnesses/observer-critical-collapse.json
+            artifacts/witnesses/four-stable-five-routes.json
+            artifacts/witnesses/mechanistic-interpretability-trace.json
+            artifacts/witnesses/provenance-fold-collapse.json
+            artifacts/witnesses/runtime-provenance-fold.json
+            artifacts/witnesses/traced-reducibility.json
+          if-no-files-found: warn
+
       - name: Audience witnesses for integrators, operators, and reviewers
         if: matrix.python-version == '3.14'
         shell: bash

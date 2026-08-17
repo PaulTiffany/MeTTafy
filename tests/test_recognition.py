@@ -1,4 +1,4 @@
-"""Tests for blind-only structural recognition and unit-local evaluation."""
+"""Tests for blind-only structural recognition and mechanistic interpretation."""
 
 from __future__ import annotations
 
@@ -60,6 +60,24 @@ def test_compound_dataflow_can_promote_to_generic_reduction():
     assert reductions[0].evidence[0].span.filename.startswith("source:")
 
 
+def test_promoted_strategy_has_exact_mechanistic_rule_trace():
+    raw = _raw()
+    blind = blind_structural_view(raw)
+    audit = blind_audit_map(raw)
+    result = recognize_from_structural(blind)
+    composed_id = next(
+        unit_id for unit_id, info in audit.items() if info["original_name"] == "composed"
+    )
+    trace = next(item for item in result.rule_traces if item.local_id == composed_id)
+    assert trace.rule_id == "recognition.reduction.dataflow-composition.v1"
+    assert trace.target == StrategyKind.REDUCTION.value
+    assert trace.required_features == ("composition",)
+    assert trace.observed_required_features == ("composition",)
+    assert trace.missing_required_features == ()
+    assert trace.decision == "promote"
+    assert trace.reason == "all mechanical premises hold and no guard blocks promotion"
+
+
 def test_single_induction_and_decision_observations_abstain_instead_of_overclaiming():
     raw = _raw()
     blind = blind_structural_view(raw)
@@ -67,16 +85,13 @@ def test_single_induction_and_decision_observations_abstain_instead_of_overclaim
     result = recognize_from_structural(blind)
 
     name_by_blind_id = {unit_id: info["original_name"] for unit_id, info in audit.items()}
-    abstained_names = {
-        name_by_blind_id[item["local_id"]]
-        for item in result.abstentions
-    }
+    abstained_names = {name_by_blind_id[item["local_id"]] for item in result.abstentions}
     assert "induction_only" in abstained_names
     assert "decision_only" in abstained_names
     assert all(strategy.kind != StrategyKind.CERTIFICATE_CHECK for strategy in result.strategies)
 
 
-def test_near_miss_multiple_applications_without_dataflow_does_not_become_reduction():
+def test_near_miss_reports_exact_missing_premise():
     source = r'''Theorem near_miss x : target x.
 Proof. apply helper. exact x. Qed.
 '''
@@ -84,6 +99,37 @@ Proof. apply helper. exact x. Qed.
     result = recognize_from_structural(blind_structural_view(raw))
     assert not result.strategies
     assert result.abstentions
+    trace = result.rule_traces[0]
+    assert trace.decision == "not_applicable"
+    assert trace.missing_required_features == ("composition",)
+    why_not = result.abstentions[0]["why_not"]
+    assert why_not == [
+        {
+            "rule_id": "recognition.reduction.dataflow-composition.v1",
+            "target": "Reduction",
+            "decision": "not_applicable",
+            "missing_required_features": ["composition"],
+            "observed_forbidden_features": [],
+            "reason": "required mechanical premise(s) were not observed",
+        }
+    ]
+
+
+def test_confidence_threshold_is_visible_and_does_not_silently_promote():
+    result = recognize_from_structural(blind_structural_view(_raw()), min_confidence=0.80)
+    assert not result.strategies
+    promoted_candidate = next(
+        trace for trace in result.rule_traces if not trace.missing_required_features
+    )
+    assert promoted_candidate.confidence == 0.78
+    assert promoted_candidate.min_confidence == 0.80
+    assert promoted_candidate.decision == "below_threshold"
+
+
+def test_invalid_confidence_threshold_fails_closed():
+    blind = blind_structural_view(_raw())
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        recognize_from_structural(blind, min_confidence=1.1)
 
 
 def test_recognition_output_contains_no_held_out_labels_or_audit_names():
@@ -100,6 +146,12 @@ def test_recognition_output_contains_no_held_out_labels_or_audit_names():
         "reducibility",
     ):
         assert token not in dumped
+
+
+def test_trace_count_is_rule_count_times_unit_count():
+    blind = blind_structural_view(_raw())
+    result = recognize_from_structural(blind)
+    assert len(result.rule_traces) == len(blind.units)
 
 
 def test_evaluation_is_unit_local_and_cannot_credit_an_unrelated_layer():

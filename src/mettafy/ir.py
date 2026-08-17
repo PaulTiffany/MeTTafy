@@ -35,6 +35,15 @@ class Evidence:
     span: SourceSpan
 
 
+@dataclass(frozen=True)
+class ProvenanceEdge:
+    """Typed, source-neutral edge in the sibling compilation provenance graph."""
+
+    relation: str
+    source_id: str
+    target_id: str
+
+
 @dataclass
 class Strategy:
     id: str
@@ -44,6 +53,7 @@ class Strategy:
     children: list["Strategy"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
+        """Preserve the stable public Strategy serialization contract."""
         return {
             "id": self.id,
             "kind": self.kind.value,
