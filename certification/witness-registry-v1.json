@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -95,12 +95,12 @@
     {
       "id": "WIT-DIFFERENTIAL",
       "name": "Differential execution witness",
-      "status": "planned",
+      "status": "implemented",
       "kind": "behavioral_equivalence",
       "strength": "behavioral",
-      "claim": "For the certified input domain, source execution and executable MeTTa lowering agree on observable results.",
-      "non_claims": ["equivalence outside the sampled/certified domain", "intensional strategy identity by itself"],
-      "authority": "independent execution of source and MeTTa artifacts",
+      "claim": "For the frozen finite graph corpus in certification/differential-four-color-v1.json, the checked-in Python source and executable MeTTa agree on 4-colorability and every returned coloring is independently validated.",
+      "non_claims": ["equivalence outside the frozen corpus", "Four Color theorem validity", "intensional strategy identity by itself"],
+      "authority": "independent Python-process and pinned MeTTaScript execution plus graph-level witness validation",
       "replayable": true
     },
     {
