@@ -97,6 +97,20 @@ A learner should be able to ask:
 
 If answering those questions requires understanding the entire implementation, the interpretation is not finished.
 
+## Architecture micro-witness: Brown Goo
+
+MeTTafy also carries a small Lean-checked architecture witness for **distinction-preserving transport**: [`examples/brown_goo/`](examples/brown_goo/).
+
+The informal mnemonic is deliberately silly:
+
+> **Brown goo = lost distinction disguised as knowledge.**
+
+The formal claim is narrower. If a translation collapses two source objects that an admissible downstream continuation can still distinguish, then that continuation cannot be reproduced exactly from the translated representation.
+
+This closes a subtle loophole in ordinary lossy abstraction: a distinction is not genuinely arbitrary merely because the **current** layer does not inspect it. A later policy, action, provenance query, verifier, reward, or composed consequence may make it operationally real. The Lean witness distinguishes **contextually arbitrary** from **pseudo-arbitrary** distinctions and proves the corresponding factorization failure.
+
+This micro-witness is MeTTafy-original architecture work, not part of the Four Color benchmark corpus and not evidence for Four Color theorem validity.
+
 ## Why MeTTa?
 
 MeTTa is the programming language of OpenCog Hyperon. Its metagraph-oriented model allows facts, rules, queries, and programs themselves to participate in a common symbolic substrate. That makes it an interesting target for a semantic intermediate representation: the recovered description of *what a program is doing* can itself become available to later reasoning and transformation.
