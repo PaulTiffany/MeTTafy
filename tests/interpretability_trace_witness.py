@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from mettafy.recognition import recognize_from_structural
+from mettafy.recognition import RECOGNITION_RULES, recognize_from_structural
 from mettafy.structural import blind_structural_view, extract_structural_evidence
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,8 +55,9 @@ def main() -> int:
     abstentions = baseline["abstentions"]
     if not isinstance(strategies, list) or len(strategies) != 1:
         failures.append("baseline must promote exactly one strategy")
-    if not isinstance(traces, list) or len(traces) != 2:
-        failures.append("baseline must emit one rule trace per blind unit")
+    expected_trace_count = 2 * len(RECOGNITION_RULES)
+    if not isinstance(traces, list) or len(traces) != expected_trace_count:
+        failures.append("baseline must emit one rule trace per rule per blind unit")
     if not isinstance(abstentions, list) or len(abstentions) != 1:
         failures.append("baseline must abstain on the near-miss unit")
 
@@ -64,10 +65,14 @@ def main() -> int:
     miss_traces = [item for item in traces if item.get("decision") == "not_applicable"]
     if len(promote_traces) != 1:
         failures.append("expected exactly one promoting trace")
-    if len(miss_traces) != 1:
-        failures.append("expected exactly one not-applicable trace")
-    elif miss_traces[0].get("missing_required_features") != ["composition"]:
-        failures.append("near-miss trace must identify composition as the missing premise")
+    if len(miss_traces) != expected_trace_count - 1:
+        failures.append("all non-promoting baseline rule evaluations must be visible")
+    if not any(
+        item.get("rule_id") == "recognition.reduction.dataflow-composition.v1"
+        and item.get("missing_required_features") == ["composition"]
+        for item in miss_traces
+    ):
+        failures.append("near-miss composition trace must identify the exact missing premise")
 
     strict_strategies = strict["strategies"]
     strict_traces = strict["rule_traces"]
@@ -108,6 +113,7 @@ def main() -> int:
             "natural-language explanations are causal evidence",
             "the bounded witness proves general mechanistic interpretability",
         ],
+        "rule_count": len(RECOGNITION_RULES),
         "baseline_sha256": baseline_hash,
         "replay_sha256": replay_hash,
         "baseline": baseline,
@@ -121,7 +127,7 @@ def main() -> int:
         raise SystemExit("; ".join(failures))
     print(
         "Mechanistic interpretability witness passed: deterministic source-neutral rule traces, "
-        "exact missing-premise counterfactual, and visible confidence gating verified."
+        "exact missing-premise counterfactuals, and visible confidence gating verified."
     )
     return 0
 
