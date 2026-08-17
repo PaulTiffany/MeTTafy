@@ -5,7 +5,11 @@ from __future__ import annotations
 import pytest
 
 from mettafy.ir import StrategyKind
-from mettafy.recognition import evaluate_against_held_out, recognize_from_structural
+from mettafy.recognition import (
+    RECOGNITION_RULES,
+    evaluate_against_held_out,
+    recognize_from_structural,
+)
 from mettafy.structural import (
     blind_audit_map,
     blind_structural_view,
@@ -37,6 +41,17 @@ Theorem plain x : target x.
 Proof. exact x. Qed.
 '''
 
+COUNTEREXAMPLE_SOURCE = r'''
+Theorem discharge n G : target G.
+Proof.
+elim: n G => // n IHn G.
+case: G => [done | blocked].
+have H := decide_colorable blocked.
+apply helper.
+exact H.
+Qed.
+'''
+
 
 def _raw():
     return extract_structural_evidence(
@@ -60,6 +75,21 @@ def test_compound_dataflow_can_promote_to_generic_reduction():
     assert reductions[0].evidence[0].span.filename.startswith("source:")
 
 
+def test_counterexample_discharge_skeleton_can_promote_to_generic_reduction():
+    raw = extract_structural_evidence(
+        {"proof.v": COUNTEREXAMPLE_SOURCE},
+        upstream_sha=UPSTREAM_SHA,
+        mettafy_sha="test",
+    )
+    result = recognize_from_structural(blind_structural_view(raw))
+    reductions = [
+        strategy for strategy in result.strategies if strategy.kind == StrategyKind.REDUCTION
+    ]
+    assert len(reductions) == 1
+    assert reductions[0].confidence == 0.74
+    assert reductions[0].evidence[0].kind == "structural-counterexample-discharge"
+
+
 def test_promoted_strategy_has_exact_mechanistic_rule_trace():
     raw = _raw()
     blind = blind_structural_view(raw)
@@ -68,8 +98,12 @@ def test_promoted_strategy_has_exact_mechanistic_rule_trace():
     composed_id = next(
         unit_id for unit_id, info in audit.items() if info["original_name"] == "composed"
     )
-    trace = next(item for item in result.rule_traces if item.local_id == composed_id)
-    assert trace.rule_id == "recognition.reduction.dataflow-composition.v1"
+    trace = next(
+        item
+        for item in result.rule_traces
+        if item.local_id == composed_id
+        and item.rule_id == "recognition.reduction.dataflow-composition.v1"
+    )
     assert trace.target == StrategyKind.REDUCTION.value
     assert trace.required_features == ("composition",)
     assert trace.observed_required_features == ("composition",)
@@ -91,7 +125,7 @@ def test_single_induction_and_decision_observations_abstain_instead_of_overclaim
     assert all(strategy.kind != StrategyKind.CERTIFICATE_CHECK for strategy in result.strategies)
 
 
-def test_near_miss_reports_exact_missing_premise():
+def test_near_miss_reports_exact_missing_premises_for_each_rule():
     source = r'''Theorem near_miss x : target x.
 Proof. apply helper. exact x. Qed.
 '''
@@ -99,31 +133,36 @@ Proof. apply helper. exact x. Qed.
     result = recognize_from_structural(blind_structural_view(raw))
     assert not result.strategies
     assert result.abstentions
-    trace = result.rule_traces[0]
-    assert trace.decision == "not_applicable"
-    assert trace.missing_required_features == ("composition",)
+
+    traces = {trace.rule_id: trace for trace in result.rule_traces}
+    composition = traces["recognition.reduction.dataflow-composition.v1"]
+    assert composition.decision == "not_applicable"
+    assert composition.missing_required_features == ("composition",)
+
+    discharge = traces["recognition.reduction.counterexample-discharge.v1"]
+    assert discharge.decision == "not_applicable"
+    assert set(discharge.missing_required_features) == {
+        "case_split",
+        "decision_call",
+        "induction",
+    }
+
     why_not = result.abstentions[0]["why_not"]
-    assert why_not == [
-        {
-            "rule_id": "recognition.reduction.dataflow-composition.v1",
-            "target": "Reduction",
-            "decision": "not_applicable",
-            "missing_required_features": ["composition"],
-            "observed_forbidden_features": [],
-            "reason": "required mechanical premise(s) were not observed",
-        }
-    ]
+    assert {item["rule_id"] for item in why_not} == set(traces)
 
 
 def test_confidence_threshold_is_visible_and_does_not_silently_promote():
     result = recognize_from_structural(blind_structural_view(_raw()), min_confidence=0.80)
     assert not result.strategies
-    promoted_candidate = next(
-        trace for trace in result.rule_traces if not trace.missing_required_features
+    composition = next(
+        trace
+        for trace in result.rule_traces
+        if trace.rule_id == "recognition.reduction.dataflow-composition.v1"
+        and not trace.missing_required_features
     )
-    assert promoted_candidate.confidence == 0.78
-    assert promoted_candidate.min_confidence == 0.80
-    assert promoted_candidate.decision == "below_threshold"
+    assert composition.confidence == 0.78
+    assert composition.min_confidence == 0.80
+    assert composition.decision == "below_threshold"
 
 
 def test_invalid_confidence_threshold_fails_closed():
@@ -151,7 +190,7 @@ def test_recognition_output_contains_no_held_out_labels_or_audit_names():
 def test_trace_count_is_rule_count_times_unit_count():
     blind = blind_structural_view(_raw())
     result = recognize_from_structural(blind)
-    assert len(result.rule_traces) == len(blind.units)
+    assert len(result.rule_traces) == len(RECOGNITION_RULES) * len(blind.units)
 
 
 def test_evaluation_is_unit_local_and_cannot_credit_an_unrelated_layer():
