@@ -160,10 +160,13 @@ jobs:
         run: python -m pip install --disable-pip-version-check -e '.[dev,hyperon]'
 
       - name: Run Hyperon rail unit tests
-        run: pytest tests/test_hyperon_driver.py tests/test_hyperon_witness.py
+        run: pytest tests/test_hyperon_driver.py tests/test_hyperon_witness.py tests/test_derived_probe.py
 
       - name: Run live Hyperon state-liveness witness
         run: python tests/hyperon_liveness_witness.py
+
+      - name: Run source-derived Hyperon liveness witness
+        run: python tests/derived_hyperon_liveness_witness.py
 
       - name: Audit Hyperon witness environment
         run: pip-audit
@@ -173,5 +176,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hyperon-state-liveness-evidence
-          path: artifacts/witnesses/hyperon-state-liveness.json
+          path: |
+            artifacts/witnesses/hyperon-state-liveness.json
+            artifacts/witnesses/derived-hyperon-liveness.json
           if-no-files-found: warn
