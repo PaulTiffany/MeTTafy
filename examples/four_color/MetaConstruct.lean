@@ -58,7 +58,7 @@ not by extending a closed enum of named patterns.
 -/
 inductive MetaConstruct (reference : V4) where
   | empty
-  | atom (local : LocalConstruct reference)
+  | atom (piece : LocalConstruct reference)
   | compose (left right : MetaConstruct reference)
 
 namespace MetaConstruct
@@ -66,7 +66,7 @@ namespace MetaConstruct
 /-- A composed surface has acted wherever either child has acted. -/
 def acted {reference : V4} : MetaConstruct reference → V4 → Prop
   | .empty, _ => False
-  | .atom local, state => local.acted state
+  | .atom piece, state => piece.acted state
   | .compose left right, state => acted left state ∨ acted right state
 
 /--
@@ -76,7 +76,7 @@ non-reference state.
 -/
 def available {reference : V4} : MetaConstruct reference → V4 → Prop
   | .empty, state => UpwardFrom reference state
-  | .atom local, state => local.available state
+  | .atom piece, state => piece.available state
   | .compose left right, state => available left state ∧ available right state
 
 /-- Every acted state in a meta-construct is genuinely upward/non-reference. -/
@@ -89,8 +89,8 @@ theorem acted_upward
   | empty =>
       intro impossible
       exact False.elim impossible
-  | atom local =>
-      exact local.actedUpward state
+  | atom piece =>
+      exact piece.actedUpward state
   | compose left right leftIH rightIH =>
       intro actedHere
       rcases actedHere with actedLeft | actedRight
@@ -107,8 +107,8 @@ theorem available_upward
   | empty =>
       intro upward
       exact upward
-  | atom local =>
-      exact local.availableUpward state
+  | atom piece =>
+      exact piece.availableUpward state
   | compose left right leftIH rightIH =>
       intro availableHere
       exact leftIH availableHere.1
@@ -118,7 +118,7 @@ Void-blocking is preserved by arbitrary finite construct composition.
 
 This is the central closure fact for the grammar: a composed meta-construct
 cannot make an already-consumed local action available again merely by adding
-another compatible game constraint.
+another game constraint.
 -/
 theorem void_blocks_acted
     {reference : V4}
@@ -128,8 +128,8 @@ theorem void_blocks_acted
   | empty =>
       intro state impossible
       exact False.elim impossible
-  | atom local =>
-      exact local.voidBlocks
+  | atom piece =>
+      exact piece.voidBlocks
   | compose left right leftIH rightIH =>
       intro state actedHere availableHere
       rcases actedHere with actedLeft | actedRight
@@ -170,9 +170,12 @@ theorem stopped_iff_no_action
     Stopped construct ↔ ¬ HasAction construct := by
   constructor
   · intro stopped hasAction
+    have stopped' : UpwardGameStopped reference (available construct) := stopped
     rcases hasAction with ⟨state, upward, availableHere⟩
-    exact stopped state upward availableHere
-  · intro noAction state upward availableHere
+    exact stopped' state upward availableHere
+  · intro noAction
+    change UpwardGameStopped reference (available construct)
+    intro state upward availableHere
     exact noAction ⟨state, upward, availableHere⟩
 
 /--
@@ -230,6 +233,7 @@ theorem stripe_acts_generator
     (reference state : V4)
     (stateUp : UpwardFrom reference state) :
     MetaConstruct.acted (stripeMeta reference state stateUp) state := by
+  show state = state
   rfl
 
 /-- A stripe leaves every different upward state available. -/
@@ -239,6 +243,7 @@ theorem stripe_leaves_other_upward_available
     (candidateUp : UpwardFrom reference candidate)
     (different : candidate ≠ stripeState) :
     MetaConstruct.available (stripeMeta reference stripeState stripeUp) candidate := by
+  show UpwardFrom reference candidate ∧ candidate ≠ stripeState
   exact ⟨candidateUp, different⟩
 
 /-! ## The red-team surface as an ordinary composition -/
@@ -272,6 +277,8 @@ theorem threeUpwardMeta_left_acted
     MetaConstruct.acted
       (threeUpwardMeta reference left right leftUp rightUp different)
       left := by
+  change left = left ∨
+    (left = right ∨ left = forcedThirdFrom reference left right)
   exact Or.inl rfl
 
 /-- The second generating upward state has acted in the three-stripe composite. -/
@@ -283,6 +290,8 @@ theorem threeUpwardMeta_right_acted
     MetaConstruct.acted
       (threeUpwardMeta reference left right leftUp rightUp different)
       right := by
+  change right = left ∨
+    (right = right ∨ right = forcedThirdFrom reference left right)
   exact Or.inr (Or.inl rfl)
 
 /-- The V4-forced third upward state has acted in the three-stripe composite. -/
@@ -294,6 +303,9 @@ theorem threeUpwardMeta_forcedThird_acted
     MetaConstruct.acted
       (threeUpwardMeta reference left right leftUp rightUp different)
       (forcedThirdFrom reference left right) := by
+  change forcedThirdFrom reference left right = left ∨
+    (forcedThirdFrom reference left right = right ∨
+      forcedThirdFrom reference left right = forcedThirdFrom reference left right)
   exact Or.inr (Or.inr rfl)
 
 /--
@@ -308,17 +320,20 @@ theorem threeUpwardMeta_stops
     (different : left ≠ right) :
     MetaConstruct.Stopped
       (threeUpwardMeta reference left right leftUp rightUp different) := by
-  apply all_three_upward_acted_and_void_blocked_stop_game
+  change UpwardGameStopped reference
+    (MetaConstruct.available
+      (threeUpwardMeta reference left right leftUp rightUp different))
+  exact all_three_upward_acted_and_void_blocked_stop_game
     reference left right leftUp rightUp different
     (MetaConstruct.acted
       (threeUpwardMeta reference left right leftUp rightUp different))
     (MetaConstruct.available
       (threeUpwardMeta reference left right leftUp rightUp different))
-  · exact threeUpwardMeta_left_acted reference left right leftUp rightUp different
-  · exact threeUpwardMeta_right_acted reference left right leftUp rightUp different
-  · exact threeUpwardMeta_forcedThird_acted reference left right leftUp rightUp different
-  · exact MetaConstruct.void_blocks_acted
-      (threeUpwardMeta reference left right leftUp rightUp different)
+    (threeUpwardMeta_left_acted reference left right leftUp rightUp different)
+    (threeUpwardMeta_right_acted reference left right leftUp rightUp different)
+    (threeUpwardMeta_forcedThird_acted reference left right leftUp rightUp different)
+    (MetaConstruct.void_blocks_acted
+      (threeUpwardMeta reference left right leftUp rightUp different))
 
 /-- Canonical A=0, B=a, C=b, D=c instance of the generic three-stripe stop. -/
 theorem canonical_BCD_meta_stops :
