@@ -3,14 +3,43 @@
 These files are deliberately bounded formal witnesses for the independent Four Color research lane.
 
 - `FourColorCore.lean` — V4 palette algebra, fixed-region and hard-frontier separation, degree-five frontier facts, and atomic bichromatic turn preservation.
-- `C2ContactVoid.lean` — in-game contact/void semantics, Brown's embedded coarse interface, canonical `A B A C D` carrier incidence, and the reduction of C2 clean-carrier existence to one explicit planar carrier-interaction premise.
+- `C2ContactVoid.lean` — in-game contact/void semantics, Brown's embedded coarse interface, canonical `A B A C D` carrier incidence, and the reduction of clean-carrier existence to one explicit planar carrier-interaction premise.
 - `C2ForcedThird.lean` — the red-team forced-third law: fixing one lower/reference state leaves three nontrivial upward states, and any two distinct upward states uniquely determine the third by `r + x + y`.
-- `C2CrossCutAffordance.lean` — operational cross-cut semantics. A cross-cut consumes a previously available cut-state opportunity and offers an escape-state opportunity on the successor surface, so the cut and escape states cannot coincide and the cross-cut itself cannot dead-end. In the V4 specialization the escape is the unique forced third state; canonically, with `A=0`, a C-carried cut of B restricts B and offers D.
+- `C2CrossCutAffordance.lean` — a bounded realized cross-cut affordance model. It records what follows from a supplied cut/escape bundle; it does not establish that actual planar geometry supplies a useful one-step escape.
 - `BrownAffordance.lean` — embedded-player relevance: Brown distinguishes occupancy (`void` versus `colored`) and is present in the game, but its coarse interface cannot reconstruct the color-dependent affordance profile, so it is not color-relevant to local play.
-- `RedTeamComposition.lean` — one-turn composition for the hard degree-five game: a proper one-site frontier rewrite either re-enters the same hard/A-B-A red-team normal form or removes the old seed color from the frontier and thereby opens a concrete focus-color opportunity. A successor that remains blocked therefore re-enters the same normal form. The same file also banks the finite stop condition: relative to one fixed reference there are exactly three upward states, and once all three have acted, a void rule that makes acted states unavailable leaves no upward action on that local surface; any later action must be a fresh start/restart elsewhere.
-- `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum. Compatible coherent primitives compose coherently; regrouping a composition tree preserves its game projection; and the existing B/C/D void-stop theorem lifts into the generic surface semantics.
-- `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites. `TerminalResult` accepts only a `CompletedMap`, so partial maps and intermediate turns cannot be fed to the terminal verifier by type. The resulting completed map is proper and uses only V4 states.
+- `RedTeamComposition.lean` — one-turn composition for the hard degree-five game: a proper one-site frontier rewrite either re-enters the same hard/A-B-A red-team normal form or removes the old seed color from the frontier and thereby opens a concrete focus-color opportunity. A successor that remains blocked therefore re-enters the same normal form. The separate finite-stop theorem remains conditional on the declared acted/void-blocked action surface; it is not a proof that actual Kempe play necessarily exhausts those actions.
+- `TestTimeActiveInference.lean` — test-time/receding-horizon control semantics. A current action is selected from the current realized state, exactly one successor is realized, and that actual successor is re-observed. The canonical `A B A C D -> A B D C D` witness proves that a proper repeated-color action can remain hard and blocked, so one-step reducibility is explicitly rejected. `ClosedNonterminalClass` / `NoClosedNonterminalClass` name the actual global no-trap obligation without assuming it.
+- `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum. Compatible coherent primitives compose coherently; regrouping a composition tree preserves its game projection; and the existing conditional B/C/D void-stop theorem lifts into the generic surface semantics.
+- `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites. `TerminalResult` accepts only a `CompletedMap`, so partial maps and intermediate turns cannot be fed to the terminal verifier by type. The same map-maker may pause play to inspect the partial map; this is a mode boundary, not a permanent identity split.
 
-The game is therefore constructed from inside: realized color states and their contacts determine legal opportunities. Brown is an embedded coarse player that may remain present while becoming irrelevant to color-dependent play. No terminal verifier observes or steers intermediate turns. Only after a map is complete does the terminal result layer report that the finished proper map uses the four-state V4 palette.
+## Current operational frame
 
-These files do not claim a new proof of the Four Color Theorem. In particular, the remaining C2 existence question is now sharper: the current lane formalizes what an operational cross-cut does once present, but does not yet prove that the canonical alternating planar/contact-void configuration forces such a cross-cut event to exist. `crosscut_meets_opposite` therefore remains an explicit open bridge rather than a hidden theorem. The construct grammar does not claim that the current primitive families generate every planar map or provide an automatic decomposition algorithm. The red-team composition witness does not require or claim a monotone ranking function, a global non-replay theorem, or a proof that every restart policy over an arbitrary map eventually exhausts all voids.
+The map-maker alternates between embedded play and inspection. In inspection mode, hypothetical moves and responses may be evaluated, but they are not realized construction history. The selected current move is realized once; then all permissions are recomputed from the actual successor.
+
+```text
+observe current realized map
+-> derive current legal actions
+-> imagine consequences / responses
+-> choose one current action
+-> realize exactly one action
+-> discard the old counterfactual bundle
+-> re-observe the actual successor
+```
+
+A hard successor is therefore a legitimate observation, not evidence that the realized action was invalid. The proof does **not** require every hard state to open in one move.
+
+The existing Python `ImmediateControlCertificate` / `ColorationControlSurface` already follows this receding-horizon discipline on graph-native Kempe controls: immediate access is derived from the current construction, one control is realized, and any later control is recomputed from the resulting state. Bounded path search remains an audit/falsification surface rather than a proof-relevant future route.
+
+## Current proof debt
+
+These files do not claim a new proof of the Four Color Theorem. In particular:
+
+- clean carrier existence is weaker than one-step color freeing;
+- the canonical hard-to-hard witness mechanically blocks any silent promotion of a proper/clean current move into one-step reducibility;
+- test-time actionability alone is not global closure;
+- the remaining strong target is to rule out a reachable **closed nonterminal action class** for the actual graph-derived controller, or establish an equivalent no-trap theorem;
+- no monotone progress scalar is assumed necessary;
+- no stored future route is admitted as proof state;
+- the construct grammar still does not prove that current primitives generate every planar map or that arbitrary map completion follows.
+
+PR #68's stronger imagined-escape contract is not part of this authority surface: an imagined response may guide test-time choice, but it may not carry the missing success theorem as an assumption.
