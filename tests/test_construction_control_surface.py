@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from mettafy.color_construction import ConstructionState
-from mettafy.construction_control_surface import ColorationControlSurface, state_key
+from mettafy.construction_control_surface import CounterfactualColorationSurface, state_key
 from mettafy.kempe_traversal import KempeMove
 
 
@@ -26,15 +26,19 @@ def persistent_double_lock_state() -> ConstructionState:
     )
 
 
-def test_controls_are_derived_from_current_graph_state() -> None:
-    surface = ColorationControlSurface(persistent_double_lock_state(), "v")
+def test_inference_controls_are_derived_from_current_graph_snapshot() -> None:
+    """INFERENCE: available thought experiments depend on the inspected state."""
+
+    surface = CounterfactualColorationSurface(persistent_double_lock_state(), "v")
     controls = surface.controls(surface.initial)
     assert controls
     assert all(move.seed in surface.initial.coloring for move in controls)
 
 
-def test_bounded_exploration_preserves_the_same_carrier_and_species() -> None:
-    surface = ColorationControlSurface(persistent_double_lock_state(), "v")
+def test_inference_exploration_preserves_carrier_and_species() -> None:
+    """INFERENCE: bounded branching changes colors, not the graph carrier."""
+
+    surface = CounterfactualColorationSurface(persistent_double_lock_state(), "v")
     states, transitions = surface.explore(max_depth=2)
 
     assert transitions
@@ -46,8 +50,10 @@ def test_bounded_exploration_preserves_the_same_carrier_and_species() -> None:
         assert state.committed_edges_valid
 
 
-def test_shortest_focus_slack_path_is_two_on_persistent_carrier() -> None:
-    surface = ColorationControlSurface(persistent_double_lock_state(), "v")
+def test_inference_can_find_two_step_apparent_focus_slack() -> None:
+    """INFERENCE: a diagnostic path may open an imagined focus after two moves."""
+
+    surface = CounterfactualColorationSurface(persistent_double_lock_state(), "v")
     path = surface.shortest_focus_slack_path(max_depth=2)
     assert path is not None
     assert len(path) == 2
@@ -57,9 +63,13 @@ def test_shortest_focus_slack_path_is_two_on_persistent_carrier() -> None:
         current = surface.step(current, move)
     assert current.admissible_colors("v")
 
+    # This result is intentionally not asserted to be a realized successor.
 
-def test_noncommuting_controls_define_distinct_surface_points() -> None:
-    surface = ColorationControlSurface(persistent_double_lock_state(), "v")
+
+def test_noncommuting_inference_controls_define_distinct_imagined_points() -> None:
+    """INFERENCE: order sensitivity is a property of counterfactual geometry."""
+
+    surface = CounterfactualColorationSurface(persistent_double_lock_state(), "v")
     t_ab = KempeMove(seed="a", other_color=1)
     t_bc = KempeMove(seed="b", other_color=2)
 
@@ -68,8 +78,10 @@ def test_noncommuting_controls_define_distinct_surface_points() -> None:
     assert not surface.pair_commutes(t_ab, t_bc)
 
 
-def test_commuting_controls_land_on_same_surface_point() -> None:
-    surface = ColorationControlSurface(persistent_double_lock_state(), "v")
+def test_commuting_inference_controls_share_an_imagined_endpoint() -> None:
+    """INFERENCE: commutation does not grant construction authority."""
+
+    surface = CounterfactualColorationSurface(persistent_double_lock_state(), "v")
     t_ac = KempeMove(seed="a", other_color=2)
     t_ad = KempeMove(seed="c", other_color=3)
 
