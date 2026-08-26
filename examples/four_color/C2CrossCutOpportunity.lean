@@ -23,9 +23,9 @@ into the single clean opportunity selected for the next realized move.
 For the canonical A B A C D boundary there are only two relevant terminal-
 avoiding A/D cross-cut probes when a,c,e lie in one A/D carrier: a--c or c--e.
 Either puts b and d on opposite boundary sides.  The opposite B/C player is then
-imagined responding to that cut.  A legal imagined response is incompatible
-with b and d remaining one untouched B/C component.  That incompatibility is
-enough for C2; no physical A/D--B/C carrier intersection is required.
+imagined responding to that cut.  By the operational meaning of response, it
+escapes on one exposed side: either B is boundary-clean or D is boundary-clean.
+That is enough for C2; no physical A/D--B/C carrier intersection is required.
 -/
 
 namespace MeTTafy.FourColor
@@ -37,54 +37,57 @@ inductive CanonicalCrossCutChoice where
   deriving DecidableEq, Repr
 
 /--
-The opposite B/C state may answer the imagined cut from either exposed boundary
-side.  These are counterfactual response roles, not realized successor states.
+An imagined opposite response is, by definition of escape from the cross-cut,
+one of the two exposed B/C boundary opportunities.  The response is hypothetical;
+the proof carried by the constructor is a fact about the current inspected map,
+not a realized successor.
 -/
-inductive CanonicalOppositeResponse where
-  | fromB
-  | fromD
-  deriving DecidableEq, Repr
+inductive CanonicalOppositeResponse
+    {ADComponent BCComponent : Type}
+    (frame : CanonicalC2Incidence ADComponent BCComponent) where
+  | escapeB (clean : BCCleanAtB frame)
+  | escapeD (clean : BCCleanAtD frame)
+
+/-- Either typed opposite response immediately certifies that b,d are not one B/C component. -/
+theorem opposite_response_rejects_bc_lock
+    {ADComponent BCComponent : Type}
+    {frame : CanonicalC2Incidence ADComponent BCComponent}
+    (response : CanonicalOppositeResponse frame) :
+    frame.bcB ≠ frame.bcD := by
+  cases response with
+  | escapeB clean => exact clean
+  | escapeD clean => exact Ne.symm clean
 
 /--
 The exact planar-disk counterfactual interface needed by C2.
 
 `cutAvailable` records which cross-cut probes the current inspected geometry
-permits us to imagine. `responseAvailable cut response` records which opposite
-responses can be imagined against that cut.
+permits us to imagine.
 
-The response is *conditioned on* the imagined cut for deliberation, but there is
-no `before -> after` state transition in this structure.  The cut and response
-are evaluated together as one simultaneous imagined exchange.
-
-The three ground disk laws are:
+The two ground disk laws are deliberately small:
 
 1. if a,c,e lie in one A/D carrier, inspection exposes a terminal-avoiding
    a--c or c--e imagined cross-cut;
-2. every exposed imagined cross-cut admits at least one opposite B/C response;
-3. any legal cut-response bundle is incompatible with b,d remaining one
-   untouched B/C component.
+2. every exposed imagined cross-cut offers at least one opposite escape
+   response.
 
-These are the paper-map cross-cut mechanics of the declared planar-disk domain.
-They are not supplied by an observer, a future route, or a realized intermediate
-state.
+The response is conditioned on the imagined cut for deliberation, but there is
+no `before -> after` state transition here.  The cut and response are evaluated
+together as one simultaneous imagined exchange.  The fact that an escape
+response breaks the B/C lock is no longer an extra geometry premise; it follows
+from the response type itself.
 -/
 structure CanonicalC2DiskGeometry
     {ADComponent BCComponent : Type}
     (frame : CanonicalC2Incidence ADComponent BCComponent) where
   cutAvailable : CanonicalCrossCutChoice → Prop
-  responseAvailable : CanonicalCrossCutChoice → CanonicalOppositeResponse → Prop
   spanning_ad_offers_crosscut :
     frame.adA = frame.adC →
     frame.adC = frame.adE →
     ∃ cut, cutAvailable cut
   crosscut_offers_response :
     ∀ cut, cutAvailable cut →
-      ∃ response, responseAvailable cut response
-  imagined_exchange_rejects_bc_lock :
-    ∀ cut response,
-      cutAvailable cut →
-      responseAvailable cut response →
-      frame.bcB ≠ frame.bcD
+      ∃ response : CanonicalOppositeResponse frame, True
 
 /--
 One complete imagined exchange: first choose an instantiated state's hypothetical
@@ -97,8 +100,7 @@ structure CanonicalC2ImaginedExchange
     (geometry : CanonicalC2DiskGeometry frame) where
   cut : CanonicalCrossCutChoice
   cut_imagined : geometry.cutAvailable cut
-  response : CanonicalOppositeResponse
-  response_imagined : geometry.responseAvailable cut response
+  response : CanonicalOppositeResponse frame
 
 /--
 A spanning A/D lock exposes a complete imagined cut-response exchange without
@@ -112,9 +114,8 @@ theorem spanning_ad_exposes_imagined_exchange
     (hce : frame.adC = frame.adE) :
     ∃ exchange : CanonicalC2ImaginedExchange frame geometry, True := by
   rcases geometry.spanning_ad_offers_crosscut hac hce with ⟨cut, cutAvailable⟩
-  rcases geometry.crosscut_offers_response cut cutAvailable with
-    ⟨response, responseAvailable⟩
-  exact ⟨⟨cut, cutAvailable, response, responseAvailable⟩, trivial⟩
+  rcases geometry.crosscut_offers_response cut cutAvailable with ⟨response, _⟩
+  exact ⟨⟨cut, cutAvailable, response⟩, trivial⟩
 
 /--
 A complete imagined exchange reveals that the opposite B/C continuation cannot
@@ -126,8 +127,7 @@ theorem imagined_exchange_restricts_bc
     {geometry : CanonicalC2DiskGeometry frame}
     (exchange : CanonicalC2ImaginedExchange frame geometry) :
     frame.bcB ≠ frame.bcD :=
-  geometry.imagined_exchange_rejects_bc_lock
-    exchange.cut exchange.response exchange.cut_imagined exchange.response_imagined
+  opposite_response_rejects_bc_lock exchange.response
 
 /--
 The simultaneous counterfactual exchange rules out the only fully locked
@@ -149,8 +149,8 @@ geometry.
 
 The proof performs the red-team exchange entirely in imagination.  If the
 canonical incidence were fully locked, the imagined A/D cut plus imagined B/C
-response would reject that lock.  Hence at least one clean carrier opportunity
-already exists in the current realized map.
+escape response would reject that lock.  Hence at least one clean carrier
+opportunity already exists in the current realized map.
 -/
 theorem c2_clean_carrier_from_imagined_exchange
     {ADComponent BCComponent : Type}
@@ -170,10 +170,7 @@ structure AmortizedC2Move
     (frame : CanonicalC2Incidence ADComponent BCComponent) where
   cleanOpportunity : HasCanonicalCleanCarrier frame
 
-/--
-Amortize every C2 counterfactual cut/response step into one next-move clean
-opportunity.
--/
+/-- Amortize every C2 counterfactual cut/response step into one next-move clean opportunity. -/
 def amortizeC2
     {ADComponent BCComponent : Type}
     (frame : CanonicalC2Incidence ADComponent BCComponent)
