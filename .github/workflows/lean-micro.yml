@@ -65,7 +65,7 @@ jobs:
           elan toolchain install "$(cat lean-toolchain)"
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Check Four Color core and C2 witnesses
+      - name: Check Four Color core and test-time witnesses
         shell: bash
         run: |
           set -euo pipefail
@@ -78,3 +78,4 @@ jobs:
           LEAN_PATH=. lean examples/four_color/BrownAffordance.lean
           LEAN_PATH=. lean examples/four_color/C2CrossCutAffordance.lean
           LEAN_PATH=. lean examples/four_color/ConstructionTerminalFrame.lean
+          LEAN_PATH=. lean examples/four_color/TestTimeActiveInference.lean
