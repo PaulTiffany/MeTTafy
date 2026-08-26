@@ -10,7 +10,11 @@ For reference `r` and distinct upward states `x` and `y`, define
 z = r + x + y.
 ```
 
-Then `z` is distinct from `r`, `x`, and `y`, and it is the unique palette state with that property. In the canonical gauge used by the C2 sketch,
+Then `z` is distinct from `r`, `x`, and `y`, and it is the unique palette state with that property. Moreover, every non-reference state is exactly one of `x`, `y`, or `z`: fixing the lower state leaves only three upward possibilities.
+
+The forced state also leaves the interacting bichromatic pair `{x,y}`. So a typed interaction between two upward states cannot invent an arbitrary fourth upward option; the remaining state is mechanically fixed.
+
+In the canonical gauge used by the C2 sketch,
 
 ```text
 A = 0, B = a, C = b, D = c,
@@ -34,7 +38,7 @@ The intended decomposition is therefore:
 planar boundary / void geometry
     -> forces the relevant interaction
 V4 contact algebra
-    -> fixes the unique third state at that interaction
+    -> exhausts the three upward states and fixes the unique third state
 ```
 
 The first arrow remains open. The second is now Lean-checkable.
