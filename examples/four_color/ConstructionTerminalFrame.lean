@@ -1,4 +1,4 @@
-import Std.Data.Finset.Basic
+import Lean.Elab.Tactic.Omega
 import examples.four_color.C2ContactVoid
 
 /-
@@ -141,7 +141,7 @@ def instantiate {Vertex : Type u} [DecidableEq Vertex]
         exact map.proper left right leftColor rightColor
           adjacent leftBefore rightBefore
 
-/-- Realized execution preserves every non-focus site exactly. -/
+/-- REALIZED: execution preserves every non-focus site exactly. -/
 theorem instantiate_preserves_elsewhere
     {Vertex : Type u} [DecidableEq Vertex]
     {map : RealizedMap Vertex}
@@ -152,7 +152,7 @@ theorem instantiate_preserves_elsewhere
     (instantiate cert).state vertex = map.state vertex := by
   simp [instantiate, instantiatedState, notFocus]
 
-/-- The realized focus is exactly the certified V4 state. -/
+/-- REALIZED: the focus becomes exactly the certified V4 state. -/
 theorem instantiate_realizes_focus
     {Vertex : Type u} [DecidableEq Vertex]
     {map : RealizedMap Vertex}
@@ -226,40 +226,108 @@ def toMapMakerStep {Vertex : Type u} [DecidableEq Vertex]
 
 end ConstructionStep
 
-/-- The finite set of currently uninstantiated sites. -/
-def voidSites {Vertex : Type u} [Fintype Vertex] [DecidableEq Vertex]
-    (map : RealizedMap Vertex) : Finset Vertex :=
-  Finset.univ.filter (fun vertex => map.state vertex = .void)
+/-! ## Finite construction clock -/
 
-/-- Construction time is measured by the remaining uninstantiated sites. -/
-def voidCount {Vertex : Type u} [Fintype Vertex] [DecidableEq Vertex]
+/--
+A duplicate-free complete roster for a finite realized map.  Keeping finiteness
+explicit avoids importing a second foundational library merely to count voids.
+-/
+structure VertexRoster (Vertex : Type u) where
+  vertices : List Vertex
+  nodup : vertices.Nodup
+  complete : ∀ vertex, vertex ∈ vertices
+
+/-- Count currently void sites on an explicit finite roster. -/
+def voidCountOn {Vertex : Type u}
+    (map : RealizedMap Vertex) : List Vertex → Nat
+  | [] => 0
+  | vertex :: rest =>
+      if map.state vertex = .void then
+        Nat.succ (voidCountOn map rest)
+      else
+        voidCountOn map rest
+
+/-- REALIZED: the exact finite construction clock. -/
+def voidCount {Vertex : Type u}
+    (roster : VertexRoster Vertex)
     (map : RealizedMap Vertex) : Nat :=
-  (voidSites map).card
+  voidCountOn map roster.vertices
 
-/-- A certified instantiation removes exactly its focus from the void set. -/
-theorem voidSites_instantiate
-    {Vertex : Type u} [Fintype Vertex] [DecidableEq Vertex]
+/-- A non-focus roster fragment has exactly the same void count after execution. -/
+theorem voidCountOn_preserved_off_focus
+    {Vertex : Type u} [DecidableEq Vertex]
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
-    (cert : CertifiedInstantiation map focus) :
-    voidSites (instantiate cert) = (voidSites map).erase focus.vertex := by
-  ext vertex
-  by_cases atFocus : vertex = focus.vertex
-  · subst vertex
-    simp [voidSites, instantiate, instantiatedState]
-  · simp [voidSites, instantiate, instantiatedState, atFocus]
+    (cert : CertifiedInstantiation map focus)
+    (vertices : List Vertex)
+    (focusAbsent : focus.vertex ∉ vertices) :
+    voidCountOn (instantiate cert) vertices = voidCountOn map vertices := by
+  induction vertices with
+  | nil => rfl
+  | cons head tail ih =>
+      have headNotFocus : head ≠ focus.vertex := by
+        intro equal
+        apply focusAbsent
+        simp [equal]
+      have focusAbsentTail : focus.vertex ∉ tail := by
+        intro present
+        apply focusAbsent
+        exact List.mem_cons_of_mem head present
+      have headState := instantiate_preserves_elsewhere cert head headNotFocus
+      simp [voidCountOn, headState, ih focusAbsentTail]
+
+/--
+REALIZED: on a duplicate-free roster containing the focus, one certified
+instantiation removes exactly one void from the construction clock.
+-/
+theorem voidCountOn_instantiate_succ
+    {Vertex : Type u} [DecidableEq Vertex]
+    {map : RealizedMap Vertex}
+    {focus : Focus Vertex}
+    (cert : CertifiedInstantiation map focus)
+    (vertices : List Vertex)
+    (nodup : vertices.Nodup)
+    (focusPresent : focus.vertex ∈ vertices) :
+    Nat.succ (voidCountOn (instantiate cert) vertices) =
+      voidCountOn map vertices := by
+  induction vertices with
+  | nil => simp at focusPresent
+  | cons head tail ih =>
+      have nodupParts : head ∉ tail ∧ tail.Nodup := by
+        exact List.nodup_cons.mp nodup
+      rcases List.mem_cons.mp focusPresent with headIsFocus | focusInTail
+      · subst head
+        have tailSame := voidCountOn_preserved_off_focus cert tail nodupParts.1
+        simp [voidCountOn, cert.admissible.focus_was_void,
+          instantiate_realizes_focus, tailSame]
+      · have headNotFocus : head ≠ focus.vertex := by
+          intro equal
+          subst head
+          exact nodupParts.1 focusInTail
+        have headState := instantiate_preserves_elsewhere cert head headNotFocus
+        have tailStep := ih nodupParts.2 focusInTail
+        by_cases headVoid : map.state head = .void
+        · have afterHeadVoid : (instantiate cert).state head = .void := by
+            rw [headState]
+            exact headVoid
+          simp [voidCountOn, headVoid, afterHeadVoid, tailStep]
+        · have afterHeadNotVoid : (instantiate cert).state head ≠ .void := by
+            rw [headState]
+            exact headVoid
+          simp [voidCountOn, headVoid, afterHeadNotVoid, tailStep]
 
 /-- Every realized construction turn consumes exactly one void. -/
 theorem voidCount_instantiate
-    {Vertex : Type u} [Fintype Vertex] [DecidableEq Vertex]
+    {Vertex : Type u} [DecidableEq Vertex]
+    (roster : VertexRoster Vertex)
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
     (cert : CertifiedInstantiation map focus) :
-    voidCount (instantiate cert) = voidCount map - 1 := by
-  change (voidSites (instantiate cert)).card = (voidSites map).card - 1
-  rw [voidSites_instantiate]
-  exact Finset.card_erase_of_mem (by
-    simp [voidSites, cert.admissible.focus_was_void])
+    voidCount roster (instantiate cert) = voidCount roster map - 1 := by
+  have oneStep := voidCountOn_instantiate_succ cert roster.vertices
+    roster.nodup (roster.complete focus.vertex)
+  unfold voidCount
+  omega
 
 /-- A completed map is a construction state with no remaining void sites. -/
 structure CompletedMap (Vertex : Type u) extends ConstructionMap Vertex where
@@ -272,7 +340,7 @@ no intermediate route, and no authority to alter the completed map.
 structure TerminalResult (Vertex : Type u) where
   completed : CompletedMap Vertex
 
-/-- Terminal verification is defined only on a completed map. -/
+/-- TERMINAL: verification is defined only on a completed map. -/
 def verifyTerminalResult {Vertex : Type u}
     (completed : CompletedMap Vertex) : TerminalResult Vertex :=
   ⟨completed⟩
