@@ -101,6 +101,21 @@ theorem hard_frontier_has_no_focus_opportunity
   exact absent (usesAllFour_contains boundary color hard.2)
 
 /--
+Changing one slot cannot erase a different color that was already present.
+This is the small structural fact behind the composition dichotomy.
+-/
+theorem replaceBoundary_preserves_other_color
+    (before : Boundary5)
+    (slot : BoundarySlot)
+    (replacement color : V4)
+    (present : BoundaryContains before color)
+    (notOld : color ≠ boundaryAt before slot) :
+    BoundaryContains (replaceBoundary before slot replacement) color := by
+  rcases before with ⟨c0, c1, c2, c3, c4⟩
+  cases slot <;>
+    simp_all [BoundaryContains, boundaryAt, replaceBoundary]
+
+/--
 One-site composition dichotomy.
 
 Start from the hard 2,1,1,1 frontier, change exactly one site, and require the
@@ -115,13 +130,22 @@ theorem one_site_hard_turn_reenters_or_frees_seed
     (properAfter : ProperPentagon turn.after) :
     HardDegreeFiveFrontier turn.after ∨
       ¬ BoundaryContains turn.after (boundaryAt before turn.slot) := by
-  rcases before with ⟨c0, c1, c2, c3, c4⟩
-  rcases turn with ⟨slot, replacement, changed⟩
-  cases slot <;>
-  cases c0 <;> cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;>
-  cases replacement <;>
-    simp_all [OneSiteBoundaryTurn.after, boundaryAt, replaceBoundary,
-      HardDegreeFiveFrontier, ProperPentagon, UsesAllFourColors, BoundaryContains]
+  let old := boundaryAt before turn.slot
+  by_cases oldPresent : BoundaryContains turn.after old
+  · left
+    refine ⟨properAfter, ?_⟩
+    have containsAfter : ∀ color : V4, BoundaryContains turn.after color := by
+      intro color
+      by_cases sameOld : color = old
+      · simpa [sameOld] using oldPresent
+      · have presentBefore : BoundaryContains before color :=
+          usesAllFour_contains before color hard.2
+        simpa [OneSiteBoundaryTurn.after] using
+          (replaceBoundary_preserves_other_color before turn.slot turn.replacement color
+            presentBefore sameOld)
+    exact ⟨containsAfter .zero, containsAfter .a, containsAfter .b, containsAfter .c⟩
+  · right
+    exact oldPresent
 
 /--
 A red-team turn either composes into the same red-team species or opens a color
