@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -202,23 +202,42 @@
     },
     {
       "id": "WIT-LEAN-FOUR-COLOR-REDTEAM-COMPOSITION",
-      "name": "Lean red-team turn composition witness",
+      "name": "Lean red-team composition and void-stop witness",
       "status": "implemented",
       "kind": "formal_verification",
       "strength": "formal",
-      "claim": "The Lean kernel accepts the stated one-turn degree-five composition dichotomy: from a hard/A-B-A red-team frontier, a proper one-site frontier rewrite either re-enters the same red-team normal form or removes the old seed color and opens a focus-color opportunity; if the successor remains blocked, it necessarily re-enters the normal form.",
+      "claim": "The Lean kernel accepts the stated one-turn degree-five composition dichotomy: from a hard/A-B-A red-team frontier, a proper one-site frontier rewrite either re-enters the same red-team normal form or removes the old seed color and opens a focus-color opportunity; if the successor remains blocked, it necessarily re-enters the normal form. It also accepts the finite local stop theorem: relative to one fixed reference the three upward V4 states exhaust the action surface, and once all three have acted and void makes acted states unavailable, no upward action remains on that local surface.",
       "non_claims": [
         "a formal transport theorem from every generic CleanAtomicTurn to the concrete five-slot boundary representation",
         "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
         "unconditional Clean Frontier Turn Existence (C2)",
-        "termination of repeated turns",
-        "a monotone construction-progress measure",
-        "non-replay for arbitrary turn sequences",
-        "Repeated-Turn Pair availability",
+        "a theorem selecting which external void a restart uses",
+        "global exhaustion for arbitrary restart policies over arbitrary maps",
+        "global non-replay for arbitrary turn sequences",
         "global ordered-construction closure",
         "a new proof of the Four Color Theorem"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/RedTeamComposition.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-CONSTRUCT-GRAMMAR",
+      "name": "Lean game-theoretic construct composition witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts an open meta-construct grammar parameterized by primitive construct and realized-fact types; compatible coherent primitive game surfaces compose coherently; regrouping a composition tree preserves its realized-fact, acted-route, and available-action projection; every recursively well-formed construct evaluates coherently; and the canonical B/C/D void-stop theorem lifts into the generic game-surface semantics.",
+      "non_claims": [
+        "that basic stripes or any current primitive family generate every planar map",
+        "an exhaustive classification of primitive constructs",
+        "an automatic decomposition algorithm from arbitrary maps into primitives",
+        "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
+        "unconditional Clean Frontier Turn Existence (C2)",
+        "a transport theorem from every generic construct to a concrete Kempe carrier turn",
+        "global exhaustion for arbitrary restart policies over arbitrary maps",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/ConstructGrammar.lean",
       "replayable": true
     },
     {
