@@ -207,8 +207,8 @@ theorem swapPair_changes_member
     (member : InPair left right color) :
     swapPair left right color ≠ color := by
   rcases member with rfl | rfl
-  · simp [swapPair, different]
-  · simp [swapPair, different, Ne.symm different]
+  · simpa [swapPair] using (Ne.symm different)
+  · simpa [swapPair, different] using different
 
 universe u
 
