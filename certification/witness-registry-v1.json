@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -161,6 +161,24 @@
         "that Brown can adjudicate the game's color-contact obligations"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/C2ContactVoid.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-C2-IMAGINED-EXCHANGE",
+      "name": "Lean C2 imagined cross-cut/response amortization witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts C2 clean-carrier opportunity existence for the declared canonical planar-disk game contract: when the A/D terminals a,c,e are locked together, inspection exposes a terminal-avoiding imagined A/D cross-cut; that cut offers an imagined opposite B/C escape response; the response type itself certifies a clean B or D boundary opportunity and therefore rejects the fully locked incidence; cut and response are represented as one simultaneous counterfactual exchange and amortized into a single clean next-move opportunity without any realized intermediate map state.",
+      "non_claims": [
+        "a from-first-principles Lean formalization of Euclidean or Jordan topology",
+        "automatic transport from every external planar-map representation into CanonicalC2DiskGeometry",
+        "that the older physical carrier-intersection premise crosscut_meets_opposite is necessary",
+        "execution of the clean turn after the opportunity is selected",
+        "global map-completion composition",
+        "a new proof of the Four Color Theorem by this witness alone"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/C2CrossCutOpportunity.lean",
       "replayable": true
     },
     {
