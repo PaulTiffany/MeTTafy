@@ -111,10 +111,11 @@ theorem replaceBoundary_preserves_other_color
     (present : BoundaryContains before color)
     (notOld : color ≠ boundaryAt before slot) :
     BoundaryContains (replaceBoundary before slot replacement) color := by
-  have oldNe : boundaryAt before slot ≠ color := Ne.symm notOld
   rcases before with ⟨c0, c1, c2, c3, c4⟩
   cases slot <;>
-    simp_all [BoundaryContains, boundaryAt, replaceBoundary]
+    simp [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢ <;>
+    rcases present with h | h | h | h <;>
+    simp_all
 
 /--
 One-site composition dichotomy.
