@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -123,6 +123,24 @@
         "observer or time-delay dynamics"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/FourColorCore.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-HARD-SHAPE",
+      "name": "Lean hard frontier A-B-A shape witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated theorem that every proper degree-five frontier using all four colors contains a cyclic A-B-A window: its unique repeated absolute color occurs at distance two on the 5-cycle.",
+      "non_claims": [
+        "alternating-endpoint crossing in a planar disk",
+        "the Jordan or crosscut theorem used by the human C2 argument",
+        "Clean Frontier Turn Existence (C2)",
+        "Repeated-Turn Pair availability",
+        "ordered-construction closure",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over hard-frontier shape theorems in examples/four_color/FourColorCore.lean",
       "replayable": true
     },
     {
