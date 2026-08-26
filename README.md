@@ -151,7 +151,9 @@ MeTTafy now has a mechanically witnessed research pipeline rather than only a bo
 - **Bounded source-distinction correspondence.** One current witness removes the source-side `composition` distinction, observes the recovered dependency disappear in executable MeTTa, restores the source exactly, and observes the byte-identical target behavior return.
 - **Bounded differential execution.** The frozen finite graph corpus runs independently through the checked-in Python implementation and pinned MeTTaScript runtime, with zero tolerated colorability mismatches and independent validation of returned colorings.
 - **Brown Goo micro-witness.** Lean checks the narrower architecture theorem that collapsing a source distinction needed by an admissible future continuation can prevent exact downstream factorization.
-- **Four Color V4 micro-core.** Lean checks the fixed global proof-frame algebra for the Klein-four palette, cyclic five-frontier closure/parity, and the saturated proper degree-five `3,1,1` mode law. This banks only those local statements; it is not a new Four Color proof claim.
+- **Four Color frame-separated V4 micro-core.** Lean distinguishes the fixed-region gauge frame from the Track-B hard frontier. The fixed-region frame has the `3,1,1` tangential-mode law; the hard five-neighbor frame has the `2,1,1,1` absolute-color law. Lean also checks that excluding a reference color and using all four colors are not the same frontier condition. None of this is a transport or a new Four Color proof claim.
+- **Atomic Four Color turn witness.** Lean checks that one closed bichromatic carrier swap, realized as one whole turn, preserves proper coloring. It carries no future route, delay, or asynchronous half-state.
+- **Clean frontier effect witness.** Lean checks that a supplied clean atomic turn changes only its unique frontier seed, and that a singleton-colored seed frees its old color from the realized successor frontier. Clean-turn existence itself remains a separate planar-topology obligation.
 
 These witness classes are intentionally not flattened into one success flag:
 
