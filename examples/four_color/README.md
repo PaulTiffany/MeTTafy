@@ -6,5 +6,6 @@ These files are deliberately bounded formal witnesses for the independent Four C
 - `C2ContactVoid.lean` — contact/void semantics, the coarse Brown projection, canonical `A B A C D` carrier incidence, and the reduction of C2 clean-carrier existence to one explicit planar crosscut-intersection premise.
 - `C2ForcedThird.lean` — the red-team forced-third law: fixing one lower/reference state leaves three nontrivial upward states, and any two distinct upward states uniquely determine the third by `r + x + y`.
 - `BrownAffordance.lean` — observer-relative playability: direct color contact determines the local legal-move profile, while Brown can distinguish occupancy (`void` versus `colored`) but cannot factor the color-dependent affordance profile through its coarse observation.
+- `RedTeamComposition.lean` — one-turn composition for the hard degree-five game: a proper one-site frontier rewrite either re-enters the same hard/A-B-A red-team normal form or removes the old seed color from the frontier and thereby opens a concrete focus-color opportunity. A successor that remains blocked therefore re-enters the same normal form.
 
-These files do not claim a new proof of the Four Color Theorem. In particular, `crosscut_meets_opposite` remains an open planar-topology obligation.
+These files do not claim a new proof of the Four Color Theorem. In particular, `crosscut_meets_opposite` remains an open planar-topology obligation, and the red-team composition witness does not claim termination, monotone progress, or non-replay across an arbitrary run.
