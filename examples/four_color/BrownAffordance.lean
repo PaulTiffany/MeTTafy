@@ -4,22 +4,23 @@ import examples.four_color.C2ContactVoid
 Copyright (c) 2026 Paul Carver Tiffany III.
 Released under the MIT License; see LICENSE.
 
-A deliberately small Four Color witness for observer-relative playability.
+A deliberately small Four Color witness for player-relative playability.
 
 FRAME CONTRACT
 --------------
-The formal game may inspect the actual palette state presented at contact.
-A coherent local player must be able to recover the legal color affordances of
-that contact from its observation alone.
+To participate in the game, a player is embedded in the realized construction
+and receives local contact observations. A coherent color-relevant player must
+be able to recover the legal color affordances of that contact from its own
+interface.
 
-Brown remains a legitimate external occupancy observer: it distinguishes
-`void` from `colored`.  But every realized palette state projects to the same
-`brown` value.  This file proves that the game's color-dependent local move
-opportunities therefore do not factor through Brown's observation.
+Brown is such an embedded player: it distinguishes `void` from `colored`.
+But every realized palette state appears as the same `brown` value. Brown is
+therefore present in the game while functionally left behind by the distinctions
+that determine color-dependent moves.
 
 This is not a claim that Brown changes or destroys the underlying distinctions.
-It is exactly the opposite: the operational distinctions remain present in the
-game while Brown lacks the interface required to use them coherently.
+The distinctions remain operational for the color-capable players; Brown simply
+cannot use them to alter the legal color-action surface.
 -/
 
 namespace MeTTafy.FourColor
@@ -28,7 +29,7 @@ namespace MeTTafy.FourColor
 
 /--
 A candidate palette state is locally legal against one exposed contact exactly
-when the two states differ.  This is the atomic Four Color contact rule, not a
+when the two states differ. This is the atomic Four Color contact rule, not a
 chooser or a global search policy.
 -/
 def legalAgainst (exposed candidate : V4) : Bool :=
@@ -68,12 +69,33 @@ theorem direct_color_supports_coherent_play :
   intro exposed
   rfl
 
-/-! ## Brown sees occupancy but loses move opportunity -/
+/-! ## Embedded players and color relevance -/
+
+/-- An embedded player receives an observation from each realized local site. -/
+structure EmbeddedPlayer (View : Type) where
+  observe : SiteState → View
+
+/-- Brown is an embedded player with a coarse local interface. -/
+def brownPlayer : EmbeddedPlayer BrownView where
+  observe := brownObserve
+
+/-- A direct color-capable player preserves the realized site state itself. -/
+def directSitePlayer : EmbeddedPlayer SiteState where
+  observe := id
+
+/--
+Color relevance means that a player's colored-contact interface is sufficient
+to reconstruct the legal local color affordances.
+-/
+def ColorRelevant {View : Type} (player : EmbeddedPlayer View) : Prop :=
+  AffordancesFactorThrough (fun color => player.observe (.colored color))
+
+/-! ## Brown is present but strategically irrelevant to color play -/
 
 /-- Brown distinguishes a void site from a colored site. -/
 theorem brown_observes_occupancy :
-    brownObserve .void ≠ brownObserve (.colored V4.zero) := by
-  simp [brownObserve]
+    brownPlayer.observe .void ≠ brownPlayer.observe (.colored V4.zero) := by
+  simp [brownPlayer, brownObserve]
 
 /--
 The same Brown observation can hide opposite answers to a concrete move
@@ -94,8 +116,8 @@ theorem zero_and_a_have_different_affordances :
 
 /--
 Brown cannot recover exact legal move opportunities from its observation alone.
-Two formal states collapse to the same Brown view while requiring different
-local affordance profiles.
+Two realized color states collapse to the same Brown view while requiring
+different local affordance profiles.
 -/
 theorem brown_affordances_do_not_factor :
     ¬ AffordancesFactorThrough brownColorProjection := by
@@ -109,10 +131,19 @@ theorem brown_affordances_do_not_factor :
     _ = decode (brownColorProjection V4.a) := by rfl
     _ = contactAffordances V4.a := aProfile
 
+/-- Brown is embedded in the game but is not color-relevant to its local move rule. -/
+theorem brown_embedded_not_color_relevant :
+    ¬ ColorRelevant brownPlayer := by
+  intro factors
+  apply brown_affordances_do_not_factor
+  rcases factors with ⟨decode, commutes⟩
+  refine ⟨decode, ?_⟩
+  intro exposed
+  simpa [brownPlayer, brownObserve, brownColorProjection] using commutes exposed
+
 /--
-Operational statement of the Brown-observer limitation: Brown is an occupancy
-observer but not a sufficient interface for coherent participation in a game
-whose legal moves depend on color identity.
+Compatibility name retained for existing references: Brown cannot coherently
+play the color-dependent contact rule from its coarse interface alone.
 -/
 theorem brown_cannot_coherently_play_local_contact_rule :
     ¬ AffordancesFactorThrough brownColorProjection :=
