@@ -8,26 +8,29 @@ A deliberately narrow C2 reduction for the Four Color research game.
 
 FRAME CONTRACT
 --------------
-The Four Color proof continues to reason from the declared formal global frame.
-This file does not add asynchronous observers or subjective dynamics.
+The Four Color game is instantiated from inside construction. Colors are
+operational states realized by the map-maker, and contact between already
+realized states determines what moves remain available. No omniscient observer
+participates in the game or certifies its intermediate turns.
 
 It does make one distinction explicit:
 
 * a color is operational inside the game where contact can distinguish palette
   states;
-* `void` means no color is present at that site;
-* an external brown projection may collapse all four colors and therefore lacks
-  the separating interface needed to enforce color-contact obligations.
+* `void` means no color is present at that site yet;
+* Brown is an embedded coarse player whose interface collapses all four realized
+  colors and therefore cannot contribute the distinctions needed to adjudicate
+  color-dependent contact obligations.
 
 For C2 itself, the file banks only the finite component-incidence reduction and
 the reduction from a planar crosscut-intersection law to that incidence fact.
-The Jordan/crosscut intersection law itself remains an explicit topology debt;
-it is not proved or smuggled in here.
+The remaining crosscut existence/intersection law is an explicit proof debt; it
+is not supplied by a result verifier or hidden global viewpoint.
 -/
 
 namespace MeTTafy.FourColor
 
-/-! ## Operational color, void, and the brown projection -/
+/-! ## Operational color, void, and Brown's embedded coarse interface -/
 
 /-- A site is either uncolored/void or realizes one of the four palette states. -/
 inductive SiteState where
@@ -45,21 +48,21 @@ def colorOf? : SiteState → Option V4
 
 /--
 A contact-color interface must preserve the four distinctions used by the game.
-The direct palette view has such an interface; a constant brown projection does
+The direct palette view has such an interface; Brown's collapsed interface does
 not.
 -/
 structure ContactColorInterface (View : Type) where
   observe : V4 → View
   separates : Function.Injective observe
 
-/-- The four game states can distinguish the palette state presented at contact. -/
+/-- The four color-capable game states can distinguish the palette state presented at contact. -/
 def directColorContact : ContactColorInterface V4 where
   observe := id
   separates := by
     intro left right equal
     exact equal
 
-/-- The external coarse view used to witness distinction collapse. -/
+/-- Brown's embedded coarse view of a local site. -/
 inductive BrownView where
   | void
   | brown
@@ -70,17 +73,17 @@ def brownObserve : SiteState → BrownView
   | .void => .void
   | .colored _ => .brown
 
-/-- Restrict the brown observation to colored states. -/
+/-- Restrict Brown's observation to realized colored states. -/
 def brownColorProjection (_ : V4) : BrownView := .brown
 
-/-- The brown projection cannot serve as the game's operational color-contact interface. -/
+/-- Brown's collapsed interface cannot serve as the game's operational color-contact interface. -/
 theorem brownColorProjection_not_injective :
     ¬ Function.Injective brownColorProjection := by
   intro injective
   have collapsed : V4.zero = V4.a := injective rfl
   cases collapsed
 
-/-- Different formal colors can be observationally identical to Brown. -/
+/-- Different realized colors can be observationally identical to Brown. -/
 theorem brown_collapses_distinct_colors :
     V4.zero ≠ V4.a ∧
     brownObserve (.colored V4.zero) = brownObserve (.colored V4.a) := by
@@ -96,7 +99,7 @@ The only boundary-component information needed by the canonical `A B A C D`
 C2 argument.
 
 `adA`, `adC`, and `adE` are the `{A,D}` component identities seen at boundary
-positions `a`, `c`, and `e`.  `bcB` and `bcD` are the `{B,C}` component
+positions `a`, `c`, and `e`. `bcB` and `bcD` are the `{B,C}` component
 identities at `b` and `d`.
 
 Component equality is the operational contact fact: two terminals with the same
@@ -158,8 +161,8 @@ def AlternatingCrosscutExclusion {ADComponent BCComponent : Type}
 Finite C2 reduction: once the planar alternating-crosscut exclusion is supplied,
 at least one canonical boundary carrier is clean.
 
-No topology is hidden in this proof.  The proof only performs the finite
-component-partition reasoning from the frozen C2 argument.
+No topology is hidden in this proof. The proof only performs the finite
+component-partition reasoning from the C2 argument.
 -/
 theorem c2_clean_carrier_from_crosscut
     {ADComponent BCComponent : Type}
@@ -199,11 +202,11 @@ theorem bc_clean_symmetry
     BCCleanAtB frame ↔ BCCleanAtD frame := by
   constructor <;> intro different <;> exact Ne.symm different
 
-/-! ## Exposing the remaining topology debt as forced carrier intersection -/
+/-! ## Exposing the remaining topology debt as forced carrier interaction -/
 
 /--
 In the canonical naming `A=zero`, `B=a`, `C=b`, `D=c`, the two C2 color pairs
-`{A,D}` and `{B,C}` are disjoint.  No operationally colored vertex can belong
+`{A,D}` and `{B,C}` are disjoint. No operationally colored vertex can belong
 to both pairs.
 -/
 theorem canonical_c2_pairs_disjoint (color : V4) :
@@ -216,19 +219,19 @@ universe v
 A carrier-level world for the canonical C2 crosscut argument.
 
 The boundary terminals are concrete vertices in cyclic canonical order
-`a,b,c,d,e` carrying `A,B,A,C,D`.  Their component memberships are retained
-explicitly so a later planar theorem can attach to actual boundary geometry
-rather than to ungrounded component labels.
+`a,b,c,d,e` carrying `A,B,A,C,D`. Their component memberships are retained
+explicitly so the remaining planar theorem can attach to the realized boundary
+and carrier relations rather than to an observer outside the game.
 
 The deleted degree-five focus is retained only as an explicit `void` site: it
-has no palette state and cannot lie on either bichromatic carrier.  The
-`crosscut_meets_opposite` field is the one still-unproved planar theorem: if the
-three `{A,D}` boundary terminals collapse into one current carrier and `b,d`
-collapse into one `{B,C}` carrier, the crosscut through the exposed pentagonal
-void forces the two carriers to meet.
+has no palette state and cannot lie on either bichromatic carrier. The
+`crosscut_meets_opposite` field is the still-unproved bridge: if the three
+`{A,D}` boundary terminals collapse into one current carrier and `b,d` collapse
+into one `{B,C}` carrier, the realized planar/contact-void configuration forces
+an operational interaction between those carriers.
 
-Everything else in this structure is operational contact data visible from the
-formal global proof frame.
+Everything else in this structure is realized construction/contact data. No
+terminal result verifier is used inside the game.
 -/
 structure CanonicalC2CarrierWorld
     (Vertex : Type v)
@@ -265,9 +268,9 @@ structure CanonicalC2CarrierWorld
     ∃ vertex, adCarrier frame.adA vertex ∧ bcCarrier frame.bcB vertex
 
 /--
-The formal global frame distinguishes the canonical `A B A C D` boundary,
-while the coarse external Brown projection sees five identical colored sites and
-the deleted focus as void.
+The color-capable players distinguish the canonical `A B A C D` boundary,
+while embedded Brown sees five identical colored sites and the remaining focus
+as void.
 -/
 theorem c2_brown_view_of_canonical_world
     {Vertex : Type v}
@@ -326,7 +329,7 @@ theorem c2_carrier_families_disjoint
   exact canonical_c2_pairs_disjoint adColor ⟨adPair, bcPair⟩
 
 /--
-The positive planar intersection law plus operational color disjointness yields
+The positive planar interaction law plus operational color disjointness yields
 the abstract alternating-crosscut exclusion used by the finite C2 reduction.
 -/
 theorem c2_crosscut_exclusion_from_contact_void
@@ -341,9 +344,9 @@ theorem c2_crosscut_exclusion_from_contact_void
     ⟨onAD, onBC⟩
 
 /--
-C2 reduced to its remaining topology theorem: in any canonical contact/void
-world satisfying the crosscut-intersection law, at least one boundary carrier
-is clean.
+C2 reduced to its remaining in-game planar theorem: in any canonical
+contact/void world satisfying the forced carrier-interaction law, at least one
+boundary carrier is clean.
 -/
 theorem c2_clean_carrier_from_contact_void
     {Vertex : Type v}
