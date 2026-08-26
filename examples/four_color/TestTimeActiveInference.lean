@@ -129,9 +129,10 @@ def realizeInference
     RealizedMap Vertex :=
   instantiate (amortize method sound episode color certified)
 
-/-- The collapse boundary advances construction by exactly one void. -/
+/-- REALIZED: the collapse boundary advances construction by exactly one void. -/
 theorem realizeInference_consumes_one_void
-    {Vertex : Type u} [Fintype Vertex] [DecidableEq Vertex]
+    {Vertex : Type u} [DecidableEq Vertex]
+    (roster : VertexRoster Vertex)
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
     (method : InferenceMethod Vertex)
@@ -139,9 +140,9 @@ theorem realizeInference_consumes_one_void
     (episode : InferenceEpisode map focus)
     (color : V4)
     (certified : method.certifies episode color) :
-    voidCount (realizeInference method sound episode color certified) =
-      voidCount map - 1 := by
-  exact voidCount_instantiate
+    voidCount roster (realizeInference method sound episode color certified) =
+      voidCount roster map - 1 := by
+  exact voidCount_instantiate roster
     (amortize method sound episode color certified)
 
 /-! ## Canonical INFERENCE / NEGATIVE witness -/
