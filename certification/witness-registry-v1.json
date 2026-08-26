@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -121,6 +121,24 @@
         "observer or time-delay dynamics"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/FourColorCore.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-TURN",
+      "name": "Lean atomic Four Color turn witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated theorem that one atomic closed bichromatic carrier swap preserves proper coloring.",
+      "non_claims": [
+        "clean-turn existence",
+        "repeated-turn availability",
+        "ordered-construction progress",
+        "degree-five extension",
+        "a new proof of the Four Color Theorem",
+        "semantic equivalence with the Python Kempe implementation"
+      ],
+      "authority": "pinned Lean kernel/toolchain over atomic-turn theorems in examples/four_color/FourColorCore.lean",
       "replayable": true
     },
     {
