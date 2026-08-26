@@ -65,10 +65,11 @@ jobs:
           elan toolchain install "$(cat lean-toolchain)"
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Check Four Color core and C2 contact-void reduction
+      - name: Check Four Color core and C2 witnesses
         shell: bash
         run: |
           set -euo pipefail
           lean --version
           LEAN_PATH=. lean -o examples/four_color/FourColorCore.olean examples/four_color/FourColorCore.lean
-          LEAN_PATH=. lean examples/four_color/C2ContactVoid.lean
+          LEAN_PATH=. lean -o examples/four_color/C2ContactVoid.olean examples/four_color/C2ContactVoid.lean
+          LEAN_PATH=. lean examples/four_color/C2ForcedThird.lean

@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -161,6 +161,24 @@
         "that Brown can adjudicate the game's color-contact obligations"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/C2ContactVoid.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-C2-FORCED-THIRD",
+      "name": "Lean C2 forced third-state witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the V4 forcing law that fixing one lower/reference palette state leaves exactly three nontrivial upward states; any two distinct upward states uniquely determine the third as reference + left + right; that forced state lies outside the interacting bichromatic pair; and in the canonical gauge A=0, B=a, C=b the forced remaining state is D=c.",
+      "non_claims": [
+        "that planar geometry forces the relevant interaction or crossing",
+        "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
+        "unconditional Clean Frontier Turn Existence (C2)",
+        "Repeated-Turn Pair availability",
+        "ordered-construction closure",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/C2ForcedThird.lean",
       "replayable": true
     },
     {
