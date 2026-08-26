@@ -112,10 +112,42 @@ theorem replaceBoundary_preserves_other_color
     (notOld : color ≠ boundaryAt before slot) :
     BoundaryContains (replaceBoundary before slot replacement) color := by
   rcases before with ⟨c0, c1, c2, c3, c4⟩
-  cases slot <;>
-    simp [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢ <;>
-    rcases present with h | h | h | h <;>
-    simp_all
+  cases slot
+  · simp only [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢
+    rcases present with h0 | h1 | h2 | h3 | h4
+    · exact False.elim (notOld h0.symm)
+    · exact Or.inr (Or.inl h1)
+    · exact Or.inr (Or.inr (Or.inl h2))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h3)))
+    · exact Or.inr (Or.inr (Or.inr (Or.inr h4)))
+  · simp only [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢
+    rcases present with h0 | h1 | h2 | h3 | h4
+    · exact Or.inl h0
+    · exact False.elim (notOld h1.symm)
+    · exact Or.inr (Or.inr (Or.inl h2))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h3)))
+    · exact Or.inr (Or.inr (Or.inr (Or.inr h4)))
+  · simp only [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢
+    rcases present with h0 | h1 | h2 | h3 | h4
+    · exact Or.inl h0
+    · exact Or.inr (Or.inl h1)
+    · exact False.elim (notOld h2.symm)
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h3)))
+    · exact Or.inr (Or.inr (Or.inr (Or.inr h4)))
+  · simp only [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢
+    rcases present with h0 | h1 | h2 | h3 | h4
+    · exact Or.inl h0
+    · exact Or.inr (Or.inl h1)
+    · exact Or.inr (Or.inr (Or.inl h2))
+    · exact False.elim (notOld h3.symm)
+    · exact Or.inr (Or.inr (Or.inr (Or.inr h4)))
+  · simp only [BoundaryContains, boundaryAt, replaceBoundary] at present notOld ⊢
+    rcases present with h0 | h1 | h2 | h3 | h4
+    · exact Or.inl h0
+    · exact Or.inr (Or.inl h1)
+    · exact Or.inr (Or.inr (Or.inl h2))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h3)))
+    · exact False.elim (notOld h4.symm)
 
 /--
 One-site composition dichotomy.
