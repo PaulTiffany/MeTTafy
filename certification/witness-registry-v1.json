@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -109,14 +109,16 @@
     },
     {
       "id": "WIT-LEAN-FOUR-COLOR-CORE",
-      "name": "Lean Four Color V4 frontier micro-core",
+      "name": "Lean Four Color frame-separated V4 micro-core",
       "status": "implemented",
       "kind": "formal_verification",
       "strength": "formal",
-      "claim": "The Lean kernel accepts the stated Klein-four palette laws, cyclic five-frontier closure/parity, and saturated proper degree-five 3,1,1 mode theorem in examples/four_color/FourColorCore.lean.",
+      "claim": "The Lean kernel accepts the stated Klein-four palette laws and cyclic closure/parity; the fixed-region gauge theorem with 3,1,1 tangential V4 modes; the Track-B hard-frontier 2,1,1,1 absolute-color theorem; and the theorem that these two frontier frames are not silently identical.",
       "non_claims": [
-        "a new proof of the Four Color Theorem",
+        "a transport from the fixed-region gauge frame to the Track-B hard frontier",
+        "Clean Frontier Turn Existence",
         "the historical Track-B closure candidate",
+        "a new proof of the Four Color Theorem",
         "semantic equivalence with the Python research implementation",
         "observer or time-delay dynamics"
       ],
