@@ -11,18 +11,24 @@ FRAME CONTRACT
 The proof world is still the formal global Four Color frame.  A clean carrier
 turn has already been banked elsewhere as changing exactly one frontier seed
 while preserving proper coloring.  This file studies only the induced
-five-frontier rewrite.
+five-frontier rewrite and the finite stop condition on the three upward states.
 
-The key claim is a dichotomy, not termination:
+The key one-turn claim is a dichotomy:
 
 * if a one-site proper frontier rewrite still uses all four palette states, the
   successor is again the same hard degree-five / A-B-A red-team species;
 * otherwise the color formerly occupying the changed site has disappeared from
   the frontier, so the deleted focus has a concrete color opportunity.
 
-Thus a blocked successor composes back into the same red-team normal form.  No
-ledger monotonicity, no non-replay theorem, and no global Four Color closure are
-claimed here.
+Repeated composition therefore does not need a synthetic ranking function.
+The upward action surface is already finite: relative to one fixed reference,
+there are exactly three upward states.  If all three have acted and the void
+boundary makes acted states unavailable, no upward action remains.  That is the
+local game-stop condition; choosing another void as a fresh start is a restart,
+not a continuation of the exhausted action surface.
+
+No ledger monotonicity, no global non-replay theorem, and no global Four Color
+closure are claimed here.
 -/
 
 namespace MeTTafy.FourColor
@@ -212,5 +218,85 @@ theorem blocked_redTeam_turn_reenters
     normalAfter | opportunity
   · exact normalAfter
   · exact False.elim (stillBlocked opportunity)
+
+/-! ## Finite upward action surface and void stop -/
+
+/-- Every non-reference state on the current upward action surface has acted. -/
+def AllUpwardActed (reference : V4) (acted : V4 → Prop) : Prop :=
+  ∀ state, UpwardFrom reference state → acted state
+
+/--
+The void boundary consumes an acted route: once a state has acted, that same
+state is not available for another action on the current surface.
+-/
+def VoidBlocksActed (acted available : V4 → Prop) : Prop :=
+  ∀ state, acted state → ¬ available state
+
+/-- No upward state remains available on the current action surface. -/
+def UpwardGameStopped (reference : V4) (available : V4 → Prop) : Prop :=
+  ∀ state, UpwardFrom reference state → ¬ available state
+
+/--
+Because the upward V4 surface has exactly three states, observing actions by two
+distinct upward states and their forced third exhausts every possible upward
+state.  No sequence-length or monotone-progress argument is involved.
+-/
+theorem pair_and_forcedThird_actions_exhaust_upward
+    (reference left right : V4)
+    (leftUp : UpwardFrom reference left)
+    (rightUp : UpwardFrom reference right)
+    (different : left ≠ right)
+    (acted : V4 → Prop)
+    (leftActed : acted left)
+    (rightActed : acted right)
+    (thirdActed : acted (forcedThirdFrom reference left right)) :
+    AllUpwardActed reference acted := by
+  intro state stateUp
+  rcases upward_states_exhausted_by_pair_and_forcedThird
+      reference left right state leftUp rightUp different stateUp with
+    equalLeft | equalRight | equalThird
+  · simpa [equalLeft] using leftActed
+  · simpa [equalRight] using rightActed
+  · simpa [equalThird] using thirdActed
+
+/--
+Three upward actions plus the void rule imply game stop: every possible upward
+state has acted, and acted states are unavailable.  A subsequent action must
+therefore be a fresh start/restart outside this exhausted local surface.
+-/
+theorem all_three_upward_acted_and_void_blocked_stop_game
+    (reference left right : V4)
+    (leftUp : UpwardFrom reference left)
+    (rightUp : UpwardFrom reference right)
+    (different : left ≠ right)
+    (acted available : V4 → Prop)
+    (leftActed : acted left)
+    (rightActed : acted right)
+    (thirdActed : acted (forcedThirdFrom reference left right))
+    (voidBlocks : VoidBlocksActed acted available) :
+    UpwardGameStopped reference available := by
+  have exhausted : AllUpwardActed reference acted :=
+    pair_and_forcedThird_actions_exhaust_upward
+      reference left right leftUp rightUp different acted
+      leftActed rightActed thirdActed
+  intro state stateUp
+  exact voidBlocks state (exhausted state stateUp)
+
+/-- Canonical gauge: once B, C, and forced D have acted, void blocks all upward action. -/
+theorem canonical_BCD_acted_and_void_blocked_stop_game
+    (acted available : V4 → Prop)
+    (bActed : acted V4.a)
+    (cActed : acted V4.b)
+    (dActed : acted V4.c)
+    (voidBlocks : VoidBlocksActed acted available) :
+    UpwardGameStopped V4.zero available := by
+  apply all_three_upward_acted_and_void_blocked_stop_game
+    V4.zero V4.a V4.b
+    (by simp [UpwardFrom])
+    (by simp [UpwardFrom])
+    (by simp)
+    acted available bActed cActed
+  · simpa [canonical_BC_interaction_forces_D] using dActed
+  · exact voidBlocks
 
 end MeTTafy.FourColor
