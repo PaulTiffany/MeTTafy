@@ -199,6 +199,22 @@ theorem swapPair_mem_pair
   · simp [InPair, swapPair]
   · simp [InPair, swapPair, different, Ne.symm different]
 
+/-- A member of a distinct selected pair actually changes under the swap. -/
+theorem swapPair_changes_member
+    (left right : V4)
+    (different : left ≠ right)
+    {color : V4}
+    (member : InPair left right color) :
+    swapPair left right color ≠ color := by
+  rcases member with h | h
+  · subst color
+    simp only [swapPair, if_pos rfl]
+    exact Ne.symm different
+  · subst color
+    have reverse : right ≠ left := Ne.symm different
+    simp only [swapPair, if_neg reverse, if_pos rfl]
+    exact different
+
 universe u
 
 /-- Properness of one realized coloring against the declared adjacency relation. -/
@@ -281,5 +297,89 @@ theorem atomicTurn_preserves_proper
       exact hu ((turn.carrier_closed adjacent upair vpair).mpr hv)
     · rw [turn.unchanged_off_carrier u hu, turn.unchanged_off_carrier v hv]
       exact before_ne
+
+/-! ## Clean frontier effects -/
+
+/--
+A clean frontier turn is an atomic turn whose selected carrier meets the declared
+frontier at exactly one seed vertex.  This definition says what a clean turn
+*does* once supplied; it does not assert that such a turn always exists.
+-/
+structure CleanAtomicTurn
+    {Vertex : Type u}
+    (Adjacent : Vertex → Vertex → Prop)
+    (before after : Vertex → V4) where
+  turn : AtomicTurn Adjacent before after
+  boundary : Vertex → Prop
+  seed : Vertex
+  seed_on_boundary : boundary seed
+  carrier_hits_boundary : ∀ vertex, boundary vertex → (turn.carrier vertex ↔ vertex = seed)
+
+/-- Every non-seed frontier vertex is unchanged by a clean atomic turn. -/
+theorem cleanTurn_other_boundary_unchanged
+    {Vertex : Type u}
+    {Adjacent : Vertex → Vertex → Prop}
+    {before after : Vertex → V4}
+    (clean : CleanAtomicTurn Adjacent before after)
+    {vertex : Vertex}
+    (onBoundary : clean.boundary vertex)
+    (notSeed : vertex ≠ clean.seed) :
+    after vertex = before vertex := by
+  have offCarrier : ¬ clean.turn.carrier vertex := by
+    intro onCarrier
+    exact notSeed ((clean.carrier_hits_boundary vertex onBoundary).mp onCarrier)
+  exact clean.turn.unchanged_off_carrier vertex offCarrier
+
+/-- The unique frontier seed actually changes state under a clean turn. -/
+theorem cleanTurn_seed_changes
+    {Vertex : Type u}
+    {Adjacent : Vertex → Vertex → Prop}
+    {before after : Vertex → V4}
+    (clean : CleanAtomicTurn Adjacent before after) :
+    after clean.seed ≠ before clean.seed := by
+  have onCarrier : clean.turn.carrier clean.seed :=
+    (clean.carrier_hits_boundary clean.seed clean.seed_on_boundary).mpr rfl
+  rw [clean.turn.changed_on_carrier clean.seed onCarrier]
+  exact swapPair_changes_member clean.turn.left clean.turn.right clean.turn.distinct
+    (clean.turn.carrier_uses_pair clean.seed onCarrier)
+
+/-- A color occurs only at the chosen seed on the declared frontier. -/
+def SingletonFrontierColor
+    {Vertex : Type u}
+    (boundary : Vertex → Prop)
+    (coloring : Vertex → V4)
+    (seed : Vertex) : Prop :=
+  ∀ vertex, boundary vertex → coloring vertex = coloring seed → vertex = seed
+
+/-- A color is absent from the declared frontier. -/
+def FrontierColorAbsent
+    {Vertex : Type u}
+    (boundary : Vertex → Prop)
+    (coloring : Vertex → V4)
+    (color : V4) : Prop :=
+  ∀ vertex, boundary vertex → coloring vertex ≠ color
+
+/--
+A clean turn at a singleton-colored frontier seed removes that old seed color
+from the entire frontier in the realized successor.
+
+This is the local C3 effect used by the ordered-construction proof.  It does not
+prove C2 (existence of a clean turn); the planar crosscut/Jordan obstruction
+needed for C2 remains a separate topology obligation.
+-/
+theorem singleton_clean_turn_frees_color
+    {Vertex : Type u}
+    {Adjacent : Vertex → Vertex → Prop}
+    {before after : Vertex → V4}
+    (clean : CleanAtomicTurn Adjacent before after)
+    (singleton : SingletonFrontierColor clean.boundary before clean.seed) :
+    FrontierColorAbsent clean.boundary after (before clean.seed) := by
+  intro vertex onBoundary
+  by_cases atSeed : vertex = clean.seed
+  · subst vertex
+    exact cleanTurn_seed_changes clean
+  · rw [cleanTurn_other_boundary_unchanged clean onBoundary atSeed]
+    intro sameColor
+    exact atSeed (singleton vertex onBoundary sameColor)
 
 end MeTTafy.FourColor

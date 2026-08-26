@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -139,6 +139,24 @@
         "semantic equivalence with the Python Kempe implementation"
       ],
       "authority": "pinned Lean kernel/toolchain over atomic-turn theorems in examples/four_color/FourColorCore.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-CLEAN-EFFECT",
+      "name": "Lean clean frontier effect witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated clean-turn effect theorems: a supplied clean atomic turn changes only its unique frontier seed, and a singleton-colored clean seed frees its old color from the realized successor frontier.",
+      "non_claims": [
+        "Clean Frontier Turn Existence (C2)",
+        "the planar alternating-endpoint or Jordan-crosscut lemma needed for C2",
+        "Repeated-Turn Pair availability",
+        "ordered-construction progress or closure",
+        "degree-five extension",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over clean-frontier effect theorems in examples/four_color/FourColorCore.lean",
       "replayable": true
     },
     {
