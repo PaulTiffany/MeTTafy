@@ -45,7 +45,7 @@ theorem forcedThird_ne_reference
     (different : left ≠ right) :
     forcedThirdFrom reference left right ≠ reference := by
   cases reference <;> cases left <;> cases right <;>
-    simp [UpwardFrom, forcedThirdFrom, add] at leftUp rightUp different ⊢
+    simp_all [UpwardFrom, forcedThirdFrom, add]
 
 /-- The forced state is different from the first interacting upward state. -/
 theorem forcedThird_ne_left
@@ -55,7 +55,7 @@ theorem forcedThird_ne_left
     (different : left ≠ right) :
     forcedThirdFrom reference left right ≠ left := by
   cases reference <;> cases left <;> cases right <;>
-    simp [UpwardFrom, forcedThirdFrom, add] at leftUp rightUp different ⊢
+    simp_all [UpwardFrom, forcedThirdFrom, add]
 
 /-- The forced state is different from the second interacting upward state. -/
 theorem forcedThird_ne_right
@@ -65,7 +65,7 @@ theorem forcedThird_ne_right
     (different : left ≠ right) :
     forcedThirdFrom reference left right ≠ right := by
   cases reference <;> cases left <;> cases right <;>
-    simp [UpwardFrom, forcedThirdFrom, add] at leftUp rightUp different ⊢
+    simp_all [UpwardFrom, forcedThirdFrom, add]
 
 /--
 There is exactly one palette state left after fixing the lower/reference state
@@ -81,36 +81,34 @@ theorem forcedThird_unique
     (candidate_ne_right : candidate ≠ right) :
     candidate = forcedThirdFrom reference left right := by
   cases reference <;> cases left <;> cases right <;> cases candidate <;>
-    simp [UpwardFrom, forcedThirdFrom, add] at
-      leftUp rightUp different candidate_ne_reference candidate_ne_left
-      candidate_ne_right ⊢
+    simp_all [UpwardFrom, forcedThirdFrom, add]
 
 /--
-Packaged forcing law: two distinct upward states determine a unique third
-upward state, and that state is distinct from both interacting states.
+Packaged forcing law without hiding the witness behind chooser language: the
+forced state exists, has all three required distinctions, and every state with
+those distinctions is equal to it.
 -/
 theorem two_upward_states_force_unique_third
     (reference left right : V4)
     (leftUp : UpwardFrom reference left)
     (rightUp : UpwardFrom reference right)
     (different : left ≠ right) :
-    ∃! third,
+    ∃ third,
       UpwardFrom reference third ∧
       third ≠ left ∧
-      third ≠ right := by
-  let third := forcedThirdFrom reference left right
-  refine ⟨third, ?_, ?_⟩
-  · exact ⟨
-      forcedThird_ne_reference reference left right leftUp rightUp different,
-      forcedThird_ne_left reference left right leftUp rightUp different,
-      forcedThird_ne_right reference left right leftUp rightUp different
-    ⟩
-  · intro candidate candidateProperties
+      third ≠ right ∧
+      ∀ candidate,
+        UpwardFrom reference candidate →
+        candidate ≠ left →
+        candidate ≠ right →
+        candidate = third := by
+  refine ⟨forcedThirdFrom reference left right, ?_, ?_, ?_, ?_⟩
+  · exact forcedThird_ne_reference reference left right leftUp rightUp different
+  · exact forcedThird_ne_left reference left right leftUp rightUp different
+  · exact forcedThird_ne_right reference left right leftUp rightUp different
+  · intro candidate candidateUp candidate_ne_left candidate_ne_right
     exact forcedThird_unique reference left right candidate
-      leftUp rightUp different
-      candidateProperties.1
-      candidateProperties.2.1
-      candidateProperties.2.2
+      leftUp rightUp different candidateUp candidate_ne_left candidate_ne_right
 
 /--
 Canonical C2 gauge: with `A = zero`, the interaction of `B = a` and `C = b`
@@ -129,7 +127,9 @@ theorem canonical_D_is_unique_remaining_upward :
       candidate = V4.c := by
   intro candidate candidate_ne_A candidate_ne_B candidate_ne_C
   exact forcedThird_unique V4.zero V4.a V4.b candidate
-    (by decide) (by decide) (by decide)
+    (by simp [UpwardFrom])
+    (by simp [UpwardFrom])
+    (by simp)
     candidate_ne_A candidate_ne_B candidate_ne_C
 
 end MeTTafy.FourColor
