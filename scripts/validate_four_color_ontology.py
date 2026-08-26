@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import fields
 from inspect import signature
 
-from mettafy.color_construction import ConstructionState, TraversalRewriteCertificate
+from mettafy.active_inference_boundary import CertifiedInstantiation
+from mettafy.color_construction import ConstructionState, CounterfactualTraversalWitness
 from mettafy.four_color_ontology import (
     FOUR_COLOR_SURFACE_GENUS,
     FOUR_COLOR_SURFACE_NAME,
@@ -21,13 +22,31 @@ def main() -> int:
     if state_parameters != ("graph", "coloring"):
         raise SystemExit(f"unexpected Four Color constructor parameters: {state_parameters}")
 
-    rewrite_fields = {field.name.lower() for field in fields(TraversalRewriteCertificate)}
-    forbidden = rewrite_fields & {"open", "opened", "opening", "closed", "closure"}
+    imagined_fields = {field.name.lower() for field in fields(CounterfactualTraversalWitness)}
+    forbidden = imagined_fields & {"open", "opened", "opening", "closed", "closure"}
     if forbidden:
         raise SystemExit(
-            "rewrite certificate contains forbidden evaluation coordinate(s): "
+            "counterfactual witness contains forbidden evaluation coordinate(s): "
             + ", ".join(sorted(forbidden))
         )
+
+    authority_fields = tuple(field.name for field in fields(CertifiedInstantiation))
+    if authority_fields != ("realized", "focus", "color"):
+        raise SystemExit(
+            "CertifiedInstantiation must contain only actual map, focus, and color"
+        )
+    authority_forbidden = {
+        "after",
+        "imagined",
+        "move",
+        "opening",
+        "path",
+        "response",
+        "route",
+        "target",
+    }
+    if authority_forbidden.intersection(authority_fields):
+        raise SystemExit("construction authority contains inference or future-route payload")
 
     if ConstructionState.surface_genus != FOUR_COLOR_SURFACE_GENUS or FOUR_COLOR_SURFACE_GENUS != 0:
         raise SystemExit("Four Color species is no longer fixed to genus zero")
@@ -36,7 +55,7 @@ def main() -> int:
 
     print(
         "Four Color ontology boundary valid: state=(graph,coloring), "
-        "surface species fixed at genus 0, no open/closed/closure state coordinate."
+        "counterfactual traversal is inference-only, CertifiedInstantiation is the authority bridge."
     )
     return 0
 
