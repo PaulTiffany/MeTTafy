@@ -67,6 +67,18 @@ theorem forcedThird_ne_right
   cases reference <;> cases left <;> cases right <;>
     simp_all [UpwardFrom, forcedThirdFrom, add]
 
+/-- The forced state leaves the bichromatic pair that generated it. -/
+theorem forcedThird_not_in_interacting_pair
+    (reference left right : V4)
+    (leftUp : UpwardFrom reference left)
+    (rightUp : UpwardFrom reference right)
+    (different : left ≠ right) :
+    ¬ InPair left right (forcedThirdFrom reference left right) := by
+  intro member
+  rcases member with equalLeft | equalRight
+  · exact forcedThird_ne_left reference left right leftUp rightUp different equalLeft
+  · exact forcedThird_ne_right reference left right leftUp rightUp different equalRight
+
 /--
 There is exactly one palette state left after fixing the lower/reference state
 and two distinct upward states: `reference + left + right`.
@@ -81,6 +93,23 @@ theorem forcedThird_unique
     (candidate_ne_right : candidate ≠ right) :
     candidate = forcedThirdFrom reference left right := by
   cases reference <;> cases left <;> cases right <;> cases candidate <;>
+    simp_all [UpwardFrom, forcedThirdFrom, add]
+
+/--
+The fixed reference leaves exactly three upward possibilities.  Once two
+distinct upward states are named, every upward state is one of those two or the
+forced third.
+-/
+theorem upward_states_exhausted_by_pair_and_forcedThird
+    (reference left right state : V4)
+    (leftUp : UpwardFrom reference left)
+    (rightUp : UpwardFrom reference right)
+    (different : left ≠ right)
+    (stateUp : UpwardFrom reference state) :
+    state = left ∨
+    state = right ∨
+    state = forcedThirdFrom reference left right := by
+  cases reference <;> cases left <;> cases right <;> cases state <;>
     simp_all [UpwardFrom, forcedThirdFrom, add]
 
 /--
@@ -117,6 +146,14 @@ forces `D = c`.  The violated/remaining color is therefore not a free choice.
 theorem canonical_BC_interaction_forces_D :
     forcedThirdFrom V4.zero V4.a V4.b = V4.c := by
   rfl
+
+/-- Canonically, the forced D state is outside the interacting B/C pair. -/
+theorem canonical_forced_D_not_in_BC_pair :
+    ¬ InPair V4.a V4.b (forcedThirdFrom V4.zero V4.a V4.b) := by
+  exact forcedThird_not_in_interacting_pair V4.zero V4.a V4.b
+    (by simp [UpwardFrom])
+    (by simp [UpwardFrom])
+    (by simp)
 
 /-- The same canonical fact stated as uniqueness among upward states. -/
 theorem canonical_D_is_unique_remaining_upward :
