@@ -70,5 +70,5 @@ jobs:
         run: |
           set -euo pipefail
           lean --version
-          LEAN_PATH=. lean examples/four_color/FourColorCore.lean
+          LEAN_PATH=. lean -o examples/four_color/FourColorCore.olean examples/four_color/FourColorCore.lean
           LEAN_PATH=. lean examples/four_color/C2ContactVoid.lean
