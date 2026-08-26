@@ -151,6 +151,7 @@ MeTTafy now has a mechanically witnessed research pipeline rather than only a bo
 - **Bounded source-distinction correspondence.** One current witness removes the source-side `composition` distinction, observes the recovered dependency disappear in executable MeTTa, restores the source exactly, and observes the byte-identical target behavior return.
 - **Bounded differential execution.** The frozen finite graph corpus runs independently through the checked-in Python implementation and pinned MeTTaScript runtime, with zero tolerated colorability mismatches and independent validation of returned colorings.
 - **Brown Goo micro-witness.** Lean checks the narrower architecture theorem that collapsing a source distinction needed by an admissible future continuation can prevent exact downstream factorization.
+- **Four Color V4 micro-core.** Lean checks the fixed global proof-frame algebra for the Klein-four palette, cyclic five-frontier closure/parity, and the saturated proper degree-five `3,1,1` mode law. This banks only those local statements; it is not a new Four Color proof claim.
 
 These witness classes are intentionally not flattened into one success flag:
 
@@ -160,7 +161,7 @@ valid target ≠ executed target ≠ live target ≠ faithful transcode
 
 The current open research problem is the last relation: **general source-to-target strategy faithfulness remains unproved.** Existing witnesses certify only their declared bounded claims. Likewise, the repository does **not** claim a new proof of the Four Color Theorem; the independent Track-B proof genealogy remains unresolved where its frozen claim was falsified.
 
-See [`certification/witness-registry-v1.json`](certification/witness-registry-v1.json) for the machine-readable witness ledger and [`docs/four-color-proof-status.md`](docs/four-color-proof-status.md) for the current Four Color research frontier.
+See [`certification/witness-registry-v1.json`](certification/witness-registry-v1.json) for the machine-readable witness ledger, [`docs/four-color-proof-surface.md`](docs/four-color-proof-surface.md) for the current Four Color falsification/research surface, and [`docs/four-color-proof-status.md`](docs/four-color-proof-status.md) for the preserved historical Track-B claim surface.
 
 ## Prior art and community
 

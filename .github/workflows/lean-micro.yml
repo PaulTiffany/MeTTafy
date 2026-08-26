@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "examples/brown_goo/**"
+      - "examples/four_color/**"
       - "lean-toolchain"
       - ".github/workflows/lean-micro.yml"
   push:
     branches: [main]
     paths:
       - "examples/brown_goo/**"
+      - "examples/four_color/**"
       - "lean-toolchain"
       - ".github/workflows/lean-micro.yml"
   workflow_dispatch:
@@ -43,3 +45,29 @@ jobs:
           set -euo pipefail
           lean --version
           lean examples/brown_goo/BrownGoo.lean
+
+  four-color-core:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Lean toolchain with Elan
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            https://raw.githubusercontent.com/leanprover/elan/464c9d28395000a2a0128e07081e4956d50eced2/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          export PATH="$HOME/.elan/bin:$PATH"
+          elan toolchain install "$(cat lean-toolchain)"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check Four Color V4 frontier core
+        shell: bash
+        run: |
+          set -euo pipefail
+          lean --version
+          lean examples/four_color/FourColorCore.lean

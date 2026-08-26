@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -90,6 +90,37 @@
       "claim": "The pinned Four Color formal artifact is accepted by the pinned Rocq checker/toolchain.",
       "non_claims": ["MeTTafy semantic interpretation is correct", "historical narrative correctness"],
       "authority": "Rocq kernel/checker on pinned upstream artifact",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-BROWN-GOO",
+      "name": "Lean distinction-preservation micro-witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated Brown Goo distinction-preservation and contextual factorization theorems in examples/brown_goo/BrownGoo.lean.",
+      "non_claims": [
+        "Four Color theorem validity",
+        "general source-to-target semantic faithfulness",
+        "that every lossy abstraction is operationally harmful"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/brown_goo/BrownGoo.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-CORE",
+      "name": "Lean Four Color V4 frontier micro-core",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated Klein-four palette laws, cyclic five-frontier closure/parity, and saturated proper degree-five 3,1,1 mode theorem in examples/four_color/FourColorCore.lean.",
+      "non_claims": [
+        "a new proof of the Four Color Theorem",
+        "the historical Track-B closure candidate",
+        "semantic equivalence with the Python research implementation",
+        "observer or time-delay dynamics"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/FourColorCore.lean",
       "replayable": true
     },
     {

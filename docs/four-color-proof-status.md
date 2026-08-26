@@ -1,15 +1,26 @@
-# Four Color Proof Program — Current Status
+# Four Color Proof Program — Historical Track-B Claim Surface
 
 **Repository:** `PaulTiffany/MeTTafy`  
-**Branch:** `agent/ordered-state-construction`  
-**Status:** ordered-construction proof spine closed; mechanical validation active
+**Historical branch:** `agent/ordered-state-construction`  
+**Authority status:** **SUPERSEDED — retained for provenance and falsification history**
 
-## 1. Canonical proof
+> [!WARNING]
+> This file is **not the current theorem-authority surface**. It records a historical
+> Track-B proof candidate and the claims made on that research branch. Labels such as
+> `PROVED` below are preserved as historical assertions; they must not be promoted to
+> current repository theorem status. See the root `README.md` and the witness registry
+> for the current corrective/falsification-preserving surface.
+>
+> The distinction is intentional: historical research claims remain inspectable, while
+> current authority must be explicit. A reader, model, or downstream tool should not
+> infer present proof closure merely because an older claim document remains in-tree.
 
-The canonical Track-B proof is now
+## 1. Historical candidate proof
+
+The historical Track-B candidate was recorded in
 `docs/four-color-ordered-construction-proof.md`.
 
-Its construction is deliberately small:
+Its construction was deliberately small:
 
 ```text
 minimum counterexample
@@ -27,90 +38,88 @@ minimum counterexample
 ```
 
 No Bellman value, phase rank, SRMF cycle, holonomy theorem, observer quotient,
-or future-route coordinate appears in the proof dependency chain.
+or future-route coordinate appeared in that candidate proof dependency chain.
 
-## 2. Fixed theorem species
+## 2. Fixed theorem species used by the candidate
 
-The proof stays on one finite closed genus-zero planar carrier with one exact
+The candidate stayed on one finite closed genus-zero planar carrier with one exact
 indexed edge ledger and terminal palette
 
 \[
 Q_4=\{0,1,2,3\}.
 \]
 
-A **turn** means one complete current bichromatic component whose physical shape
-is determined before the interchange is applied.  Later turns are derived only
+A **turn** meant one complete current bichromatic component whose physical shape
+was determined before the interchange was applied. Later turns were derived only
 from the realized successor.
 
-An exact inverse of the component just resolved is a legal graph symmetry but
-is not a new construction event: its physical shape is already known.  Genuine
-construction progress means retaining a previously unresolved component-shape
-fact.  On a finite carrier only finitely many such facts exist.
+An exact inverse of the component just resolved was treated as a legal graph
+symmetry but not a new construction event: its physical shape was already known.
+Genuine construction progress was defined as retaining a previously unresolved
+component-shape fact. On a finite carrier only finitely many such facts exist.
 
-## 3. Direct planar lemmas
+## 3. Historical direct-planar claims
 
-### Clean Frontier Turn Existence — PROVED
+### Clean Frontier Turn Existence — HISTORICAL CLAIM: PROVED
 
-Every saturated proper degree-five frontier `A B A C D` has a bichromatic
-component meeting the frontier at exactly one vertex.
+The branch claimed that every saturated proper degree-five frontier `A B A C D`
+has a bichromatic component meeting the frontier at exactly one vertex.
 
-The proof is a direct planar-crosscut contradiction between complementary color
-pairs.
+The recorded argument was a direct planar-crosscut contradiction between
+complementary color pairs.
 
-### Repeated-Turn Pair Lemma — PROVED
+### Repeated-Turn Pair Lemma — HISTORICAL CLAIM: PROVED
 
-If no singleton-colored frontier vertex has a clean finishing turn, both
-occurrences of the repeated color have clean turns.
+The branch claimed that if no singleton-colored frontier vertex has a clean
+finishing turn, both occurrences of the repeated color have clean turns.
 
-Thus saturation never leaves the ordered construction without a current whole-
-component continuation.
+The historical conclusion was that saturation never leaves the ordered
+construction without a current whole-component continuation.
 
-## 4. Closure by construction
+These labels are retained for genealogy. They are **not** current repository
+proof authority unless and until independently promoted on the corrective
+surface with an explicit mechanical/formal witness.
 
-The previously proposed `Persistent-Orbit Shape Growth` theorem is retired.
-It was solving a problem introduced by treating reversible micro-recolorings as
-construction turns.
+## 4. Historical closure-by-construction claim
 
-The ordered construction already distinguishes:
+The previously proposed `Persistent-Orbit Shape Growth` theorem was retired on
+that branch. It had been solving a problem introduced by treating reversible
+micro-recolorings as construction turns.
+
+The ordered construction distinguished:
 
 - a graph symmetry that can reverse a known component; from
 - a genuine turn that resolves previously unresolved physical shape.
 
-Let `Gamma_t` be the retained finite set of resolved component-shape facts.
-Every genuine turn satisfies
+Let `Gamma_t` be the retained finite set of resolved component-shape facts. The
+historical candidate asserted that every genuine turn satisfies
 
 \[
 \Gamma_t\subsetneq\Gamma_{t+1}.
 \]
 
-Because the carrier is finite, genuine turns terminate.  Termination while the
-focus is saturated is impossible: the clean-turn lemmas supply a current
-continuation, and the already-resolved inverse is not the other repeated
-occurrence selected by the ordered construction.  Hence termination exposes a
-singleton finishing turn and frees a color for the focus.
+It then argued that finite-carrier termination plus the clean-turn claims forces
+a singleton finishing turn. That was the candidate closure step.
 
-This is the closure step used in the canonical proof.
+This section records the historical reasoning; it does not promote it to current
+proof status.
 
-## 5. Mechanical red team
+## 5. Historical mechanical red team
 
-Mechanical witnesses are the red team.  Model hesitation is not proof
-invalidity.
+Mechanical witnesses were used as a red team rather than as theorem premises.
 
 `src/mettafy/sequential_frontier.py` certifies whole-component clean turns from
 the actual current state.
 
-`tests/test_sequential_frontier.py` retains the earlier hard witnesses:
+`tests/test_sequential_frontier.py` retained the earlier hard witnesses:
 
 - persistent double lock: exact two-turn clean route;
 - three-interior kill witness: no route within two clean turns, exact route in
   three.
 
-`tests/test_ordered_construction_closure.py` now attacks the complete ordered
-turn law over the established 154-member proper-color-preserving flip family.
-It enumerates every saturated proper coloring with one global color fixed by
-symmetry and attacks both nonterminal orientations.
-
-An equivalent local audit was executed before committing the test and produced:
+`tests/test_ordered_construction_closure.py` attacked the ordered-turn law over
+the established 154-member proper-color-preserving flip family. The historical
+local audit reported:
 
 ```text
 flip-family carriers                         154
@@ -125,9 +134,7 @@ maximum persistent turns before finish        3
 persistent depths: {1: 2052, 2: 60, 3: 60}
 ```
 
-A second local generated-family audit built 5,000 additional proper planar
-pentagonal disks by stacked interior-vertex insertion plus proper-color-
-preserving flips.  Results:
+A second generated-family audit reported:
 
 ```text
 generated carriers                         5,000
@@ -138,27 +145,27 @@ repeated physical turn signatures              0
 maximum persistent turns before finish         4
 ```
 
-These audits are supporting/falsifying evidence, not proof premises.
+These counts remain useful falsification evidence. They are not proof premises
+and do not override the current corrective claim surface.
 
-## 6. Verification state
+## 6. Verification state at the time
 
-The exact committed pytest file has not yet been run by GitHub Actions on this
-branch.  The container cannot currently resolve `raw.githubusercontent.com`, so
-we did not spend an Actions run merely to manufacture a badge.  The equivalent
-audit logic was executed locally and generated the counts above.
+The exact committed pytest file had not yet been run by GitHub Actions on the
+historical branch. Equivalent audit logic was executed locally and generated the
+counts above.
 
-A future CI run should be treated as executable confirmation of the committed
-regression test, not as authority for the mathematical theorem.
+A CI run of those tests would certify execution of the committed regression
+logic only, not mathematical theorem authority.
 
 ## 7. Held-out trust boundary
 
 Track A remains the pinned held-out Rocq Four Color development and is not a
-premise of Track B.  Structural comparison may occur only after Track-B claims
-are frozen.
+premise of independent Track-B research. Structural comparison is governed by
+the repository's current certification and provenance rules.
 
-## 8. Bottom line
+## 8. Historical bottom line
 
-The current independent proof claim is now explicit and compact:
+The branch's candidate claim was
 
 \[
 \boxed{
@@ -174,5 +181,6 @@ The current independent proof claim is now explicit and compact:
 
 combined with the standard minimum-counterexample reduction.
 
-The proof is written.  The mechanical program now attempts to kill it with
-actual planar carriers.
+**Current status:** this is preserved as a historical research claim, not as the
+repository's present declaration of a new Four Color proof. New Track-B claims
+must earn fresh authority through the current corrective witness surface.
