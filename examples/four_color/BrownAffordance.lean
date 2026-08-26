@@ -134,8 +134,12 @@ theorem brown_affordances_do_not_factor :
 /-- Brown is embedded in the game but is not color-relevant to its local move rule. -/
 theorem brown_embedded_not_color_relevant :
     ¬ ColorRelevant brownPlayer := by
-  simpa [ColorRelevant, brownPlayer, brownObserve, brownColorProjection] using
-    brown_affordances_do_not_factor
+  intro factors
+  apply brown_affordances_do_not_factor
+  rcases factors with ⟨decode, commutes⟩
+  refine ⟨decode, ?_⟩
+  intro exposed
+  simpa [brownPlayer, brownObserve, brownColorProjection] using commutes exposed
 
 /--
 Compatibility name retained for existing references: Brown cannot coherently
