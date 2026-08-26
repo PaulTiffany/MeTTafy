@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -141,6 +141,26 @@
         "a new proof of the Four Color Theorem"
       ],
       "authority": "pinned Lean kernel/toolchain over hard-frontier shape theorems in examples/four_color/FourColorCore.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-C2-REDUCTION",
+      "name": "Lean C2 contact/void reduction witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated contact/void C2 reduction: void is distinct from the four palette states; the coarse Brown projection cannot separate those four operational color states; the canonical A-B-A-C-D boundary is attached to concrete carrier terminals; the {A,D} and {B,C} carrier families are vertex-disjoint by their operational color types; and an explicit planar crosscut-intersection premise entails at least one clean boundary carrier.",
+      "non_claims": [
+        "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
+        "unconditional Clean Frontier Turn Existence (C2)",
+        "construction of a CleanAtomicTurn from the clean carrier incidence alone",
+        "normalization from every cyclic HasABAWindow witness to the canonical A-B-A-C-D naming",
+        "Repeated-Turn Pair availability",
+        "ordered-construction closure",
+        "a new proof of the Four Color Theorem",
+        "that Brown can adjudicate the game's color-contact obligations"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/C2ContactVoid.lean",
       "replayable": true
     },
     {
