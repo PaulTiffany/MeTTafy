@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -179,6 +179,25 @@
         "a new proof of the Four Color Theorem"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/C2ForcedThird.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-BROWN-AFFORDANCE",
+      "name": "Lean Brown affordance factorization witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated observer-relative playability result: Brown distinguishes void from colored occupancy, but distinct formal color contacts can have the same Brown observation and different legal local move profiles; therefore the exact color-contact affordance profile does not factor through Brown's projection, while it does factor through direct color observation.",
+      "non_claims": [
+        "that Brown observes nothing",
+        "that every coarse observer is unable to play every game",
+        "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
+        "unconditional Clean Frontier Turn Existence (C2)",
+        "Repeated-Turn Pair availability",
+        "ordered-construction closure",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/BrownAffordance.lean",
       "replayable": true
     },
     {
