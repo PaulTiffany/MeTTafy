@@ -206,9 +206,14 @@ theorem swapPair_changes_member
     {color : V4}
     (member : InPair left right color) :
     swapPair left right color ≠ color := by
-  rcases member with rfl | rfl
-  · simpa [swapPair] using (Ne.symm different)
-  · simpa [swapPair, different] using different
+  rcases member with h | h
+  · subst color
+    simp only [swapPair, if_pos rfl]
+    exact Ne.symm different
+  · subst color
+    have reverse : right ≠ left := Ne.symm different
+    simp only [swapPair, if_neg reverse, if_pos rfl]
+    exact different
 
 universe u
 
