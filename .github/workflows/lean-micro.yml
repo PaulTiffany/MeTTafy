@@ -77,4 +77,5 @@ jobs:
           LEAN_PATH=. lean -o examples/four_color/ConstructGrammar.olean examples/four_color/ConstructGrammar.lean
           LEAN_PATH=. lean examples/four_color/BrownAffordance.lean
           LEAN_PATH=. lean examples/four_color/C2CrossCutAffordance.lean
+          LEAN_PATH=. lean examples/four_color/C2CrossCutOpportunity.lean
           LEAN_PATH=. lean examples/four_color/ConstructionTerminalFrame.lean
