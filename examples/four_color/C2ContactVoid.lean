@@ -215,6 +215,11 @@ universe v
 /--
 A carrier-level world for the canonical C2 crosscut argument.
 
+The boundary terminals are concrete vertices in cyclic canonical order
+`a,b,c,d,e` carrying `A,B,A,C,D`.  Their component memberships are retained
+explicitly so a later planar theorem can attach to actual boundary geometry
+rather than to ungrounded component labels.
+
 The deleted degree-five focus is retained only as an explicit `void` site: it
 has no palette state and cannot lie on either bichromatic carrier.  The
 `crosscut_meets_opposite` field is the one still-unproved planar theorem: if the
@@ -230,10 +235,25 @@ structure CanonicalC2CarrierWorld
     (ADComponent BCComponent : Type) where
   state : Vertex → SiteState
   focus : Vertex
+  a : Vertex
+  b : Vertex
+  c : Vertex
+  d : Vertex
+  e : Vertex
   focus_void : state focus = .void
+  a_state : state a = .colored V4.zero
+  b_state : state b = .colored V4.a
+  c_state : state c = .colored V4.zero
+  d_state : state d = .colored V4.b
+  e_state : state e = .colored V4.c
   frame : CanonicalC2Incidence ADComponent BCComponent
   adCarrier : ADComponent → Vertex → Prop
   bcCarrier : BCComponent → Vertex → Prop
+  ad_a_mem : adCarrier frame.adA a
+  ad_c_mem : adCarrier frame.adC c
+  ad_e_mem : adCarrier frame.adE e
+  bc_b_mem : bcCarrier frame.bcB b
+  bc_d_mem : bcCarrier frame.bcD d
   ad_uses_pair : ∀ {component vertex}, adCarrier component vertex →
     ∃ color, state vertex = .colored color ∧ InPair V4.zero V4.c color
   bc_uses_pair : ∀ {component vertex}, bcCarrier component vertex →
@@ -243,6 +263,24 @@ structure CanonicalC2CarrierWorld
     frame.adC = frame.adE →
     frame.bcB = frame.bcD →
     ∃ vertex, adCarrier frame.adA vertex ∧ bcCarrier frame.bcB vertex
+
+/--
+The formal global frame distinguishes the canonical `A B A C D` boundary,
+while the coarse external Brown projection sees five identical colored sites and
+the deleted focus as void.
+-/
+theorem c2_brown_view_of_canonical_world
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent) :
+    brownObserve (world.state world.a) = .brown ∧
+    brownObserve (world.state world.b) = .brown ∧
+    brownObserve (world.state world.c) = .brown ∧
+    brownObserve (world.state world.d) = .brown ∧
+    brownObserve (world.state world.e) = .brown ∧
+    brownObserve (world.state world.focus) = .void := by
+  simp [world.a_state, world.b_state, world.c_state, world.d_state,
+    world.e_state, world.focus_void, brownObserve]
 
 /-- The explicit void focus cannot belong to an `{A,D}` carrier. -/
 theorem c2_void_not_in_ad_carrier
