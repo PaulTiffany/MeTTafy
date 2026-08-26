@@ -151,6 +151,36 @@ theorem hard_degree_five_has_2111
     simp [HardDegreeFiveFrontier, ProperPentagon, UsesAllFourColors,
       BoundaryContains, DegreeFive2111, countColor] at *
 
+/--
+A cyclic five-frontier has an A-B-A window when one color repeats across exactly
+one intervening frontier vertex.  The five disjuncts are the five cyclic
+positions of that distance-two repetition.
+-/
+def HasABAWindow (boundary : Boundary5) : Prop :=
+  boundary.c0 = boundary.c2 ∨
+  boundary.c1 = boundary.c3 ∨
+  boundary.c2 = boundary.c4 ∨
+  boundary.c3 = boundary.c0 ∨
+  boundary.c4 = boundary.c1
+
+/--
+Every Track-B hard degree-five frontier has an A-B-A window.
+
+Because the frontier is proper, the repeated color cannot occupy adjacent
+positions.  Because all four colors occur in five slots, exactly one color
+repeats.  On a 5-cycle that repeated pair is therefore at cyclic distance two.
+This is the finite combinatorial input used before the separate planar
+crosscut/Jordan argument in Clean Frontier Turn Existence.
+-/
+theorem hard_degree_five_has_ABA_window
+    (boundary : Boundary5)
+    (hard : HardDegreeFiveFrontier boundary) :
+    HasABAWindow boundary := by
+  rcases boundary with ⟨c0, c1, c2, c3, c4⟩
+  cases c0 <;> cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;>
+    simp [HardDegreeFiveFrontier, ProperPentagon, UsesAllFourColors,
+      BoundaryContains, HasABAWindow] at *
+
 /-- Avoiding a reference color is exactly saying that color is absent from the frontier. -/
 theorem avoidsReference_iff_not_contains
     (reference : V4)
