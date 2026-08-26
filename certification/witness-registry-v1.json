@@ -1,6 +1,6 @@
 {
   "registry": "MeTTafy Mechanical Witness Registry",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "principle": "A witness certifies only the proposition inside its declared claim boundary.",
   "composition": {
     "rule": "Independent witnesses accumulate evidence; no witness inherits the authority of another.",
@@ -198,6 +198,27 @@
         "a new proof of the Four Color Theorem"
       ],
       "authority": "pinned Lean kernel/toolchain over examples/four_color/BrownAffordance.lean",
+      "replayable": true
+    },
+    {
+      "id": "WIT-LEAN-FOUR-COLOR-REDTEAM-COMPOSITION",
+      "name": "Lean red-team turn composition witness",
+      "status": "implemented",
+      "kind": "formal_verification",
+      "strength": "formal",
+      "claim": "The Lean kernel accepts the stated one-turn degree-five composition dichotomy: from a hard/A-B-A red-team frontier, a proper one-site frontier rewrite either re-enters the same red-team normal form or removes the old seed color and opens a focus-color opportunity; if the successor remains blocked, it necessarily re-enters the normal form.",
+      "non_claims": [
+        "a formal transport theorem from every generic CleanAtomicTurn to the concrete five-slot boundary representation",
+        "the Jordan or crosscut intersection theorem represented by crosscut_meets_opposite",
+        "unconditional Clean Frontier Turn Existence (C2)",
+        "termination of repeated turns",
+        "a monotone construction-progress measure",
+        "non-replay for arbitrary turn sequences",
+        "Repeated-Turn Pair availability",
+        "global ordered-construction closure",
+        "a new proof of the Four Color Theorem"
+      ],
+      "authority": "pinned Lean kernel/toolchain over examples/four_color/RedTeamComposition.lean",
       "replayable": true
     },
     {
