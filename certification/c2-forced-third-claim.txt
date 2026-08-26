@@ -1,0 +1,12 @@
+WIT-LEAN-FOUR-COLOR-C2-FORCED-THIRD
+
+Lean checks only the V4 forcing law:
+- one lower/reference palette state is fixed;
+- two distinct non-reference states uniquely determine the remaining palette state;
+- in the canonical gauge A=0, B=a, C=b, the forced remaining state is D=c.
+
+NON-CLAIMS:
+- no proof that planar geometry forces the relevant crossing/intersection;
+- no discharge of crosscut_meets_opposite;
+- no unconditional C2 Clean Frontier Turn Existence;
+- no new proof of the Four Color Theorem.
