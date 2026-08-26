@@ -260,7 +260,8 @@ theorem atomicTurn_preserves_proper
   by_cases hu : turn.carrier u
   · by_cases hv : turn.carrier v
     · rw [turn.changed_on_carrier u hu, turn.changed_on_carrier v hv]
-      exact swapPair_injective turn.left turn.right turn.distinct before_ne
+      intro collapsed
+      exact before_ne (swapPair_injective turn.left turn.right turn.distinct collapsed)
     · rw [turn.changed_on_carrier u hu, turn.unchanged_off_carrier v hv]
       intro collapsed
       have upair := turn.carrier_uses_pair u hu
