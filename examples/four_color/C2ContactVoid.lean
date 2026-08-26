@@ -19,9 +19,9 @@ It does make one distinction explicit:
 * an external brown projection may collapse all four colors and therefore lacks
   the separating interface needed to enforce color-contact obligations.
 
-For C2 itself, the file banks only the finite component-incidence reduction.
-The planar Jordan/crosscut fact is represented by one explicit premise,
-`AlternatingCrosscutExclusion`.  That premise is the remaining topology debt;
+For C2 itself, the file banks only the finite component-incidence reduction and
+the reduction from a planar crosscut-intersection law to that incidence fact.
+The Jordan/crosscut intersection law itself remains an explicit topology debt;
 it is not proved or smuggled in here.
 -/
 
@@ -144,15 +144,9 @@ def HasCanonicalCleanCarrier {ADComponent BCComponent : Type}
   BCCleanAtD frame
 
 /--
-The exact topology seam left open by this tranche.
-
-If `a,c,e` all lie in one `{A,D}` carrier, a spanning-tree subpath gives a
-crosscut of the pentagonal void.  A `{B,C}` carrier joining `b` to `d` would
-have to cross that crosscut, but the two color pairs are disjoint and hence the
-carriers are vertex-disjoint.  Planarity forbids the simultaneous incidence
-pattern below.
-
-This definition names that Jordan/crosscut consequence; it does not prove it.
+The incidence consequence of the planar C2 argument: the three `{A,D}`
+terminals cannot all be in one component while the two `{B,C}` terminals are
+also in one component.
 -/
 def AlternatingCrosscutExclusion {ADComponent BCComponent : Type}
     (frame : CanonicalC2Incidence ADComponent BCComponent) : Prop :=
@@ -204,5 +198,121 @@ theorem bc_clean_symmetry
     (frame : CanonicalC2Incidence ADComponent BCComponent) :
     BCCleanAtB frame ↔ BCCleanAtD frame := by
   constructor <;> intro different <;> exact Ne.symm different
+
+/-! ## Exposing the remaining topology debt as forced carrier intersection -/
+
+/--
+In the canonical naming `A=zero`, `B=a`, `C=b`, `D=c`, the two C2 color pairs
+`{A,D}` and `{B,C}` are disjoint.  No operationally colored vertex can belong
+to both pairs.
+-/
+theorem canonical_c2_pairs_disjoint (color : V4) :
+    ¬ (InPair V4.zero V4.c color ∧ InPair V4.a V4.b color) := by
+  cases color <;> simp [InPair]
+
+universe v
+
+/--
+A carrier-level world for the canonical C2 crosscut argument.
+
+The deleted degree-five focus is retained only as an explicit `void` site: it
+has no palette state and cannot lie on either bichromatic carrier.  The
+`crosscut_meets_opposite` field is the one still-unproved planar theorem: if the
+three `{A,D}` boundary terminals collapse into one current carrier and `b,d`
+collapse into one `{B,C}` carrier, the crosscut through the exposed pentagonal
+void forces the two carriers to meet.
+
+Everything else in this structure is operational contact data visible from the
+formal global proof frame.
+-/
+structure CanonicalC2CarrierWorld
+    (Vertex : Type v)
+    (ADComponent BCComponent : Type) where
+  state : Vertex → SiteState
+  focus : Vertex
+  focus_void : state focus = .void
+  frame : CanonicalC2Incidence ADComponent BCComponent
+  adCarrier : ADComponent → Vertex → Prop
+  bcCarrier : BCComponent → Vertex → Prop
+  ad_uses_pair : ∀ {component vertex}, adCarrier component vertex →
+    ∃ color, state vertex = .colored color ∧ InPair V4.zero V4.c color
+  bc_uses_pair : ∀ {component vertex}, bcCarrier component vertex →
+    ∃ color, state vertex = .colored color ∧ InPair V4.a V4.b color
+  crosscut_meets_opposite :
+    frame.adA = frame.adC →
+    frame.adC = frame.adE →
+    frame.bcB = frame.bcD →
+    ∃ vertex, adCarrier frame.adA vertex ∧ bcCarrier frame.bcB vertex
+
+/-- The explicit void focus cannot belong to an `{A,D}` carrier. -/
+theorem c2_void_not_in_ad_carrier
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent)
+    (component : ADComponent) :
+    ¬ world.adCarrier component world.focus := by
+  intro onCarrier
+  rcases world.ad_uses_pair onCarrier with ⟨color, stateEqual, _⟩
+  rw [world.focus_void] at stateEqual
+  cases stateEqual
+
+/-- The explicit void focus cannot belong to a `{B,C}` carrier. -/
+theorem c2_void_not_in_bc_carrier
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent)
+    (component : BCComponent) :
+    ¬ world.bcCarrier component world.focus := by
+  intro onCarrier
+  rcases world.bc_uses_pair onCarrier with ⟨color, stateEqual, _⟩
+  rw [world.focus_void] at stateEqual
+  cases stateEqual
+
+/-- The two canonical bichromatic carrier families are vertex-disjoint by color. -/
+theorem c2_carrier_families_disjoint
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent)
+    (adComponent : ADComponent)
+    (bcComponent : BCComponent)
+    (vertex : Vertex) :
+    ¬ (world.adCarrier adComponent vertex ∧ world.bcCarrier bcComponent vertex) := by
+  intro both
+  rcases world.ad_uses_pair both.1 with ⟨adColor, adState, adPair⟩
+  rcases world.bc_uses_pair both.2 with ⟨bcColor, bcState, bcPair⟩
+  have coloredEqual : SiteState.colored adColor = SiteState.colored bcColor :=
+    adState.symm.trans bcState
+  have colorEqual : adColor = bcColor := by
+    injection coloredEqual
+  subst bcColor
+  exact canonical_c2_pairs_disjoint adColor ⟨adPair, bcPair⟩
+
+/--
+The positive planar intersection law plus operational color disjointness yields
+the abstract alternating-crosscut exclusion used by the finite C2 reduction.
+-/
+theorem c2_crosscut_exclusion_from_contact_void
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent) :
+    AlternatingCrosscutExclusion world.frame := by
+  intro blocked
+  rcases world.crosscut_meets_opposite blocked.1 blocked.2.1 blocked.2.2 with
+    ⟨vertex, onAD, onBC⟩
+  exact c2_carrier_families_disjoint world world.frame.adA world.frame.bcB vertex
+    ⟨onAD, onBC⟩
+
+/--
+C2 reduced to its remaining topology theorem: in any canonical contact/void
+world satisfying the crosscut-intersection law, at least one boundary carrier
+is clean.
+-/
+theorem c2_clean_carrier_from_contact_void
+    {Vertex : Type v}
+    {ADComponent BCComponent : Type}
+    (world : CanonicalC2CarrierWorld Vertex ADComponent BCComponent) :
+    HasCanonicalCleanCarrier world.frame :=
+  c2_clean_carrier_from_crosscut world.frame
+    (c2_crosscut_exclusion_from_contact_void world)
 
 end MeTTafy.FourColor
