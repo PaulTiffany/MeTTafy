@@ -84,13 +84,107 @@ def ProperPentagon (boundary : Boundary5) : Prop :=
   boundary.c3 ≠ boundary.c4 ∧
   boundary.c4 ≠ boundary.c0
 
-/-- Every frontier region differs from one fixed central region. -/
-def SaturatedAround (center : V4) (boundary : Boundary5) : Prop :=
-  center ≠ boundary.c0 ∧
-  center ≠ boundary.c1 ∧
-  center ≠ boundary.c2 ∧
-  center ≠ boundary.c3 ∧
-  center ≠ boundary.c4
+/-! ## Two distinct degree-five frames -/
+
+/--
+Fixed-region/gauge frame: every frontier color differs from one already-colored
+reference region.  This mirrors `FixedRegionFrontier` in
+`src/mettafy/plane_parameterization.py`.
+
+This is deliberately *not* called a saturated frontier.  In the Track-B hard
+case, saturation means that an uncolored focus has no available palette state,
+so its five neighbors collectively use all four colors.  Those are different
+frames and are typed separately below.
+-/
+def AvoidsReferenceColor (reference : V4) (boundary : Boundary5) : Prop :=
+  reference ≠ boundary.c0 ∧
+  reference ≠ boundary.c1 ∧
+  reference ≠ boundary.c2 ∧
+  reference ≠ boundary.c3 ∧
+  reference ≠ boundary.c4
+
+/-- Whether a concrete palette state occurs somewhere on the five-frontier. -/
+def BoundaryContains (boundary : Boundary5) (color : V4) : Prop :=
+  boundary.c0 = color ∨
+  boundary.c1 = color ∨
+  boundary.c2 = color ∨
+  boundary.c3 = color ∨
+  boundary.c4 = color
+
+/-- Track-B hard-frame condition: all four palette states occur on the frontier. -/
+def UsesAllFourColors (boundary : Boundary5) : Prop :=
+  BoundaryContains boundary .zero ∧
+  BoundaryContains boundary .a ∧
+  BoundaryContains boundary .b ∧
+  BoundaryContains boundary .c
+
+/-- A proper degree-five neighborhood in the classical no-color-available hard case. -/
+def HardDegreeFiveFrontier (boundary : Boundary5) : Prop :=
+  ProperPentagon boundary ∧ UsesAllFourColors boundary
+
+/-- Count occurrences of one absolute palette state on the five-frontier. -/
+def countColor (color : V4) (boundary : Boundary5) : Nat :=
+  (if boundary.c0 = color then 1 else 0) +
+  (if boundary.c1 = color then 1 else 0) +
+  (if boundary.c2 = color then 1 else 0) +
+  (if boundary.c3 = color then 1 else 0) +
+  (if boundary.c4 = color then 1 else 0)
+
+/-- In a five-slot hard frontier, exactly one absolute color repeats and three are singleton. -/
+def DegreeFive2111 (boundary : Boundary5) : Prop :=
+  (countColor .zero boundary = 2 ∧ countColor .a boundary = 1 ∧
+    countColor .b boundary = 1 ∧ countColor .c boundary = 1) ∨
+  (countColor .zero boundary = 1 ∧ countColor .a boundary = 2 ∧
+    countColor .b boundary = 1 ∧ countColor .c boundary = 1) ∨
+  (countColor .zero boundary = 1 ∧ countColor .a boundary = 1 ∧
+    countColor .b boundary = 2 ∧ countColor .c boundary = 1) ∨
+  (countColor .zero boundary = 1 ∧ countColor .a boundary = 1 ∧
+    countColor .b boundary = 1 ∧ countColor .c boundary = 2)
+
+/-- A Track-B hard degree-five frontier has the absolute-color 2,1,1,1 law. -/
+theorem hard_degree_five_has_2111
+    (boundary : Boundary5)
+    (hard : HardDegreeFiveFrontier boundary) :
+    DegreeFive2111 boundary := by
+  rcases boundary with ⟨c0, c1, c2, c3, c4⟩
+  cases c0 <;> cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;>
+    simp [HardDegreeFiveFrontier, ProperPentagon, UsesAllFourColors,
+      BoundaryContains, DegreeFive2111, countColor] at *
+
+/-- Avoiding a reference color is exactly saying that color is absent from the frontier. -/
+theorem avoidsReference_iff_not_contains
+    (reference : V4)
+    (boundary : Boundary5) :
+    AvoidsReferenceColor reference boundary ↔ ¬ BoundaryContains boundary reference := by
+  rcases boundary with ⟨c0, c1, c2, c3, c4⟩
+  cases reference <;> cases c0 <;> cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;>
+    simp [AvoidsReferenceColor, BoundaryContains]
+
+/-- A boundary using all four colors contains any selected palette state. -/
+theorem usesAllFour_contains
+    (boundary : Boundary5)
+    (color : V4)
+    (uses : UsesAllFourColors boundary) :
+    BoundaryContains boundary color := by
+  cases color with
+  | zero => exact uses.1
+  | a => exact uses.2.1
+  | b => exact uses.2.2.1
+  | c => exact uses.2.2.2
+
+/--
+The fixed-region frame and the Track-B hard frame cannot describe the same
+boundary relative to the same reference color: one excludes that color while
+the other contains every color.
+-/
+theorem fixedRegion_and_hard_are_disjoint
+    (reference : V4)
+    (boundary : Boundary5)
+    (avoids : AvoidsReferenceColor reference boundary)
+    (hard : HardDegreeFiveFrontier boundary) :
+    False := by
+  have absent := (avoidsReference_iff_not_contains reference boundary).mp avoids
+  exact absent (usesAllFour_contains boundary reference hard.2)
 
 /-- The five tangential V4 differences around the cyclic frontier. -/
 def edgeMode0 (boundary : Boundary5) : V4 := difference boundary.c0 boundary.c1
@@ -133,8 +227,8 @@ theorem frontier_mode_counts_same_parity (boundary : Boundary5) :
       edgeMode4, difference, add]
 
 /--
-The degree-five 3-1-1 law, stated without choosing which nonzero V4 mode is the
-repeated one.
+The fixed-region degree-five 3-1-1 law, stated without choosing which nonzero
+V4 tangential mode is the repeated one.
 -/
 def DegreeFive311 (boundary : Boundary5) : Prop :=
   (countMode .a boundary = 3 ∧ countMode .b boundary = 1 ∧ countMode .c boundary = 1) ∨
@@ -142,20 +236,22 @@ def DegreeFive311 (boundary : Boundary5) : Prop :=
   (countMode .a boundary = 1 ∧ countMode .b boundary = 1 ∧ countMode .c boundary = 3)
 
 /--
-A proper pentagonal frontier saturated around one fixed region has tangential
-V4 mode multiplicities 3,1,1.  This is the finite algebraic core currently
-mirrored by `src/mettafy/plane_parameterization.py`.
+A proper pentagonal frontier around one already-colored reference region has
+tangential V4 mode multiplicities 3,1,1 when that reference color is excluded
+from the frontier.  This is the finite algebraic core mirrored by
+`src/mettafy/plane_parameterization.py`; it is not the Track-B hard-neighborhood
+2,1,1,1 statement above.
 -/
-theorem saturated_proper_pentagon_has_311
-    (center : V4)
+theorem fixedRegion_proper_pentagon_has_311
+    (reference : V4)
     (boundary : Boundary5)
     (proper : ProperPentagon boundary)
-    (saturated : SaturatedAround center boundary) :
+    (avoidsReference : AvoidsReferenceColor reference boundary) :
     DegreeFive311 boundary := by
   rcases boundary with ⟨c0, c1, c2, c3, c4⟩
-  cases center <;>
+  cases reference <;>
   cases c0 <;> cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;>
-    simp [ProperPentagon, SaturatedAround, DegreeFive311, countMode, edgeMode0,
+    simp [ProperPentagon, AvoidsReferenceColor, DegreeFive311, countMode, edgeMode0,
       edgeMode1, edgeMode2, edgeMode3, edgeMode4, difference, add] at *
 
 /-! ## Atomic whole-carrier turns -/
