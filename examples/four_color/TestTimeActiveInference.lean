@@ -19,7 +19,7 @@ The map-maker acts receding-horizon:
   -> discard the old counterfactual bundle
   -> re-observe the actual successor
 
-Imagined futures never become construction history.  A hard successor is not a
+Imagined futures never become construction history. A hard successor is not a
 failed turn; it is a new test-time observation from which the current action
 surface must be derived again.
 
@@ -32,13 +32,13 @@ Thus one-step reducibility is not the theorem being pursued.
 
 The remaining global obligation is stated, not assumed: a successful test-time
 proof must rule out a reachable closed class of nonterminal states under the
-actual graph-derived action relation.  No monotone progress scalar or stored
+actual graph-derived action relation. No monotone progress scalar or stored
 future route is introduced here.
 -/
 
 namespace MeTTafy.FourColor
 
-universe u v
+universe u v w
 
 /--
 Generic current-state controller. `available` is recomputed from the current
@@ -73,6 +73,44 @@ def TestTimeActionable
     (controller : TestTimeController State Action)
     (state : State) : Prop :=
   ∃ action, controller.available state action
+
+/--
+One test-time inference bundle. `Imagined` may contain cross-cuts, predicted
+responses, scores, or any other counterfactual material used to choose the
+current action. The bundle receives no authority to certify a future state.
+-/
+structure TestTimeInference
+    {State : Type u} {Action : Type v} (Imagined : Type w)
+    (controller : TestTimeController State Action)
+    (current : State) where
+  imagined : Imagined
+  chosen : Action
+  permitted : controller.available current chosen
+
+/--
+Amortize the whole imagined bundle into exactly one realized current action.
+Only `chosen` and its current permission survive into construction history.
+-/
+def realizeInference
+    {State : Type u} {Action : Type v} {Imagined : Type w}
+    {controller : TestTimeController State Action}
+    {current : State}
+    (inference : TestTimeInference Imagined controller current) : State :=
+  controller.realize current inference.chosen
+
+/--
+Changing only the imagined payload cannot change the realized successor once the
+chosen current action is fixed. Counterfactual content guides choice; it does
+not itself become proof authority over the successor.
+-/
+theorem realization_depends_only_on_chosen_action
+    {State : Type u} {Action : Type v} {Imagined : Type w}
+    {controller : TestTimeController State Action}
+    {current : State}
+    (first second : TestTimeInference Imagined controller current)
+    (sameChoice : first.chosen = second.chosen) :
+    realizeInference first = realizeInference second := by
+  simp [realizeInference, sameChoice]
 
 /--
 A nonterminal closed action class is the actual failure object for an adaptive
