@@ -65,9 +65,10 @@ jobs:
           elan toolchain install "$(cat lean-toolchain)"
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Check Four Color V4 frontier core
+      - name: Check Four Color core and C2 contact-void reduction
         shell: bash
         run: |
           set -euo pipefail
           lean --version
           lean examples/four_color/FourColorCore.lean
+          lean examples/four_color/C2ContactVoid.lean
