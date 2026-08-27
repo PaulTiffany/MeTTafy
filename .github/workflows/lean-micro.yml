@@ -79,4 +79,5 @@ jobs:
           LEAN_PATH=. lean examples/four_color/C2CrossCutAffordance.lean
           LEAN_PATH=. lean -o examples/four_color/ConstructionTerminalFrame.olean examples/four_color/ConstructionTerminalFrame.lean
           LEAN_PATH=. lean -o examples/four_color/TestTimeActiveInference.olean examples/four_color/TestTimeActiveInference.lean
-          LEAN_PATH=. lean examples/four_color/ReidemeisterStaging.lean
+          LEAN_PATH=. lean -o examples/four_color/ReidemeisterStaging.olean examples/four_color/ReidemeisterStaging.lean
+          LEAN_PATH=. lean examples/four_color/StrategyQuotientAudit.lean
