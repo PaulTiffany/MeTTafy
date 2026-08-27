@@ -58,6 +58,10 @@ jobs:
       - name: Unit and deterministic build tests
         run: pytest
 
+      - name: Four Color Strategy quotient adversarial audit
+        if: matrix.python-version == '3.14'
+        run: python scripts/report_four_color_strategy_adversaries.py
+
       - name: Replay deterministic Rocq structural witness
         if: matrix.python-version == '3.14'
         shell: bash

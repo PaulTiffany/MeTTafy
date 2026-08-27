@@ -28,6 +28,9 @@ INFERENCE_ONLY_NODES = {
     "StrategyNormalForm",
     "NormalFormCompleteness",
     "StagingMetrics",
+    "AdversarialStrategyCorpus",
+    "QuotientChallenge",
+    "QuotientAudit",
 }
 
 
@@ -70,6 +73,14 @@ def staging_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
     return required <= upstream and not bool(upstream & DOWNSTREAM_OR_EXTERNAL_AUTHORITY)
 
 
+def quotient_audit_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """INFERENCE: empirical quotient pressure is evidence, never authority."""
+
+    upstream = ancestors("QuotientAudit", edges)
+    required = {"AdversarialStrategyCorpus", "StrategyNormalForm", "QuotientChallenge"}
+    return required <= upstream and not bool(upstream & DOWNSTREAM_OR_EXTERNAL_AUTHORITY)
+
+
 def inference_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
     """INFERENCE: strategy completeness cannot be supplied by downstream authority."""
 
@@ -82,8 +93,8 @@ def authority_bridge_clean(edges: tuple[ProofEdge, ...]) -> bool:
 
     A safe-continuation theorem must have both strategy completeness and
     inference soundness upstream. Counterfactual states, roleplay transcripts,
-    staged tangles, and strategy normal forms may feed those inference theorems,
-    but may not be direct premises of construction authority.
+    staged tangles, normal forms, and adversarial audits may feed inference
+    work, but may not be direct premises of construction authority.
     """
 
     target = "StrategySafeContinuation"
