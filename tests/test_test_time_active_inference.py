@@ -3,17 +3,16 @@ from __future__ import annotations
 import pytest
 
 from mettafy.active_inference_boundary import (
-    amortize,
     CertifiedInstantiation,
-    imagine_kempe,
     InferenceEpisode,
+    amortize,
+    imagine_kempe,
     inspect,
     instantiate,
     void_count,
 )
 from mettafy.color_construction import ConstructionState, terminal_decode
 from mettafy.kempe_traversal import KempeMove
-
 
 BOUNDARY = ("a", "b", "c", "d", "e")
 
