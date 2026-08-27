@@ -3,10 +3,10 @@ from __future__ import annotations
 import pytest
 
 from mettafy.active_inference_boundary import (
-    CertifiedInstantiation,
-    InferenceEpisode,
     amortize,
+    CertifiedInstantiation,
     imagine_kempe,
+    InferenceEpisode,
     inspect,
     instantiate,
     void_count,
