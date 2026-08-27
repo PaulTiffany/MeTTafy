@@ -14,10 +14,15 @@ from mettafy.four_color_dependency import (
 
 def clean_authority_graph() -> tuple[ProofEdge, ...]:
     return (
-        # INFERENCE: roleplay is unweaved, staged, then quotiented before completeness.
+        # INFERENCE: roleplay is unweaved into one bounded StrategyTangle.
         ProofEdge("RoleplayTranscript", "RawStrategyTrace"),
         ProofEdge("RawStrategyTrace", "StrategyTangle"),
         ProofEdge("StrategySignature", "StrategyTangle"),
+        # TRANSDUCER: tangle geometry may stutter or simulate color uncrossing.
+        ProofEdge("StrategyTangle", "StrategyColorProjection"),
+        ProofEdge("StrategyColorProjection", "ColorReidemeisterUncrossing"),
+        ProofEdge("ColorReidemeisterUncrossing", "StrategyColorSimulation"),
+        ProofEdge("StrategyColorSimulation", "ReidemeisterStaging"),
         ProofEdge("StrategyTangle", "ReidemeisterStaging"),
         ProofEdge("ReidemeisterStaging", "StrategyNormalForm"),
         ProofEdge("StrategyNormalForm", "NormalFormCompleteness"),
@@ -91,6 +96,24 @@ def test_strategy_normal_form_cannot_directly_authorize_safe_continuation() -> N
 
     edges = clean_authority_graph() + (
         ProofEdge("StrategyNormalForm", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_strategy_color_projection_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: transduced shared structure remains inference-only."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("StrategyColorProjection", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_strategy_color_simulation_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: even a phase-preserving geometric simulation is not execution authority."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("StrategyColorSimulation", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
