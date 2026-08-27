@@ -310,11 +310,13 @@ theorem voidCountOn_instantiate_succ
         · have afterHeadVoid : (instantiate cert).state head = .void := by
             rw [headState]
             exact headVoid
-          simp [voidCountOn, headVoid, afterHeadVoid, tailStep]
+          simp [voidCountOn, headVoid, afterHeadVoid]
+          simpa [Nat.succ_eq_add_one] using tailStep
         · have afterHeadNotVoid : (instantiate cert).state head ≠ .void := by
             rw [headState]
             exact headVoid
-          simp [voidCountOn, headVoid, afterHeadNotVoid, tailStep]
+          simp [voidCountOn, headVoid, afterHeadNotVoid]
+          simpa [Nat.succ_eq_add_one] using tailStep
 
 /-- Every realized construction turn consumes exactly one void. -/
 theorem voidCount_instantiate
