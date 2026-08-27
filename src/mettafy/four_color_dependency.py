@@ -14,11 +14,14 @@ DOWNSTREAM_OR_EXTERNAL_AUTHORITY = {
 
 INFERENCE_ONLY_NODES = {
     "ImaginedState",
+    "HypotheticalMap",
     "CounterfactualTraversalLaw",
     "ContractExpansionInference",
     "NilpotentDesaturationInference",
     "FocusSlackPath",
     "PredictedResponse",
+    "RoleplayTranscript",
+    "StrategySignature",
 }
 
 
@@ -49,25 +52,25 @@ def ancestors(target: str, edges: tuple[ProofEdge, ...]) -> frozenset[str]:
 
 
 def inference_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """INFERENCE: blocked-focus resolution cannot be supplied by downstream authority."""
+    """INFERENCE: strategy completeness cannot be supplied by downstream authority."""
 
-    upstream = ancestors("EveryBlockedFocusResolvable", edges)
+    upstream = ancestors("StrategyIRCompleteness", edges)
     return not bool(upstream & DOWNSTREAM_OR_EXTERNAL_AUTHORITY)
 
 
 def authority_bridge_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """BRIDGE: imagined data cannot directly become construction authority.
+    """BRIDGE: strategy data cannot directly become construction authority.
 
-    A sound certified-instantiation theorem must have both the resolution and
-    soundness obligations upstream. Counterfactual states, paths, and predicted
-    responses may feed those inference theorems, but may not be direct premises
-    of construction authority.
+    A safe-continuation theorem must have both strategy completeness and
+    inference soundness upstream. Counterfactual states, roleplay transcripts,
+    and strategy signatures may feed those inference theorems, but may not be
+    direct premises of construction authority.
     """
 
-    target = "CertifiedInstantiationSoundness"
+    target = "StrategySafeContinuation"
     upstream = ancestors(target, edges)
     direct = direct_premises(target, edges)
-    required = {"EveryBlockedFocusResolvable", "InferenceSoundness"}
+    required = {"StrategyIRCompleteness", "InferenceSoundness"}
     return (
         required <= upstream
         and not bool(upstream & DOWNSTREAM_OR_EXTERNAL_AUTHORITY)
@@ -76,11 +79,12 @@ def authority_bridge_clean(edges: tuple[ProofEdge, ...]) -> bool:
 
 
 def construction_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """REALIZED: completion must pass through certification and the void clock."""
+    """REALIZED: completion must preserve strategy safety and consume voids."""
 
     upstream = ancestors("CompletedConstruction", edges)
     required = {
-        "CertifiedInstantiationSoundness",
+        "StrategySafeInitialState",
+        "StrategySafeContinuation",
         "VoidCountMonotone",
         "InstantiationPreservesProperness",
         "FiniteRealizedMap",
@@ -96,15 +100,16 @@ def terminal_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
 
 
 def theorem_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
-    """The final theorem must cross inference, bridge, construction, then terminal gates."""
+    """The final theorem must cross strategy, bridge, construction, then terminal gates."""
 
     upstream = ancestors("FourColorTheorem", edges)
     direct = direct_premises("FourColorTheorem", edges)
     required = {
         "FinitePlanarMap",
-        "EveryBlockedFocusResolvable",
+        "StrategyIRCompleteness",
         "InferenceSoundness",
-        "CertifiedInstantiationSoundness",
+        "StrategySafeInitialState",
+        "StrategySafeContinuation",
         "VoidCountMonotone",
         "InstantiationPreservesProperness",
         "CompletedConstruction",
