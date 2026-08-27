@@ -5,20 +5,18 @@ from mettafy.strategy_staging import (
     Cross,
     Extend,
     IntroduceRole,
+    PrimitiveOp,
     Probe,
     RawStrategyTrace,
     Return,
+    StageFrame,
     StagedOperation,
     StrategyTangle,
 )
 
 
-def _stage(frame: str, op: object) -> StagedOperation:
-    if frame not in {"reasoning", "analysis", "inspection"}:
-        raise ValueError("unknown staging frame")
-    if not isinstance(op, (IntroduceRole, Extend, Return, Cross, Probe)):
-        raise TypeError("fixture operation is not a primitive staging operation")
-    return StagedOperation(frame, op)  # type: ignore[arg-type]
+def _stage(frame: StageFrame, op: PrimitiveOp) -> StagedOperation:
+    return StagedOperation(frame, op)
 
 
 def _family_a(repetitions: int) -> StrategyTangle:
