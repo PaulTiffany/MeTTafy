@@ -5,8 +5,8 @@ from mettafy.four_color_dependency import (
     authority_bridge_clean,
     construction_dependency_clean,
     inference_dependency_clean,
-    theorem_dependency_clean,
     terminal_dependency_clean,
+    theorem_dependency_clean,
 )
 
 
