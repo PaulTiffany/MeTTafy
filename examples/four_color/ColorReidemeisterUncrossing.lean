@@ -36,18 +36,18 @@ their unique nonzero V4 sum.
 -/
 inductive ColorUncrossingStep : ColorWord → ColorWord → Prop where
   | cancel
-      (prefix suffix : ColorWord)
+      (pre suffix : ColorWord)
       (direction : ImaginaryDirection) :
       ColorUncrossingStep
-        (prefix ++ (direction :: direction :: suffix))
-        (prefix ++ suffix)
+        (pre ++ (direction :: direction :: suffix))
+        (pre ++ suffix)
   | fuse
-      (prefix suffix : ColorWord)
+      (pre suffix : ColorWord)
       (left right : ImaginaryDirection)
       (different : left ≠ right) :
       ColorUncrossingStep
-        (prefix ++ (left :: right :: suffix))
-        (prefix ++ (fuseDirection left right different :: suffix))
+        (pre ++ (left :: right :: suffix))
+        (pre ++ (fuseDirection left right different :: suffix))
 
 /-- Reflexive/transitive closure of local same-turn color uncrossings. -/
 inductive ColorUncrossingClosure : ColorWord → ColorWord → Prop where
@@ -63,10 +63,10 @@ theorem ColorUncrossingStep.preserves_phase
     (step : ColorUncrossingStep before after) :
     colorPhase before = colorPhase after := by
   cases step with
-  | cancel prefix suffix direction =>
+  | cancel pre suffix direction =>
       simp [colorPhase, netDirection_append, netDirection,
         add_left_self_cancel]
-  | fuse prefix suffix left right different =>
+  | fuse pre suffix left right different =>
       simp [colorPhase, netDirection_append, netDirection,
         fuseDirection, add_assoc]
 
