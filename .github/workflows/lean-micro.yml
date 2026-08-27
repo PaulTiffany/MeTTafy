@@ -71,6 +71,7 @@ jobs:
           set -euo pipefail
           lean --version
           LEAN_PATH=. lean -o examples/four_color/FourColorCore.olean examples/four_color/FourColorCore.lean
+          LEAN_PATH=. lean -o examples/four_color/ImaginaryColorDirections.olean examples/four_color/ImaginaryColorDirections.lean
           LEAN_PATH=. lean -o examples/four_color/C2ContactVoid.olean examples/four_color/C2ContactVoid.lean
           LEAN_PATH=. lean -o examples/four_color/C2ForcedThird.olean examples/four_color/C2ForcedThird.lean
           LEAN_PATH=. lean -o examples/four_color/RedTeamComposition.olean examples/four_color/RedTeamComposition.lean
@@ -80,5 +81,6 @@ jobs:
           LEAN_PATH=. lean -o examples/four_color/ConstructionTerminalFrame.olean examples/four_color/ConstructionTerminalFrame.lean
           LEAN_PATH=. lean -o examples/four_color/TestTimeActiveInference.olean examples/four_color/TestTimeActiveInference.lean
           LEAN_PATH=. lean -o examples/four_color/ReidemeisterStaging.olean examples/four_color/ReidemeisterStaging.lean
+          LEAN_PATH=. lean -o examples/four_color/ColorReidemeisterUncrossing.olean examples/four_color/ColorReidemeisterUncrossing.lean
           LEAN_PATH=. lean -o examples/four_color/StrategyQuotientAudit.olean examples/four_color/StrategyQuotientAudit.lean
           LEAN_PATH=. lean examples/four_color/StrategyObservationCut.lean
