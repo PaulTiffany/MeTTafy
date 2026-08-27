@@ -15,10 +15,12 @@ from mettafy.strategy_staging import (
     Extend,
     IntroduceRole,
     NormalizationPolicy,
+    PrimitiveOp,
     Probe,
     RawStrategyTrace,
     Return,
     RoleplayBinding,
+    StageFrame,
     StagedOperation,
     StrategyTangle,
     build_role_ledger,
@@ -31,8 +33,8 @@ from mettafy.strategy_staging import (
 )
 
 
-def stage(frame: str, op: object) -> StagedOperation:
-    return StagedOperation(frame, op)  # type: ignore[arg-type]
+def stage(frame: StageFrame, op: PrimitiveOp) -> StagedOperation:
+    return StagedOperation(frame, op)
 
 
 def test_independent_role_freedom_is_not_chain_of_thought_depth() -> None:
