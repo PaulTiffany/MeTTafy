@@ -12,6 +12,7 @@ from mettafy.strategy_color_projection import (
 from mettafy.strategy_ir import StrategySignature
 from mettafy.strategy_staging import (
     Cross,
+    CrossSign,
     Extend,
     IntroduceRole,
     Probe,
@@ -22,7 +23,7 @@ from mettafy.strategy_staging import (
 
 
 def shared_crossing_tangle(*, opposite: bool = True) -> StrategyTangle:
-    second_sign = -1 if opposite else 1
+    second_sign: CrossSign = -1 if opposite else 1
     operations = (
         StagedOperation("reasoning", IntroduceRole("B")),
         StagedOperation("reasoning", IntroduceRole("C")),
