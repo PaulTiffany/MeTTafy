@@ -5,6 +5,7 @@ from mettafy.four_color_dependency import (
     authority_bridge_clean,
     construction_dependency_clean,
     inference_dependency_clean,
+    quotient_audit_dependency_clean,
     staging_dependency_clean,
     terminal_dependency_clean,
     theorem_dependency_clean,
@@ -20,6 +21,10 @@ def clean_authority_graph() -> tuple[ProofEdge, ...]:
         ProofEdge("StrategyTangle", "ReidemeisterStaging"),
         ProofEdge("ReidemeisterStaging", "StrategyNormalForm"),
         ProofEdge("StrategyNormalForm", "NormalFormCompleteness"),
+        # EMPIRICAL INFERENCE: attack the quotient without promoting corpus success.
+        ProofEdge("AdversarialStrategyCorpus", "QuotientAudit"),
+        ProofEdge("QuotientChallenge", "QuotientAudit"),
+        ProofEdge("StrategyNormalForm", "QuotientAudit"),
         ProofEdge("CounterfactualTraversalLaw", "DerivedStrategyGeometry"),
         ProofEdge("ContractExpansionInference", "DerivedStrategyGeometry"),
         ProofEdge("NilpotentDesaturationInference", "DerivedStrategyGeometry"),
@@ -47,6 +52,7 @@ def clean_authority_graph() -> tuple[ProofEdge, ...]:
 def test_clean_world_model_dependency_graph() -> None:
     edges = clean_authority_graph()
     assert staging_dependency_clean(edges)
+    assert quotient_audit_dependency_clean(edges)
     assert inference_dependency_clean(edges)
     assert authority_bridge_clean(edges)
     assert construction_dependency_clean(edges)
@@ -63,6 +69,14 @@ def test_staging_lane_requires_unweave_tangle_and_normal_form() -> None:
     assert not staging_dependency_clean(edges)
 
 
+def test_quotient_audit_requires_corpus_challenges_and_normal_forms() -> None:
+    edges = (
+        ProofEdge("AdversarialStrategyCorpus", "QuotientAudit"),
+        ProofEdge("StrategyNormalForm", "QuotientAudit"),
+    )
+    assert not quotient_audit_dependency_clean(edges)
+
+
 def test_imagined_state_cannot_directly_authorize_safe_continuation() -> None:
     """NEGATIVE: imagined data requires an explicit inference/soundness bridge."""
 
@@ -77,6 +91,15 @@ def test_strategy_normal_form_cannot_directly_authorize_safe_continuation() -> N
 
     edges = clean_authority_graph() + (
         ProofEdge("StrategyNormalForm", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_quotient_audit_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: passing a finite adversarial corpus is evidence, not proof authority."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("QuotientAudit", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
