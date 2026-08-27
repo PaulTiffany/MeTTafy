@@ -9,8 +9,8 @@ from mettafy.strategy_staging import (
     Probe,
     RawStrategyTrace,
     Return,
-    StageFrame,
     StagedOperation,
+    StageFrame,
     StrategyTangle,
 )
 
