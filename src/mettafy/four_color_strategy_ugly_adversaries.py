@@ -4,6 +4,7 @@ from mettafy.strategy_ir import StrategySignature
 from mettafy.strategy_staging import (
     ColorRole,
     Cross,
+    CrossSign,
     Extend,
     IntroduceRole,
     NormalizationPolicy,
@@ -213,8 +214,7 @@ def _incomplete_recurrence(*, complete: bool) -> StrategyTangle:
     )
 
 
-def _mirrored_reentry(sign: int) -> StrategyTangle:
-    cross_sign = 1 if sign > 0 else -1
+def _mirrored_reentry(sign: CrossSign) -> StrategyTangle:
     boundary: tuple[ColorRole, ...]
     if sign > 0:
         boundary = ("A", "B", "C", "D")
@@ -231,7 +231,7 @@ def _mirrored_reentry(sign: int) -> StrategyTangle:
             _stage("reasoning", IntroduceRole("C")),
             _stage("reasoning", IntroduceRole("D")),
             *repeated,
-            _stage("analysis", Cross("B", "C", cross_sign)),
+            _stage("analysis", Cross("B", "C", sign)),
             _stage("inspection", Probe("reentry-crossing", ("B", "C"))),
         ),
         boundary,
