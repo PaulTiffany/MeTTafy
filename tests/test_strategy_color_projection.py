@@ -42,11 +42,9 @@ def shared_crossing_tangle(*, opposite: bool = True) -> StrategyTangle:
 
 def test_v4_pair_projection_has_exactly_three_nonzero_directions() -> None:
     assert direction_between("A", "A") is None
-    values = {
-        direction_between("A", role).value
-        for role in ("B", "C", "D")
-        if direction_between("A", role) is not None
-    }
+    directions = tuple(direction_between("A", role) for role in ("B", "C", "D"))
+    assert all(direction is not None for direction in directions)
+    values = {direction.value for direction in directions if direction is not None}
     assert values == {1, 2, 3}
 
 
