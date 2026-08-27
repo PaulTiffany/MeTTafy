@@ -4,6 +4,7 @@ from mettafy.four_color_dependency import (
     ProofEdge,
     authority_bridge_clean,
     construction_dependency_clean,
+    forcing_dependency_clean,
     inference_dependency_clean,
     quotient_audit_dependency_clean,
     staging_dependency_clean,
@@ -22,6 +23,12 @@ def clean_authority_graph() -> tuple[ProofEdge, ...]:
         ProofEdge("StrategyTangle", "StrategyColorProjection"),
         ProofEdge("StrategyColorProjection", "ColorReidemeisterUncrossing"),
         ProofEdge("ColorReidemeisterUncrossing", "StrategyColorSimulation"),
+        # FORCING: live response classes may shrink while color phase stays fixed.
+        ProofEdge("StrategySignature", "StrategyResponseQuotient"),
+        ProofEdge("StrategyResponseQuotient", "StrategyForcingPhase"),
+        ProofEdge("StrategyColorSimulation", "StrategyForcingPhase"),
+        ProofEdge("StrategyForcingPhase", "StrategyForcingWitness"),
+        # STAGING: remain entirely upstream of completeness and construction authority.
         ProofEdge("StrategyColorSimulation", "ReidemeisterStaging"),
         ProofEdge("StrategyTangle", "ReidemeisterStaging"),
         ProofEdge("ReidemeisterStaging", "StrategyNormalForm"),
@@ -57,6 +64,7 @@ def clean_authority_graph() -> tuple[ProofEdge, ...]:
 def test_clean_world_model_dependency_graph() -> None:
     edges = clean_authority_graph()
     assert staging_dependency_clean(edges)
+    assert forcing_dependency_clean(edges)
     assert quotient_audit_dependency_clean(edges)
     assert inference_dependency_clean(edges)
     assert authority_bridge_clean(edges)
@@ -72,6 +80,15 @@ def test_staging_lane_requires_unweave_tangle_and_normal_form() -> None:
         ProofEdge("StrategyNormalForm", "NormalFormCompleteness"),
     )
     assert not staging_dependency_clean(edges)
+
+
+def test_forcing_lane_requires_response_quotient_and_checked_simulation() -> None:
+    edges = (
+        ProofEdge("StrategyTangle", "StrategyColorSimulation"),
+        ProofEdge("StrategyColorSimulation", "StrategyForcingPhase"),
+        ProofEdge("StrategyForcingPhase", "StrategyForcingWitness"),
+    )
+    assert not forcing_dependency_clean(edges)
 
 
 def test_quotient_audit_requires_corpus_challenges_and_normal_forms() -> None:
@@ -114,6 +131,15 @@ def test_strategy_color_simulation_cannot_directly_authorize_safe_continuation()
 
     edges = clean_authority_graph() + (
         ProofEdge("StrategyColorSimulation", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_strategy_forcing_witness_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: game-theoretic forcing is inference evidence, not move authority."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("StrategyForcingWitness", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
