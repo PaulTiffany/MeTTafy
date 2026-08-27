@@ -50,12 +50,7 @@ jobs:
         run: python scripts/validate_action_local_control.py
 
       - name: Lint
-        shell: bash
-        run: |
-          set -euo pipefail
-          ruff check . --fix
-          git diff -- tests/test_test_time_active_inference.py
-          exit 1
+        run: ruff check .
 
       - name: Type check
         run: mypy
