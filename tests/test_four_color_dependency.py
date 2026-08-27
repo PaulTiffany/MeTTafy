@@ -5,6 +5,7 @@ from mettafy.four_color_dependency import (
     authority_bridge_clean,
     construction_dependency_clean,
     inference_dependency_clean,
+    staging_dependency_clean,
     terminal_dependency_clean,
     theorem_dependency_clean,
 )
@@ -12,13 +13,18 @@ from mettafy.four_color_dependency import (
 
 def clean_authority_graph() -> tuple[ProofEdge, ...]:
     return (
-        # INFERENCE: counterfactual machinery supports strategy-class completeness.
+        # INFERENCE: roleplay is unweaved, staged, then quotiented before completeness.
+        ProofEdge("RoleplayTranscript", "RawStrategyTrace"),
+        ProofEdge("RawStrategyTrace", "StrategyTangle"),
+        ProofEdge("StrategySignature", "StrategyTangle"),
+        ProofEdge("StrategyTangle", "ReidemeisterStaging"),
+        ProofEdge("ReidemeisterStaging", "StrategyNormalForm"),
+        ProofEdge("StrategyNormalForm", "NormalFormCompleteness"),
         ProofEdge("CounterfactualTraversalLaw", "DerivedStrategyGeometry"),
         ProofEdge("ContractExpansionInference", "DerivedStrategyGeometry"),
         ProofEdge("NilpotentDesaturationInference", "DerivedStrategyGeometry"),
-        ProofEdge("RoleplayTranscript", "DerivedStrategyGeometry"),
-        ProofEdge("StrategySignature", "DerivedStrategyGeometry"),
-        ProofEdge("DerivedStrategyGeometry", "StrategyIRCompleteness"),
+        ProofEdge("DerivedStrategyGeometry", "NormalFormCompleteness"),
+        ProofEdge("NormalFormCompleteness", "StrategyIRCompleteness"),
         ProofEdge("RealizedMapInspection", "InferenceSoundness"),
         # BRIDGE: complete strategy + sound inference yields one safe realized turn.
         ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
@@ -40,6 +46,7 @@ def clean_authority_graph() -> tuple[ProofEdge, ...]:
 
 def test_clean_world_model_dependency_graph() -> None:
     edges = clean_authority_graph()
+    assert staging_dependency_clean(edges)
     assert inference_dependency_clean(edges)
     assert authority_bridge_clean(edges)
     assert construction_dependency_clean(edges)
@@ -47,11 +54,29 @@ def test_clean_world_model_dependency_graph() -> None:
     assert theorem_dependency_clean(edges)
 
 
+def test_staging_lane_requires_unweave_tangle_and_normal_form() -> None:
+    edges = (
+        ProofEdge("StrategyTangle", "ReidemeisterStaging"),
+        ProofEdge("ReidemeisterStaging", "StrategyNormalForm"),
+        ProofEdge("StrategyNormalForm", "NormalFormCompleteness"),
+    )
+    assert not staging_dependency_clean(edges)
+
+
 def test_imagined_state_cannot_directly_authorize_safe_continuation() -> None:
     """NEGATIVE: imagined data requires an explicit inference/soundness bridge."""
 
     edges = clean_authority_graph() + (
         ProofEdge("ImaginedState", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_strategy_normal_form_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: normalization is inference data, never construction authority."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("StrategyNormalForm", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
