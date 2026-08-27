@@ -24,6 +24,9 @@ INFERENCE_ONLY_NODES = {
     "StrategySignature",
     "RawStrategyTrace",
     "StrategyTangle",
+    "StrategyColorProjection",
+    "ColorReidemeisterUncrossing",
+    "StrategyColorSimulation",
     "ReidemeisterStaging",
     "StrategyNormalForm",
     "NormalFormCompleteness",
@@ -93,8 +96,9 @@ def authority_bridge_clean(edges: tuple[ProofEdge, ...]) -> bool:
 
     A safe-continuation theorem must have both strategy completeness and
     inference soundness upstream. Counterfactual states, roleplay transcripts,
-    staged tangles, normal forms, and adversarial audits may feed inference
-    work, but may not be direct premises of construction authority.
+    staged tangles, color projections/simulations, normal forms, and adversarial
+    audits may feed inference work, but may not be direct premises of construction
+    authority.
     """
 
     target = "StrategySafeContinuation"
