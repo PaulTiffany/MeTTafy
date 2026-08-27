@@ -12,10 +12,10 @@ The central distinction is deliberate:
 * `responseRank` is the number of live proof-relevant response classes.
 
 A supported forcing step may preserve color phase while strictly reducing response
-rank.  Thus a move can be strategically decisive without being a color phase
-transition.  Rank one is a forcing line; rank zero is checkmate.
+rank. Thus a move can be strategically decisive without being a color phase
+transition. Rank one is a forcing line; rank zero is checkmate.
 
-Everything in this file is INFERENCE-only.  No forcing witness is construction
+Everything in this file is INFERENCE-only. No forcing witness is construction
 authority and no theorem here produces `CertifiedInstantiation`.
 -/
 
@@ -23,7 +23,7 @@ namespace MeTTafy.FourColor
 
 /--
 The live-response quotient already factors out concrete replies that are strategically
-equivalent.  `nodup` means its cardinality is the number of live response classes,
+equivalent. `nodup` means its cardinality is the number of live response classes,
 not the number of serialized opponent actions.
 -/
 structure StrategyResponseQuotient where
@@ -53,7 +53,7 @@ def StrategyForcingStep (before after : StrategyGameState) : Prop :=
 
 /--
 A mechanically supported forcing step must also be a supported Strategy/color
-simulation.  The color projection may stutter or uncross; forcing is measured in
+simulation. The color projection may stutter or uncross; forcing is measured in
 response space, not inferred from color motion.
 -/
 structure SupportedStrategyForcingStep (before after : StrategyGameState) : Prop where
@@ -102,7 +102,7 @@ theorem strategyCheckmate_no_forcing
 
 /--
 If a position is already a forcing line (rank one), any further forcing step reaches
-checkmate (rank zero).  This is the finite-response analogue of the final move in a
+checkmate (rank zero). This is the finite-response analogue of the final move in a
 forcing game line.
 -/
 theorem forcing_from_forced_reaches_checkmate
@@ -120,7 +120,7 @@ theorem forcing_from_forced_reaches_checkmate
 
 /--
 A supported forcing step can change strategy phase while preserving the retained
-V4 color phase.  This is the formal separation between strategic forcing and a
+V4 color phase. This is the formal separation between strategic forcing and a
 color phase transition.
 -/
 theorem SupportedStrategyForcingStep.preservesColorPhase
@@ -156,6 +156,63 @@ theorem supported_forced_step_reaches_color_stable_checkmate
   exact ⟨forcing_from_forced_reaches_checkmate forced step.forces,
     step.preservesColorPhase⟩
 
+/-- A finite forcing line records the number of supported forcing moves. -/
+inductive SupportedStrategyForcingPath :
+    StrategyGameState → StrategyGameState → Nat → Prop where
+  | refl (state : StrategyGameState) :
+      SupportedStrategyForcingPath state state 0
+  | step {before middle after : StrategyGameState} {moves : Nat} :
+      SupportedStrategyForcingStep before middle →
+      SupportedStrategyForcingPath middle after moves →
+      SupportedStrategyForcingPath before after (moves + 1)
+
+/-- Every move in a forcing line consumes at least one unit of response rank. -/
+theorem SupportedStrategyForcingPath.rank_bound
+    {before after : StrategyGameState}
+    {moves : Nat}
+    (path : SupportedStrategyForcingPath before after moves) :
+    responseRank after.responses + moves ≤ responseRank before.responses := by
+  induction path with
+  | refl => simp
+  | @step before middle after moves head tail ih =>
+      have headBound :
+          responseRank middle.responses + 1 ≤ responseRank before.responses :=
+        head.forces.succ_after_le_before
+      omega
+
+/-- Supported forcing paths preserve the retained V4 color phase end to end. -/
+theorem SupportedStrategyForcingPath.preservesColorPhase
+    {before after : StrategyGameState}
+    {moves : Nat}
+    (path : SupportedStrategyForcingPath before after moves) :
+    colorPhase (projectStrategyTangle before.tangle) =
+      colorPhase (projectStrategyTangle after.tangle) := by
+  induction path with
+  | refl => rfl
+  | step head tail ih =>
+      exact Eq.trans head.preservesColorPhase ih
+
+/-- A positive-length forcing line cannot cycle back to the same strategy state. -/
+theorem SupportedStrategyForcingPath.no_positive_cycle
+    {state : StrategyGameState}
+    {moves : Nat}
+    (path : SupportedStrategyForcingPath state state moves) :
+    moves = 0 := by
+  have bound := path.rank_bound
+  omega
+
+/-- A forcing line ending in checkmate is bounded by its initial response rank. -/
+theorem forcing_path_to_checkmate_length_le_initial_rank
+    {before after : StrategyGameState}
+    {moves : Nat}
+    (path : SupportedStrategyForcingPath before after moves)
+    (mate : StrategyCheckmate after.responses) :
+    moves ≤ responseRank before.responses := by
+  have bound := path.rank_bound
+  have zero : responseRank after.responses = 0 :=
+    (strategyCheckmate_iff_responseRank_zero after.responses).1 mate
+  omega
+
 /-!
 Interpretation:
 
@@ -165,6 +222,10 @@ Interpretation:
       -> forcing step strictly lowers responseRank
       -> rank 1: forced line
       -> rank 0: checkmate.
+
+For a finite forcing path of `n` supported moves, at least `n` units of response rank
+must disappear. Therefore a supported forcing line cannot positively cycle, and a
+line to checkmate is bounded by the initial number of live response classes.
 
 The richer Strategy state can therefore undergo a genuine strategic phase reduction
 while the color projection stutters or performs a phase-preserving uncrossing.
