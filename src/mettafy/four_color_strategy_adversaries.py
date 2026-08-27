@@ -3,7 +3,9 @@ from __future__ import annotations
 from mettafy.strategy_ir import StrategySignature
 from mettafy.strategy_quotient_audit import QuotientChallenge
 from mettafy.strategy_staging import (
+    ColorRole,
     Cross,
+    CrossSign,
     Extend,
     IntroduceRole,
     NormalizationPolicy,
@@ -23,17 +25,15 @@ def _stage(frame: StageFrame, op: PrimitiveOp) -> StagedOperation:
 
 def _tangle(
     operations: tuple[StagedOperation, ...],
-    boundary: tuple[str, ...],
+    boundary: tuple[ColorRole, ...],
     *,
-    anchor: str = "A",
+    anchor: ColorRole = "A",
     response_classes: tuple[str, ...] = ("stable",),
     options: tuple[str, ...] = ("first-move-A",),
 ) -> StrategyTangle:
-    # The fixtures below use only literal V4 role names. Keeping this small helper
-    # local makes each adversarial claim readable as a MapMaker transcript.
     return StrategyTangle(
-        raw=RawStrategyTrace(anchor, operations),  # type: ignore[arg-type]
-        boundary=boundary,  # type: ignore[arg-type]
+        raw=RawStrategyTrace(anchor, operations),
+        boundary=boundary,
         signature=StrategySignature(
             response_classes=response_classes,
             options=options,
@@ -71,15 +71,18 @@ def _base_probe(*, option: str = "first-move-A", response: str = "stable") -> St
     )
 
 
-def _mirror(sign: int) -> StrategyTangle:
-    boundary = ("A", "B", "C", "D") if sign > 0 else ("D", "C", "B", "A")
-    cross_sign = 1 if sign > 0 else -1
+def _mirror(sign: CrossSign) -> StrategyTangle:
+    boundary: tuple[ColorRole, ...]
+    if sign > 0:
+        boundary = ("A", "B", "C", "D")
+    else:
+        boundary = ("D", "C", "B", "A")
     return _tangle(
         (
             _stage("reasoning", IntroduceRole("B")),
             _stage("reasoning", IntroduceRole("C")),
             _stage("reasoning", IntroduceRole("D")),
-            _stage("analysis", Cross("B", "C", cross_sign)),
+            _stage("analysis", Cross("B", "C", sign)),
             _stage("inspection", Probe("crossing-response", ("B", "C"))),
         ),
         boundary,
