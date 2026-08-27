@@ -22,6 +22,12 @@ INFERENCE_ONLY_NODES = {
     "PredictedResponse",
     "RoleplayTranscript",
     "StrategySignature",
+    "RawStrategyTrace",
+    "StrategyTangle",
+    "ReidemeisterStaging",
+    "StrategyNormalForm",
+    "NormalFormCompleteness",
+    "StagingMetrics",
 }
 
 
@@ -51,6 +57,19 @@ def ancestors(target: str, edges: tuple[ProofEdge, ...]) -> frozenset[str]:
     return frozenset(seen)
 
 
+def staging_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
+    """INFERENCE: normal-form completeness must arise through the staging lane."""
+
+    upstream = ancestors("NormalFormCompleteness", edges)
+    required = {
+        "RawStrategyTrace",
+        "StrategyTangle",
+        "ReidemeisterStaging",
+        "StrategyNormalForm",
+    }
+    return required <= upstream and not bool(upstream & DOWNSTREAM_OR_EXTERNAL_AUTHORITY)
+
+
 def inference_dependency_clean(edges: tuple[ProofEdge, ...]) -> bool:
     """INFERENCE: strategy completeness cannot be supplied by downstream authority."""
 
@@ -63,8 +82,8 @@ def authority_bridge_clean(edges: tuple[ProofEdge, ...]) -> bool:
 
     A safe-continuation theorem must have both strategy completeness and
     inference soundness upstream. Counterfactual states, roleplay transcripts,
-    and strategy signatures may feed those inference theorems, but may not be
-    direct premises of construction authority.
+    staged tangles, and strategy normal forms may feed those inference theorems,
+    but may not be direct premises of construction authority.
     """
 
     target = "StrategySafeContinuation"
