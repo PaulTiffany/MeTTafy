@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from mettafy.strategy_ir import StrategySignature
 from mettafy.strategy_staging import (
+    ColorRole,
     Cross,
     Extend,
     IntroduceRole,
@@ -51,7 +52,11 @@ def _family_a(repetitions: int) -> StrategyTangle:
 
 def _family_a_mirror(sign: int) -> StrategyTangle:
     crossing = Cross("B", "C", 1 if sign > 0 else -1)
-    boundary = ("A", "B", "C", "D") if sign > 0 else ("D", "C", "B", "A")
+    boundary: tuple[ColorRole, ...]
+    if sign > 0:
+        boundary = ("A", "B", "C", "D")
+    else:
+        boundary = ("D", "C", "B", "A")
     return StrategyTangle(
         raw=RawStrategyTrace(
             anchor="A",
