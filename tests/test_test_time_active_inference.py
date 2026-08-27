@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-import dataclasses
-
 import pytest
 
-import mettafy.active_inference_boundary as inference
+from mettafy.active_inference_boundary import (
+    CertifiedInstantiation,
+    InferenceEpisode,
+    amortize,
+    imagine_kempe,
+    inspect,
+    instantiate,
+    void_count,
+)
 from mettafy.color_construction import ConstructionState, terminal_decode
 from mettafy.kempe_traversal import KempeMove
 
@@ -81,19 +87,19 @@ def test_inference_hard_to_hard_does_not_advance_construction() -> None:
     """INFERENCE/NEGATIVE: a hard imagined successor is not construction history."""
 
     realized = locked_planar_c5_state()
-    before_voids = inference.void_count(realized)
-    imagined = inference.inspect(realized)
+    before_voids = void_count(realized)
+    imagined = inspect(realized)
 
-    branch = inference.imagine_kempe(imagined, KempeMove(seed="a", other_color=1))
+    branch = imagine_kempe(imagined, KempeMove(seed="a", other_color=1))
 
     assert branch.valid
     assert boundary_word(realized) == (0, 1, 0, 2, 3)
     assert realized.admissible_colors("v") == frozenset()
     assert boundary_word(branch.after.coloring) == (1, 0, 1, 2, 3)
     assert branch.after.coloring.admissible_colors("v") == frozenset()
-    assert inference.void_count(realized) == before_voids
+    assert void_count(realized) == before_voids
 
-    episode = inference.InferenceEpisode(
+    episode = InferenceEpisode(
         realized=realized,
         focus="v",
         imagined=(imagined, branch.after),
@@ -108,14 +114,14 @@ def test_imagined_opening_cannot_silently_acquire_construction_authority() -> No
     realized = persistent_double_lock_state()
     assert realized.admissible_colors("v") == frozenset()
 
-    start = inference.inspect(realized)
-    first = inference.imagine_kempe(start, KempeMove(seed="a", other_color=2))
-    second = inference.imagine_kempe(first.after, KempeMove(seed="c", other_color=3))
+    start = inspect(realized)
+    first = imagine_kempe(start, KempeMove(seed="a", other_color=2))
+    second = imagine_kempe(first.after, KempeMove(seed="c", other_color=3))
 
     assert second.after.coloring.admissible_colors("v") == frozenset({0})
     assert realized.admissible_colors("v") == frozenset()
 
-    episode = inference.InferenceEpisode(
+    episode = InferenceEpisode(
         realized=realized,
         focus="v",
         imagined=(start, first.after, second.after),
@@ -125,7 +131,7 @@ def test_imagined_opening_cannot_silently_acquire_construction_authority() -> No
         ValueError,
         match="admissible state on the realized map",
     ):
-        inference.amortize(episode, 0)
+        amortize(episode, 0)
 
     assert "v" not in realized.coloring
     assert boundary_word(realized) == (0, 1, 0, 2, 3)
@@ -134,9 +140,7 @@ def test_imagined_opening_cannot_silently_acquire_construction_authority() -> No
 def test_certified_instantiation_is_the_only_realization_payload() -> None:
     """BRIDGE: no imagined state, Kempe move, route, or predicted response crosses."""
 
-    names = tuple(
-        field.name for field in dataclasses.fields(inference.CertifiedInstantiation)
-    )
+    names = tuple(CertifiedInstantiation.__dataclass_fields__)
     assert names == ("realized", "focus", "color")
     assert set(names).isdisjoint(
         {"imagined", "move", "after", "path", "route", "response", "opening"}
@@ -150,21 +154,17 @@ def test_amortize_then_instantiate_consumes_exactly_one_void() -> None:
     assert realized.admissible_colors("v") == frozenset({3})
     assert not realized.complete
 
-    episode = inference.InferenceEpisode(
+    episode = InferenceEpisode(
         realized=realized,
         focus="v",
-        imagined=(
-            inference.inspect(realized),
-            inference.inspect(realized),
-            inference.inspect(realized),
-        ),
+        imagined=(inspect(realized), inspect(realized), inspect(realized)),
     )
-    certificate = inference.amortize(episode, 3)
+    certificate = amortize(episode, 3)
     assert certificate.valid
 
-    after = inference.instantiate(certificate)
+    after = instantiate(certificate)
 
-    assert inference.void_count(after) == inference.void_count(realized) - 1
+    assert void_count(after) == void_count(realized) - 1
     assert after.coloring["v"] == 3
     assert "v" not in realized.coloring
     assert dict(after.graph) == dict(realized.graph)
