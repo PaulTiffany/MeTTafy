@@ -183,7 +183,7 @@ theorem every_color_word_uncrosses_to_small_normal_form :
         simpa [fused] using
           (ColorUncrossingStep.fuse ([] : ColorWord) rest left right same)
 termination_by word => word.length
-decreasing_by all_goals simp_wf
+decreasing_by all_goals simp_all <;> omega
 
 /--
 The local normalizer reaches a small presentation without changing the retained
