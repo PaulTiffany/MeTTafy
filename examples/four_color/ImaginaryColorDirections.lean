@@ -40,6 +40,10 @@ def all : List ImaginaryDirection := [dirA, dirB, dirC]
 
 @[simp] theorem all_length : all.length = 3 := rfl
 
+/-- The explicit three-direction cover contains no duplicate direction. -/
+theorem all_nodup : all.Nodup := by
+  simp [all, dirA, dirB, dirC]
+
 /-- Every nonzero V4 direction is one of the three explicit directions. -/
 theorem mem_all (direction : ImaginaryDirection) : direction ∈ all := by
   rcases direction with ⟨value, nonzero⟩
@@ -48,6 +52,12 @@ theorem mem_all (direction : ImaginaryDirection) : direction ∈ all := by
   | a => simp [all, dirA, dirB, dirC]
   | b => simp [all, dirA, dirB, dirC]
   | c => simp [all, dirA, dirB, dirC]
+
+/-- Exact cardinal statement: three distinct directions cover the whole type. -/
+theorem exactly_three :
+    all.length = 3 ∧ all.Nodup ∧
+      ∀ direction : ImaginaryDirection, direction ∈ all :=
+  ⟨all_length, all_nodup, mem_all⟩
 
 /-- Equality of directions is exactly equality of their underlying V4 values. -/
 theorem ext {left right : ImaginaryDirection}
