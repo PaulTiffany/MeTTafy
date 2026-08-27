@@ -1,14 +1,24 @@
 from __future__ import annotations
 
-from mettafy.color_construction import ConstructionState
-from mettafy.construction_control_surface import (
-    ColorationControlSurface,
-    state_key,
+import pytest
+
+from mettafy.active_inference_boundary import (
+    CertifiedInstantiation,
+    InferenceEpisode,
+    amortize,
+    imagine_kempe,
+    inspect,
+    instantiate,
+    void_count,
 )
+from mettafy.color_construction import ConstructionState, terminal_decode
+from mettafy.kempe_traversal import KempeMove
+
+BOUNDARY = ("a", "b", "c", "d", "e")
 
 
 def locked_planar_c5_state() -> ConstructionState:
-    """Retained saturated planar C5 used by the staged-control witnesses."""
+    """Retained saturated planar C5 used by the counterfactual witnesses."""
 
     graph = {
         "v": ("a", "b", "c", "d", "e"),
@@ -38,56 +48,128 @@ def locked_planar_c5_state() -> ConstructionState:
     )
 
 
+def persistent_double_lock_state() -> ConstructionState:
+    graph = {
+        "v": BOUNDARY,
+        "a": ("v", "b", "e"),
+        "b": ("v", "a", "c", "d", "e"),
+        "c": ("v", "b", "d"),
+        "d": ("v", "c", "e", "b"),
+        "e": ("v", "d", "a", "b"),
+    }
+    return ConstructionState(
+        graph,
+        {"a": 0, "b": 1, "c": 0, "d": 2, "e": 3},
+    )
+
+
+def open_wheel_state() -> ConstructionState:
+    graph = {
+        "v": BOUNDARY,
+        "a": ("v", "b", "e"),
+        "b": ("v", "a", "c"),
+        "c": ("v", "b", "d"),
+        "d": ("v", "c", "e"),
+        "e": ("v", "d", "a"),
+    }
+    return ConstructionState(
+        graph,
+        {"a": 0, "b": 1, "c": 0, "d": 1, "e": 2},
+    )
+
+
 def boundary_word(state: ConstructionState) -> tuple[int, int, int, int, int]:
-    return tuple(state.coloring[name] for name in ("a", "b", "c", "d", "e"))  # type: ignore[return-value]
+    return tuple(state.coloring[name] for name in BOUNDARY)  # type: ignore[return-value]
 
 
-def test_test_time_control_reobserves_hard_successor() -> None:
-    """One current control may remain hard; the successor is then re-observed."""
+def test_inference_hard_to_hard_does_not_advance_construction() -> None:
+    """INFERENCE/NEGATIVE: a hard imagined successor is not construction history."""
 
-    state = locked_planar_c5_state()
-    surface = ColorationControlSurface(state, "v")
+    realized = locked_planar_c5_state()
+    before_voids = void_count(realized)
+    imagined = inspect(realized)
 
-    assert state.admissible_colors("v") == frozenset()
-    assert boundary_word(state) == (0, 1, 0, 2, 3)
+    branch = imagine_kempe(imagined, KempeMove(seed="a", other_color=1))
 
-    first = surface.immediate_access(state)
-    assert first is not None and first.valid
-    assert first.before is state
-    assert first.after.admissible_colors("v") == frozenset()
-    assert boundary_word(first.after) == (1, 0, 1, 2, 3)
+    assert branch.valid
+    assert boundary_word(realized) == (0, 1, 0, 2, 3)
+    assert realized.admissible_colors("v") == frozenset()
+    assert boundary_word(branch.after.coloring) == (1, 0, 1, 2, 3)
+    assert branch.after.coloring.admissible_colors("v") == frozenset()
+    assert void_count(realized) == before_voids
 
-    # The next permission is derived from the actual successor, not stored in
-    # the first certificate or inherited from a counterfactual route.
-    second = surface.immediate_access(first.after)
-    assert second is not None and second.valid
-    assert second.before == first.after
+    episode = InferenceEpisode(
+        realized=realized,
+        focus="v",
+        imagined=(imagined, branch.after),
+    )
+    assert episode.realized is realized
+    assert "v" not in episode.realized.coloring
 
 
-def test_current_actionability_does_not_imply_no_trap() -> None:
-    """The deterministic current-control policy can legally replay a hard state.
+def test_imagined_opening_cannot_silently_acquire_construction_authority() -> None:
+    """NEGATIVE/BRIDGE: imagined slack is not admissibility on the actual map."""
 
-    This is a negative witness for the exact proof boundary:
+    realized = persistent_double_lock_state()
+    assert realized.admissible_colors("v") == frozenset()
 
-        current actionability != progress != global closure.
+    start = inspect(realized)
+    first = imagine_kempe(start, KempeMove(seed="a", other_color=2))
+    second = imagine_kempe(first.after, KempeMove(seed="c", other_color=3))
 
-    The test does not say every policy loops. It says a no-trap theorem must be
-    proved from more than the existence of one current legal action.
-    """
+    assert second.after.coloring.admissible_colors("v") == frozenset({0})
+    assert realized.admissible_colors("v") == frozenset()
 
-    state = locked_planar_c5_state()
-    surface = ColorationControlSurface(state, "v")
+    episode = InferenceEpisode(
+        realized=realized,
+        focus="v",
+        imagined=(start, first.after, second.after),
+    )
 
-    first = surface.immediate_access(state)
-    assert first is not None and first.valid
-    assert first.after.admissible_colors("v") == frozenset()
+    with pytest.raises(
+        ValueError,
+        match="admissible state on the realized map",
+    ):
+        amortize(episode, 0)
 
-    second = surface.immediate_access(first.after)
-    assert second is not None and second.valid
+    assert "v" not in realized.coloring
+    assert boundary_word(realized) == (0, 1, 0, 2, 3)
 
-    # `immediate_access` is intentionally myopic. On this witness its next
-    # deterministic choice is the exact inverse, returning to the original hard
-    # coloring. Receding-horizon legality therefore cannot itself be promoted
-    # into a closure theorem.
-    assert state_key(second.after) == state_key(state)
-    assert second.after.admissible_colors("v") == frozenset()
+
+def test_certified_instantiation_is_the_only_realization_payload() -> None:
+    """BRIDGE: no imagined state, Kempe move, route, or predicted response crosses."""
+
+    names = tuple(CertifiedInstantiation.__dataclass_fields__)
+    assert names == ("realized", "focus", "color")
+    assert set(names).isdisjoint(
+        {"imagined", "move", "after", "path", "route", "response", "opening"}
+    )
+
+
+def test_amortize_then_instantiate_consumes_exactly_one_void() -> None:
+    """BRIDGE/REALIZED/TERMINAL: imagine many, instantiate one, re-observe."""
+
+    realized = open_wheel_state()
+    assert realized.admissible_colors("v") == frozenset({3})
+    assert not realized.complete
+
+    episode = InferenceEpisode(
+        realized=realized,
+        focus="v",
+        imagined=(inspect(realized), inspect(realized), inspect(realized)),
+    )
+    certificate = amortize(episode, 3)
+    assert certificate.valid
+
+    after = instantiate(certificate)
+
+    assert void_count(after) == void_count(realized) - 1
+    assert after.coloring["v"] == 3
+    assert "v" not in realized.coloring
+    assert dict(after.graph) == dict(realized.graph)
+    for vertex, color in realized.coloring.items():
+        assert after.coloring[vertex] == color
+
+    with pytest.raises(ValueError, match="completed construction"):
+        terminal_decode(realized)
+    assert terminal_decode(after) == dict(after.coloring)

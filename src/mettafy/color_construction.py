@@ -25,11 +25,16 @@ def _edge_set(graph: Graph) -> frozenset[tuple[str, str]]:
 
 @dataclass(frozen=True)
 class ConstructionState:
-    """A partial construction state in the fixed Four Color surface species.
+    """REALIZED: a partial construction state in the Four Color surface species.
 
     The surface species is fixed at genus zero and is intentionally not a state
     parameter. ``coloring`` contains only assignments already committed by the
     construction. Every committed edge obligation is exact.
+
+    Counterfactual code may copy this immutable carrier for calculations, but a
+    recolored copy is not thereby a new realized construction state. The only
+    canonical realized transition on this type is ``commit`` at an uncommitted
+    focus.
     """
 
     surface_name: ClassVar[str] = FOUR_COLOR_SURFACE_NAME
@@ -75,11 +80,13 @@ class ConstructionState:
         )
 
     def admissible_colors(self, vertex: str) -> frozenset[int]:
-        """The exact construction observable A(v) = Q4 minus c(N(v))."""
+        """REALIZED: the exact current observable A(v) = Q4 minus c(N(v))."""
 
         return PALETTE4 - self.neighbor_color_image(vertex)
 
     def commit(self, vertex: str, color: int) -> ConstructionState:
+        """REALIZED: instantiate one currently uncommitted vertex with one Q4 color."""
+
         if vertex in self.coloring:
             raise ValueError("vertex is already committed")
         if color not in self.admissible_colors(vertex):
@@ -110,7 +117,7 @@ def brown_projection(state: ConstructionState) -> BrownObservation:
 
 
 def terminal_decode(state: ConstructionState) -> dict[str, int]:
-    """Return the four-color map only after every vertex is committed."""
+    """TERMINAL: expose the four-color map only after every vertex is committed."""
 
     if not state.complete:
         raise ValueError("terminal decode requires a completed construction")
@@ -120,8 +127,14 @@ def terminal_decode(state: ConstructionState) -> dict[str, int]:
 
 
 @dataclass(frozen=True)
-class TraversalRewriteCertificate:
-    """A graph-level construction rewrite certified by exact observables."""
+class CounterfactualTraversalWitness:
+    """INFERENCE: an exact graph-level recoloring thought experiment.
+
+    ``before`` and ``after`` use ``ConstructionState`` only as immutable proper-
+    coloring carriers. This witness does not assert that construction rewrites
+    already-realized vertices. Its purpose is to inspect whether a hypothetical
+    recoloring changes the focus affordance while preserving graph obligations.
+    """
 
     before: ConstructionState
     after: ConstructionState
@@ -158,3 +171,8 @@ class TraversalRewriteCertificate:
             and self.source_has_zero_focus_slack
             and self.target_has_focus_slack
         )
+
+
+# Historical public name retained so archived witnesses replay unchanged. It is
+# an inference witness, not construction authority.
+TraversalRewriteCertificate = CounterfactualTraversalWitness

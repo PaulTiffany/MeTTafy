@@ -5,11 +5,12 @@ from inspect import getsource, signature
 
 import mettafy.action_local_control as action_local_control
 from mettafy.action_local_control import (
-    ChangeDirectionAction,
     CommitFocusAction,
-    realize_change_direction,
+    CounterfactualDirectionChange,
+    imagine_change_direction,
     realize_focus_commit,
 )
+from mettafy.active_inference_boundary import CertifiedInstantiation
 from mettafy.plane_parameterization import COLOR_TO_V4, NONZERO_MODES, v4_add
 from mettafy.v4_action_lipschitz import (
     apply_palette_choice,
@@ -21,15 +22,20 @@ from mettafy.v4_action_lipschitz import (
 
 
 def main() -> None:
-    change_fields = tuple(field.name for field in fields(ChangeDirectionAction))
+    imagined_fields = tuple(field.name for field in fields(CounterfactualDirectionChange))
     commit_fields = tuple(field.name for field in fields(CommitFocusAction))
+    authority_fields = tuple(field.name for field in fields(CertifiedInstantiation))
 
-    if change_fields != ("parameter", "before_history", "stage"):
+    if imagined_fields != ("parameter", "before_history", "stage"):
         raise SystemExit(
-            "change-direction action must carry one chosen parameter and one realized stage"
+            "counterfactual direction change must carry one parameter and one imagined stage"
         )
-    if commit_fields != ("before", "focus", "color", "after"):
-        raise SystemExit("focus commit must carry one source and one realized successor")
+    if authority_fields != ("realized", "focus", "color"):
+        raise SystemExit(
+            "construction authority must contain only actual map, focus, and certified color"
+        )
+    if commit_fields != ("certificate", "after"):
+        raise SystemExit("realized focus commit must consume one certificate and one successor")
 
     forbidden = {
         "alternatives",
@@ -40,18 +46,18 @@ def main() -> None:
         "routes",
         "targets",
     }
-    if forbidden.intersection(change_fields) or forbidden.intersection(commit_fields):
-        raise SystemExit("proof-relevant action object contains counterfactual sibling state")
+    if forbidden.intersection(imagined_fields) or forbidden.intersection(authority_fields):
+        raise SystemExit("inference/authority object contains a stored future-route coordinate")
 
-    if tuple(signature(realize_change_direction).parameters) != ("parameter", "history"):
-        raise SystemExit("change-direction realization must consume exactly one chosen control")
-    if tuple(signature(realize_focus_commit).parameters) != ("before", "focus", "color"):
-        raise SystemExit("focus commitment must consume exactly one chosen admissible color")
+    if tuple(signature(imagine_change_direction).parameters) != ("parameter", "history"):
+        raise SystemExit("counterfactual direction change must inspect one chosen current control")
+    if tuple(signature(realize_focus_commit).parameters) != ("certificate",):
+        raise SystemExit("realized focus commitment must consume CertifiedInstantiation only")
 
     source = getsource(action_local_control)
     forbidden_imports = ("cacophony_router", "staged_cacophony_search")
     if any(name in source for name in forbidden_imports):
-        raise SystemExit("action-local proof surface may not import counterfactual routers")
+        raise SystemExit("authority-facing Four Color control may not import counterfactual routers")
     if "StopAction" in source or "realize_stop" in source:
         raise SystemExit("Four Color focus admissibility may not be encoded as a stop action")
 
@@ -83,7 +89,7 @@ def main() -> None:
             if changed_partner(opportunity[0], mode) != opportunity[1]:
                 raise SystemExit("the two other palette states must share one opportunity")
 
-    print("Four Color action-local control boundary: PASS")
+    print("Four Color authority boundary: PASS (imagine many, instantiate one)")
 
 
 if __name__ == "__main__":

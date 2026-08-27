@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
+from mettafy.active_inference_boundary import CertifiedInstantiation, instantiate
 from mettafy.color_construction import ConstructionState
 from mettafy.graph_native_staging import (
     GraphNativeDualStageCertificate,
@@ -11,17 +12,17 @@ from mettafy.graph_native_staging import (
 from mettafy.plane_dual_control import DualDomainParameter
 from mettafy.witness_expansion import GraphNativeWitnessExpansionState
 
-DecisionKind: TypeAlias = Literal["change_direction", "commit_focus"]
+DecisionKind: TypeAlias = Literal["counterfactual_change_direction", "commit_focus"]
 
 
-def construction_hamming_distance(
+def coloring_hamming_distance(
     before: ConstructionState,
     after: ConstructionState,
 ) -> int:
-    """Count changed committed assignments on one fixed graph carrier."""
+    """INFERENCE: count changed assignments on one fixed coloring carrier."""
 
     if dict(before.graph) != dict(after.graph):
-        raise ValueError("construction distance requires one fixed graph carrier")
+        raise ValueError("coloring distance requires one fixed graph carrier")
     missing = object()
     return sum(
         before.coloring.get(vertex, missing) != after.coloring.get(vertex, missing)
@@ -29,9 +30,18 @@ def construction_hamming_distance(
     )
 
 
+# Historical name retained for archived diagnostics. This is not construction time.
+construction_hamming_distance = coloring_hamming_distance
+
+
 @dataclass(frozen=True)
-class ChangeDirectionAction:
-    """One chosen nonzero dual control and exactly one realized successor state."""
+class CounterfactualDirectionChange:
+    """INFERENCE: one chosen dual control and one imagined coloring response.
+
+    The graph-native stage is retained as an exact witness/falsifier, but its
+    recolored ``after`` snapshot is not construction history and cannot itself
+    authorize a focus commitment.
+    """
 
     parameter: DualDomainParameter
     before_history: GraphNativeWitnessExpansionState
@@ -39,7 +49,7 @@ class ChangeDirectionAction:
 
     @property
     def decision(self) -> DecisionKind:
-        return "change_direction"
+        return "counterfactual_change_direction"
 
     @property
     def before(self) -> ConstructionState:
@@ -47,19 +57,17 @@ class ChangeDirectionAction:
 
     @property
     def after(self) -> ConstructionState:
+        """INFERENCE: the imagined response snapshot."""
+
         return self.stage.dual_certificate.after
 
     @property
-    def affected_state(self) -> ConstructionState:
-        return self.after
-
-    @property
-    def affected_state_count(self) -> int:
+    def imagined_state_count(self) -> int:
         return 1
 
     @property
     def displacement(self) -> int:
-        return construction_hamming_distance(self.before, self.after)
+        return coloring_hamming_distance(self.before, self.after)
 
     @property
     def finite_displacement_budget(self) -> int:
@@ -83,46 +91,57 @@ class ChangeDirectionAction:
         if set(self.before.coloring) != set(self.after.coloring):
             return False
         return (
-            self.affected_state_count == 1
+            self.imagined_state_count == 1
             and 0 < self.displacement <= self.finite_displacement_budget
             and self.after.committed_edges_valid
         )
 
 
-def realize_change_direction(
+def imagine_change_direction(
     parameter: DualDomainParameter,
     history: GraphNativeWitnessExpansionState,
-) -> ChangeDirectionAction:
-    """Realize one already-chosen current dual parameter, without sibling lookahead."""
+) -> CounterfactualDirectionChange:
+    """INFERENCE: evaluate one chosen current dual parameter without realizing it."""
 
     stage = apply_graph_native_dual_stage(parameter, history)
-    action = ChangeDirectionAction(
+    change = CounterfactualDirectionChange(
         parameter=parameter,
         before_history=history,
         stage=stage,
     )
-    if not action.valid:
-        raise AssertionError("chosen change-direction action failed certification")
-    return action
+    if not change.valid:
+        raise AssertionError("chosen counterfactual direction change failed certification")
+    return change
+
+
+# Compatibility aliases preserve archived experiments while making new names carry
+# the authoritative semantics. They remain inference-only.
+ChangeDirectionAction = CounterfactualDirectionChange
+realize_change_direction = imagine_change_direction
 
 
 @dataclass(frozen=True)
 class CommitFocusAction:
-    """Commit one currently admissible focus color.
+    """REALIZED: execute one previously certified ``void -> V4`` event."""
 
-    Focus commitment is not a stop action.  It is the ordinary Four Color
-    construction step available when the exact admissible-color complement is
-    nonempty.
-    """
-
-    before: ConstructionState
-    focus: str
-    color: int
+    certificate: CertifiedInstantiation
     after: ConstructionState
 
     @property
     def decision(self) -> DecisionKind:
         return "commit_focus"
+
+    @property
+    def before(self) -> ConstructionState:
+        return self.certificate.realized
+
+    @property
+    def focus(self) -> str:
+        return self.certificate.focus
+
+    @property
+    def color(self) -> int:
+        return self.certificate.color
 
     @property
     def affected_state(self) -> ConstructionState:
@@ -134,7 +153,7 @@ class CommitFocusAction:
 
     @property
     def displacement(self) -> int:
-        return construction_hamming_distance(self.before, self.after)
+        return coloring_hamming_distance(self.before, self.after)
 
     @property
     def finite_displacement_budget(self) -> int:
@@ -142,9 +161,7 @@ class CommitFocusAction:
 
     @property
     def valid(self) -> bool:
-        if self.focus in self.before.coloring:
-            return False
-        if self.color not in self.before.admissible_colors(self.focus):
+        if not self.certificate.valid:
             return False
         if dict(self.before.graph) != dict(self.after.graph):
             return False
@@ -158,17 +175,11 @@ class CommitFocusAction:
         )
 
 
-def realize_focus_commit(
-    before: ConstructionState,
-    focus: str,
-    color: int,
-) -> CommitFocusAction:
-    """Commit one chosen color only when it is admissible at the focus now."""
+def realize_focus_commit(certificate: CertifiedInstantiation) -> CommitFocusAction:
+    """REALIZED: execute only an explicit construction-authority certificate."""
 
-    if color not in before.admissible_colors(focus):
-        raise ValueError("focus color is not currently admissible")
-    after = before.commit(focus, color)
-    action = CommitFocusAction(before=before, focus=focus, color=color, after=after)
+    after = instantiate(certificate)
+    action = CommitFocusAction(certificate=certificate, after=after)
     if not action.valid:
-        raise AssertionError("chosen focus commit failed certification")
+        raise AssertionError("certified focus commit failed realization")
     return action

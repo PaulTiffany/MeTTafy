@@ -2,104 +2,126 @@ from __future__ import annotations
 
 from mettafy.four_color_dependency import (
     ProofEdge,
-    closure_dependency_clean,
-    nilpotent_desaturation_dependency_clean,
+    authority_bridge_clean,
+    construction_dependency_clean,
+    inference_dependency_clean,
+    terminal_dependency_clean,
     theorem_dependency_clean,
-    traversal_dependency_clean,
 )
 
 
-def test_clean_contract_expansion_dependency_graph() -> None:
-    edges = (
-        ProofEdge("NilpotencyIndexFour", "TraversalConstructionLaw"),
-        ProofEdge("AdmissibleColorComplement", "TraversalConstructionLaw"),
-        ProofEdge("ExactEdgeLedger", "TraversalConstructionLaw"),
-        ProofEdge("TraversalConstructionLaw", "ContractExpansionClosure"),
-        ProofEdge("PlanarGeneratorCalculus", "ContractExpansionClosure"),
-        ProofEdge("TraversalConstructionLaw", "NilpotentDesaturationClosure"),
-        ProofEdge("SaturatedBoundaryKernel", "NilpotentDesaturationClosure"),
-        ProofEdge("ExactEdgeLedger", "NilpotentDesaturationClosure"),
+def clean_authority_graph() -> tuple[ProofEdge, ...]:
+    return (
+        # INFERENCE: counterfactual machinery supports strategy-class completeness.
+        ProofEdge("CounterfactualTraversalLaw", "DerivedStrategyGeometry"),
+        ProofEdge("ContractExpansionInference", "DerivedStrategyGeometry"),
+        ProofEdge("NilpotentDesaturationInference", "DerivedStrategyGeometry"),
+        ProofEdge("RoleplayTranscript", "DerivedStrategyGeometry"),
+        ProofEdge("StrategySignature", "DerivedStrategyGeometry"),
+        ProofEdge("DerivedStrategyGeometry", "StrategyIRCompleteness"),
+        ProofEdge("RealizedMapInspection", "InferenceSoundness"),
+        # BRIDGE: complete strategy + sound inference yields one safe realized turn.
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        # REALIZED: induction begins safe and consumes one void per safe continuation.
+        ProofEdge("StrategySafeInitialState", "CompletedConstruction"),
+        ProofEdge("StrategySafeContinuation", "CompletedConstruction"),
+        ProofEdge("VoidCountMonotone", "CompletedConstruction"),
+        ProofEdge("InstantiationPreservesProperness", "CompletedConstruction"),
+        ProofEdge("FiniteRealizedMap", "CompletedConstruction"),
+        # TERMINAL: final decoding starts only after completion.
         ProofEdge("CompletedConstruction", "TerminalDecodeSoundness"),
         ProofEdge("ExactEdgeLedger", "TerminalDecodeSoundness"),
-        ProofEdge("TraversalConstructionLaw", "FourColorTheorem"),
-        ProofEdge("ContractExpansionClosure", "FourColorTheorem"),
-        ProofEdge("NilpotentDesaturationClosure", "FourColorTheorem"),
+        ProofEdge("FinitePlanarMap", "FourColorTheorem"),
+        ProofEdge("CompletedConstruction", "FourColorTheorem"),
         ProofEdge("TerminalDecodeSoundness", "FourColorTheorem"),
     )
-    assert traversal_dependency_clean(edges)
-    assert closure_dependency_clean(edges)
-    assert nilpotent_desaturation_dependency_clean(edges)
+
+
+def test_clean_world_model_dependency_graph() -> None:
+    edges = clean_authority_graph()
+    assert inference_dependency_clean(edges)
+    assert authority_bridge_clean(edges)
+    assert construction_dependency_clean(edges)
+    assert terminal_dependency_clean(edges)
     assert theorem_dependency_clean(edges)
 
 
-def test_observer_projection_cannot_authorize_traversal() -> None:
+def test_imagined_state_cannot_directly_authorize_safe_continuation() -> None:
+    """NEGATIVE: imagined data requires an explicit inference/soundness bridge."""
+
+    edges = clean_authority_graph() + (
+        ProofEdge("ImaginedState", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_counterfactual_data_may_feed_strategy_completeness_before_bridge() -> None:
+    """INFERENCE/BRIDGE: imagination is lawful upstream of an explicit theorem."""
+
     edges = (
-        ProofEdge("BrownObserverProjection", "TraversalConstructionLaw"),
-        ProofEdge("TraversalConstructionLaw", "FourColorTheorem"),
+        ProofEdge("HypotheticalMap", "StrategyIRCompleteness"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
     )
-    assert not traversal_dependency_clean(edges)
+    assert inference_dependency_clean(edges)
+    assert authority_bridge_clean(edges)
 
 
-def test_completed_map_cannot_define_traversal_upstream() -> None:
+def test_predicted_response_cannot_be_safe_continuation_payload() -> None:
     edges = (
-        ProofEdge("TerminalCompletedMap", "TraversalConstructionLaw"),
-        ProofEdge("TraversalConstructionLaw", "FourColorTheorem"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        ProofEdge("PredictedResponse", "StrategySafeContinuation"),
     )
-    assert not traversal_dependency_clean(edges)
+    assert not authority_bridge_clean(edges)
 
 
-def test_held_out_authority_cannot_prove_local_closure() -> None:
+def test_roleplay_transcript_cannot_directly_become_realized_authority() -> None:
     edges = (
-        ProofEdge("HeldOutRocqAuthority", "ContractExpansionClosure"),
-        ProofEdge("ContractExpansionClosure", "FourColorTheorem"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        ProofEdge("RoleplayTranscript", "StrategySafeContinuation"),
     )
-    assert not closure_dependency_clean(edges)
+    assert not authority_bridge_clean(edges)
 
 
-def test_srmf_cardinality_cannot_be_source_of_fourness() -> None:
+def test_realized_completion_requires_initial_safety_void_monotone_and_properness() -> None:
     edges = (
-        ProofEdge("SRMFFourCharts", "ContractExpansionClosure"),
-        ProofEdge("ContractExpansionClosure", "FourColorTheorem"),
+        ProofEdge("StrategySafeContinuation", "CompletedConstruction"),
+        ProofEdge("InstantiationPreservesProperness", "CompletedConstruction"),
+        ProofEdge("FiniteRealizedMap", "CompletedConstruction"),
     )
-    assert not closure_dependency_clean(edges)
+    assert not construction_dependency_clean(edges)
 
 
-def test_no_stable_fifth_class_cannot_be_used_circularly() -> None:
+def test_terminal_decode_cannot_start_from_partial_map() -> None:
     edges = (
-        ProofEdge("NoStableFifthClass", "ContractExpansionClosure"),
-        ProofEdge("ContractExpansionClosure", "FourColorTheorem"),
+        ProofEdge("RealizedPartialMap", "TerminalDecodeSoundness"),
+        ProofEdge("ExactEdgeLedger", "TerminalDecodeSoundness"),
     )
-    assert not closure_dependency_clean(edges)
+    assert not terminal_dependency_clean(edges)
 
 
-def test_observer_and_terminal_views_cannot_prove_desaturation() -> None:
-    for forbidden in (
-        "HeldOutRocqAuthority",
-        "FourColorTheorem",
-        "ExhaustiveBoundaryEnumeration",
-        "BrownObserverProjection",
-        "TerminalCompletedMap",
-    ):
-        edges = (
-            ProofEdge(forbidden, "NilpotentDesaturationClosure"),
-            ProofEdge("NilpotentDesaturationClosure", "FourColorTheorem"),
-        )
-        assert not nilpotent_desaturation_dependency_clean(edges)
-
-
-def test_theorem_requires_all_declared_species_gates() -> None:
-    missing_decode = (
-        ProofEdge("TraversalConstructionLaw", "FourColorTheorem"),
-        ProofEdge("ContractExpansionClosure", "FourColorTheorem"),
-        ProofEdge("NilpotentDesaturationClosure", "FourColorTheorem"),
+def test_counterfactual_traversal_cannot_jump_directly_to_four_color_theorem() -> None:
+    edges = clean_authority_graph() + (
+        ProofEdge("CounterfactualTraversalLaw", "FourColorTheorem"),
     )
-    complete = missing_decode + (
-        ProofEdge("TerminalDecodeSoundness", "FourColorTheorem"),
+    assert not theorem_dependency_clean(edges)
+
+
+def test_held_out_authority_cannot_supply_strategy_completeness() -> None:
+    edges = (
+        ProofEdge("HeldOutRocqAuthority", "StrategyIRCompleteness"),
     )
-    assert not theorem_dependency_clean(missing_decode)
-    assert theorem_dependency_clean(complete)
+    assert not inference_dependency_clean(edges)
 
 
-def test_theorem_cannot_jump_directly_from_planarity() -> None:
-    edges = (ProofEdge("Planarity", "FourColorTheorem"),)
+def test_theorem_requires_strategy_completeness() -> None:
+    edges = tuple(
+        edge
+        for edge in clean_authority_graph()
+        if edge.premise != "StrategyIRCompleteness"
+        and edge.conclusion != "StrategyIRCompleteness"
+    )
     assert not theorem_dependency_clean(edges)

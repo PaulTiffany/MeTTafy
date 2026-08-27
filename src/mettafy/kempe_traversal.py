@@ -6,17 +6,20 @@ from itertools import combinations
 from mettafy.color_construction import (
     PALETTE4,
     ConstructionState,
-    TraversalRewriteCertificate,
+    CounterfactualTraversalWitness,
 )
 
 
 @dataclass(frozen=True)
 class KempeMove:
-    """One exact two-color component traversal.
+    """INFERENCE: one exact two-color component intervention.
 
     ``seed`` selects the connected component in the subgraph induced by the
-    seed color and ``other_color``.  Swapping those two terminal labels on the
-    entire component preserves every committed edge obligation.
+    seed color and ``other_color``. Swapping those two labels on the entire
+    component preserves every committed edge obligation in the imagined
+    coloring carrier.
+
+    This object has no authority to recolor the realized construction.
     """
 
     seed: str
@@ -49,6 +52,8 @@ def two_color_component(
 
 
 def apply_kempe_move(state: ConstructionState, move: KempeMove) -> ConstructionState:
+    """INFERENCE: compute a proper counterfactual recoloring snapshot."""
+
     component = two_color_component(state, move.seed, move.other_color)
     seed_color = state.coloring[move.seed]
     updated = dict(state.coloring)
@@ -59,7 +64,7 @@ def apply_kempe_move(state: ConstructionState, move: KempeMove) -> ConstructionS
 
 
 def all_component_moves(state: ConstructionState) -> tuple[KempeMove, ...]:
-    """Return one canonical move for each current two-color component.
+    """INFERENCE: enumerate graph-native Kempe thought experiments.
 
     This is a mechanical witness/falsifier helper, not proof authority.
     """
@@ -84,6 +89,8 @@ def all_component_moves(state: ConstructionState) -> tuple[KempeMove, ...]:
 def opening_single_moves(
     state: ConstructionState, focus: str
 ) -> tuple[KempeMove, ...]:
+    """INFERENCE: imagined one-move branches that expose apparent focus slack."""
+
     if state.admissible_colors(focus):
         return ()
     opening: list[KempeMove] = []
@@ -95,16 +102,20 @@ def opening_single_moves(
 
 
 def single_move_locked(state: ConstructionState, focus: str) -> bool:
+    """INFERENCE/NEGATIVE: no one-step imagined Kempe branch opens the focus."""
+
     return not state.admissible_colors(focus) and not opening_single_moves(state, focus)
 
 
 @dataclass(frozen=True)
-class KempeTraversalCertificate:
-    """A finite composition of exact construction traversals.
+class CounterfactualKempeTraversal:
+    """INFERENCE: a finite composition of imagined exact component moves.
 
-    The certificate succeeds only when replaying every declared component move
-    from the supplied construction state yields an exact graph-level rewrite
-    that opens at least one terminal color at the saturated focus vertex.
+    The witness succeeds only when replaying the declared counterfactual moves
+    produces a proper graph-level recoloring that exposes apparent focus slack.
+    It does not authorize that recoloring as construction history. Any final
+    color still has to cross the independent CertifiedInstantiation boundary on
+    the unchanged realized map.
     """
 
     initial: ConstructionState
@@ -127,8 +138,13 @@ class KempeTraversalCertificate:
     def valid(self) -> bool:
         if not self.moves:
             return False
-        return TraversalRewriteCertificate(
+        return CounterfactualTraversalWitness(
             before=self.initial,
             after=self.final,
             focus=self.focus,
         ).valid
+
+
+# Historical public name retained for archived experiments. Semantics are
+# inference-only.
+KempeTraversalCertificate = CounterfactualKempeTraversal

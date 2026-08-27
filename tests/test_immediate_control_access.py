@@ -5,8 +5,8 @@ from itertools import product
 
 from mettafy.color_construction import ConstructionState
 from mettafy.construction_control_surface import (
-    ImmediateControlCertificate,
-    immediate_control_access,
+    CounterfactualControlWitness,
+    counterfactual_control_access,
     state_key,
 )
 from mettafy.plane_parameterization import proper_cycle
@@ -49,56 +49,69 @@ def saturated_boundaries() -> tuple[tuple[int, int, int, int, int], ...]:
     return tuple(out)
 
 
-def test_immediate_certificate_contains_no_future_path_coordinate() -> None:
-    names = tuple(field.name for field in fields(ImmediateControlCertificate))
+def test_inference_witness_contains_no_future_route_coordinate() -> None:
+    """INFERENCE: a thought experiment stores no future construction plan."""
+
+    names = tuple(field.name for field in fields(CounterfactualControlWitness))
     assert names == ("before", "focus", "move", "after")
     assert set(names).isdisjoint({"target", "path", "route", "goal", "closure", "opening"})
 
 
-def test_every_saturated_c5_has_a_current_exact_control_without_lookahead() -> None:
+def test_every_saturated_c5_has_a_counterfactual_exact_control() -> None:
+    """INFERENCE: current graph geometry supplies a Kempe thought experiment."""
+
     boundaries = saturated_boundaries()
     assert len(boundaries) == 120
 
     for boundary in boundaries:
         state = wheel_state(boundary)
         assert state.admissible_colors("v") == frozenset()
-        certificate = immediate_control_access(state, "v")
-        assert certificate is not None
-        assert certificate.valid
-        assert certificate.source_requires_control
-        assert certificate.state_changes
-        assert dict(certificate.after.graph) == dict(state.graph)
-        assert certificate.after.surface_genus == state.surface_genus == 0
-        assert certificate.after.committed_edges_valid
+        witness = counterfactual_control_access(state, "v")
+        assert witness is not None
+        assert witness.valid
+        assert witness.source_is_blocked
+        assert witness.state_changes
+        assert dict(witness.after.graph) == dict(state.graph)
+        assert witness.after.surface_genus == state.surface_genus == 0
+        assert witness.after.committed_edges_valid
 
 
-def test_positive_focus_slack_requires_no_continuation_control() -> None:
+def test_positive_focus_slack_requires_no_counterfactual_control() -> None:
+    """INFERENCE: an already-open focus needs no diagnostic recoloring."""
+
     state = wheel_state((0, 1, 0, 1, 2))
     assert state.admissible_colors("v") == frozenset({3})
-    assert immediate_control_access(state, "v") is None
+    assert counterfactual_control_access(state, "v") is None
 
 
-def test_access_survives_the_persistent_exterior_carrier() -> None:
+def test_counterfactual_access_survives_persistent_exterior_carrier() -> None:
+    """INFERENCE: the negative witness remains mechanically replayable."""
+
     state = persistent_double_lock_state()
-    certificate = immediate_control_access(state, "v")
-    assert certificate is not None
-    assert certificate.valid
-    assert state_key(certificate.after) != state_key(state)
-    assert dict(certificate.after.graph) == dict(state.graph)
-    assert certificate.after.committed_edges_valid
+    witness = counterfactual_control_access(state, "v")
+    assert witness is not None
+    assert witness.valid
+    assert state_key(witness.after) != state_key(state)
+    assert dict(witness.after.graph) == dict(state.graph)
+    assert witness.after.committed_edges_valid
 
 
-def test_next_control_is_recomputed_from_the_actual_next_state() -> None:
+def test_more_inference_can_be_derived_from_an_imagined_state() -> None:
+    """INFERENCE/NEGATIVE: sequential imagination is allowed within test time."""
+
     state = persistent_double_lock_state()
-    first = immediate_control_access(state, "v")
+    first = counterfactual_control_access(state, "v")
     assert first is not None and first.valid
 
     if first.after.admissible_colors("v"):
-        assert immediate_control_access(first.after, "v") is None
+        assert counterfactual_control_access(first.after, "v") is None
         return
 
-    second = immediate_control_access(first.after, "v")
+    second = counterfactual_control_access(first.after, "v")
     assert second is not None and second.valid
     assert second.before == first.after
     assert second.move.seed in first.after.coloring
     assert second.after.committed_edges_valid
+
+    # No assertion here promotes either imagined `after` snapshot to realized
+    # construction. Authority is tested separately at the amortization bridge.
