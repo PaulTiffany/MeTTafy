@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import fields
+import dataclasses
 
 import pytest
 
@@ -134,7 +134,9 @@ def test_imagined_opening_cannot_silently_acquire_construction_authority() -> No
 def test_certified_instantiation_is_the_only_realization_payload() -> None:
     """BRIDGE: no imagined state, Kempe move, route, or predicted response crosses."""
 
-    names = tuple(field.name for field in fields(inference.CertifiedInstantiation))
+    names = tuple(
+        field.name for field in dataclasses.fields(inference.CertifiedInstantiation)
+    )
     assert names == ("realized", "focus", "color")
     assert set(names).isdisjoint(
         {"imagined", "move", "after", "path", "route", "response", "opening"}
