@@ -9,16 +9,17 @@ Test-time active inference for the independent Four Color research lane.
 
 AUTHORITATIVE FRAME CONTRACT
 ----------------------------
-Test time is not game time.
+Test time is not game time. Sequential imagination is not sequential construction.
 
 A realized partial map may be inspected through arbitrarily many counterfactual
-frontier states and moves. Those objects may branch, cycle, restart, or remain
-blocked. None of them is construction history.
+frontier states, hypothetical future commitments, and response classes. Those
+objects may branch, cycle, restart, or remain blocked. None of them is
+construction history.
 
 The only authority boundary is:
 
   RealizedMap
-      -> inspect / imagine
+      -> inspect / imagine / roleplay
   InferenceEpisode
       -> derive under an explicit soundness theorem
   CertifiedInstantiation
@@ -33,8 +34,11 @@ hard-to-hard transition only as an INFERENCE/NEGATIVE witness. It proves that a
 candidate one-step recoloring can remain hard. It does not assert that the
 realized construction ever performs that recoloring.
 
-The genuine blocked-focus resolution theorem is named as an open predicate. No
-inhabitant is hidden inside an interface.
+A further correction is now explicit: an already saturated realized focus is too
+late for inference-only recoloring to repair, because the authority boundary does
+not rewrite realized colors. The open induction target is therefore precommit
+strategy safety: every strategy-safe nonterminal realized map must admit one
+certified instantiation that remains strategy-safe.
 -/
 
 namespace MeTTafy.FourColor
@@ -208,37 +212,70 @@ theorem imagined_redTeam_step_reenters_or_opens
   · exact Or.inr hardAgain
   · exact Or.inl openNow
 
-/-! ## Explicit remaining inference obligation -/
+/-! ## Explicit remaining precommit strategy obligation -/
 
-/-- Caller-supplied meaning of "blocked" on an actual partial map. -/
-abbrev BlockedFocusPredicate (Vertex : Type u) :=
-  RealizedMap Vertex → Focus Vertex → Prop
+/-- REALIZED: a partial map is nonterminal exactly when at least one site is void. -/
+def HasVoid {Vertex : Type u} (map : RealizedMap Vertex) : Prop :=
+  ∃ vertex, map.state vertex = .void
 
-/--
-The genuine open target: every blocked actual focus admits some finite inference
-episode that the method claims certifies as one V4 state.
-
-This is intentionally only a proposition. The repository does not provide an
-inhabitant here.
--/
-def EveryBlockedFocusResolvable
-    {Vertex : Type u}
-    (blocked : BlockedFocusPredicate Vertex)
-    (method : InferenceMethod Vertex) : Prop :=
-  ∀ (map : RealizedMap Vertex) (focus : Focus Vertex),
-    blocked map focus →
-    ∃ (episode : InferenceEpisode map focus) (color : V4),
-      method.certifies episode color
+/-- Caller-supplied meaning of the strategy-safe realized construction class. -/
+abbrev StrategySafePredicate (Vertex : Type u) :=
+  RealizedMap Vertex → Prop
 
 /--
-The full local proof debt has two independent parts: resolution and soundness.
-Resolution without soundness cannot construct a map; soundness without resolution
-does not solve blocked focuses.
+The construction-level open target. It does not claim that an arbitrary already
+blocked focus can be repaired. Instead, every strategy-safe nonterminal realized
+map must have one certified actual instantiation whose successor is still safe.
+
+No inhabitant is supplied here.
 -/
-def BlockedFocusInferenceObligation
-    {Vertex : Type u}
-    (blocked : BlockedFocusPredicate Vertex)
-    (method : InferenceMethod Vertex) : Prop :=
-  EveryBlockedFocusResolvable blocked method ∧ InferenceSound method
+def EveryStrategySafeStateHasSafeInstantiation
+    {Vertex : Type u} [DecidableEq Vertex]
+    (safe : StrategySafePredicate Vertex) : Prop :=
+  ∀ (map : RealizedMap Vertex),
+    safe map →
+    HasVoid map →
+    ∃ (focus : Focus Vertex) (cert : CertifiedInstantiation map focus),
+      safe (instantiate cert)
+
+/--
+The strategy-level completeness target for one particular inference method.
+A bounded roleplay procedure may inspect many same-turn states and nested
+hypothetical commitments, but it must eventually certify a depth-zero move whose
+realized successor remains inside `safe`.
+
+The soundness proof is explicit because the imagined strategy claim itself has no
+construction authority.
+-/
+def StrategyIRComplete
+    {Vertex : Type u} [DecidableEq Vertex]
+    (safe : StrategySafePredicate Vertex)
+    (method : InferenceMethod Vertex)
+    (sound : InferenceSound method) : Prop :=
+  ∀ (map : RealizedMap Vertex),
+    safe map →
+    HasVoid map →
+    ∃ (focus : Focus Vertex)
+      (episode : InferenceEpisode map focus)
+      (color : V4)
+      (certified : method.certifies episode color),
+      safe (realizeInference method sound episode color certified)
+
+/--
+BRIDGE: a complete and sound Strategy IR yields the construction-level safe
+instantiation obligation. The counterfactual transcript itself is discarded.
+-/
+theorem strategyIRComplete_implies_safe_instantiation
+    {Vertex : Type u} [DecidableEq Vertex]
+    (safe : StrategySafePredicate Vertex)
+    (method : InferenceMethod Vertex)
+    (sound : InferenceSound method)
+    (complete : StrategyIRComplete safe method sound) :
+    EveryStrategySafeStateHasSafeInstantiation safe := by
+  intro map safeMap hasVoid
+  rcases complete map safeMap hasVoid with
+    ⟨focus, episode, color, certified, safeAfter⟩
+  refine ⟨focus, amortize method sound episode color certified, ?_⟩
+  simpa [realizeInference] using safeAfter
 
 end MeTTafy.FourColor
