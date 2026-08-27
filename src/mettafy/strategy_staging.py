@@ -40,7 +40,7 @@ class Return:
 
 @dataclass(frozen=True)
 class Cross:
-    """INFERENCE: one projected crossing relation between known roles."""
+    """INFERENCE: one projected crossing between two known roles."""
 
     left: ColorRole
     right: ColorRole
@@ -75,7 +75,7 @@ PrimitiveOp: TypeAlias = IntroduceRole | Extend | Return | Cross | Probe | Perio
 
 @dataclass(frozen=True)
 class StagedOperation:
-    """INFERENCE: one unweaved operation plus the reasoning frame it belongs to."""
+    """INFERENCE: one unweaved operation plus its bounded reasoning frame."""
 
     frame: StageFrame
     op: PrimitiveOp
@@ -83,7 +83,7 @@ class StagedOperation:
 
 @dataclass(frozen=True)
 class RawStrategyTrace:
-    """INFERENCE: typed serialization of a same-turn MapMaker roleplay trace."""
+    """INFERENCE: typed serialization of one same-turn MapMaker trace."""
 
     anchor: ColorRole
     operations: tuple[StagedOperation, ...]
@@ -91,7 +91,7 @@ class RawStrategyTrace:
 
 @dataclass(frozen=True)
 class RoleplayBinding:
-    """UNWEAVE: bind one roleplay event to one lowest-level staging operation."""
+    """UNWEAVE: bind one roleplay event to one primitive staging operation."""
 
     event_index: int
     operation: StagedOperation
@@ -113,7 +113,7 @@ class RoleLedger:
 
 @dataclass(frozen=True)
 class StrategyTangle:
-    """INFERENCE: boundary-labelled tangle projected from one roleplay trace."""
+    """INFERENCE: boundary-labelled projection rooted in one realized turn."""
 
     raw: RawStrategyTrace
     boundary: tuple[ColorRole, ...]
@@ -126,11 +126,7 @@ class StrategyTangle:
 
 @dataclass(frozen=True)
 class NormalizationPolicy:
-    """INFERENCE: explicit quotient assumptions permitted during staging.
-
-    Mirror and periodic equivalence are never inferred from appearance alone.
-    They must be supplied as part of the strategy hypothesis being tested.
-    """
+    """INFERENCE: explicit quotient assumptions allowed during staging."""
 
     mirror_equivalent: bool = False
     periodic_cycles: tuple[tuple[ColorRole, ...], ...] = ()
@@ -138,7 +134,7 @@ class NormalizationPolicy:
 
 @dataclass(frozen=True)
 class StagingMetrics:
-    """INFERENCE: measured simplifications performed by the staging pass."""
+    """INFERENCE: measured simplifications in one staging pass."""
 
     r1_loops: int = 0
     r2_cancellations: int = 0
@@ -150,7 +146,7 @@ class StagingMetrics:
 
 @dataclass(frozen=True)
 class StrategyNormalForm:
-    """INFERENCE: deterministic strategy-class representative."""
+    """INFERENCE: deterministic representative of a strategy class."""
 
     anchor: ColorRole
     boundary: tuple[ColorRole, ...]
@@ -173,7 +169,7 @@ class StagedStrategySignature:
 
 @dataclass(frozen=True)
 class StrategyInterface:
-    """INFERENCE: proof-relevant interface that staging is allowed to preserve."""
+    """INFERENCE: proof-relevant interface the quotient must preserve."""
 
     remaining_roles: tuple[ColorRole, ...]
     boundary: tuple[ColorRole, ...]
@@ -184,7 +180,7 @@ class StrategyInterface:
 
 @dataclass(frozen=True)
 class StagedStrategyClass:
-    """INFERENCE: one discovered normal form plus concrete fixture members."""
+    """INFERENCE: one discovered normal form plus its concrete fixture members."""
 
     normal: StrategyNormalForm
     members: tuple[int, ...]
@@ -214,18 +210,16 @@ def _op_roles(op: PrimitiveOp) -> tuple[ColorRole, ...]:
 def _op_key(operation: StagedOperation) -> tuple[str, ...]:
     op = operation.op
     if isinstance(op, IntroduceRole):
-        payload = ("introduce", op.role)
-    elif isinstance(op, Extend):
-        payload = ("extend", op.role)
-    elif isinstance(op, Return):
-        payload = ("return", op.role)
-    elif isinstance(op, Cross):
-        payload = ("cross", op.left, op.right, str(op.sign))
-    elif isinstance(op, Probe):
-        payload = ("probe", op.label, *op.roles)
-    else:
-        payload = ("periodic", *op.cycle)
-    return (operation.frame, *payload)
+        return (operation.frame, "introduce", op.role)
+    if isinstance(op, Extend):
+        return (operation.frame, "extend", op.role)
+    if isinstance(op, Return):
+        return (operation.frame, "return", op.role)
+    if isinstance(op, Cross):
+        return (operation.frame, "cross", op.left, op.right, str(op.sign))
+    if isinstance(op, Probe):
+        return (operation.frame, "probe", op.label, *op.roles)
+    return (operation.frame, "periodic", *op.cycle)
 
 
 def unweave_roleplay(
@@ -233,7 +227,7 @@ def unweave_roleplay(
     anchor: ColorRole,
     bindings: tuple[RoleplayBinding, ...],
 ) -> RawStrategyTrace:
-    """UNWEAVE: type only the roleplay events selected as strategy operations."""
+    """UNWEAVE: type only explicitly selected roleplay events."""
 
     seen: set[int] = set()
     ordered: list[RoleplayBinding] = []
@@ -271,14 +265,17 @@ def build_role_ledger(trace: RawStrategyTrace) -> RoleLedger:
 
 
 def _canonical_mapping(trace: RawStrategyTrace) -> dict[ColorRole, ColorRole]:
+    """Canonicalize all four labels without ever colliding unused roles."""
+
     ledger = build_role_ledger(trace)
-    ordered = (ledger.anchor, *ledger.introduced)
-    targets = ALL_ROLES[: len(ordered)]
-    return dict(zip(ordered, targets, strict=True))
+    ordered = (ledger.anchor, *ledger.introduced, *ledger.unused)
+    if len(ordered) != len(ALL_ROLES) or len(set(ordered)) != len(ALL_ROLES):
+        raise AssertionError("role ledger must induce a permutation of V4 roles")
+    return dict(zip(ordered, ALL_ROLES, strict=True))
 
 
 def _map_role(role: ColorRole, mapping: dict[ColorRole, ColorRole]) -> ColorRole:
-    return mapping.get(role, role)
+    return mapping[role]
 
 
 def _map_op(op: PrimitiveOp, mapping: dict[ColorRole, ColorRole]) -> PrimitiveOp:
@@ -308,13 +305,16 @@ def _canonicalize_tangle(
         StagedOperation(item.frame, _map_op(item.op, mapping))
         for item in tangle.raw.operations
     )
-    trace = RawStrategyTrace("A", operations)
     boundary = tuple(_map_role(role, mapping) for role in tangle.boundary)
     cycles = tuple(
         tuple(_map_role(role, mapping) for role in cycle)
         for cycle in policy.periodic_cycles
     )
-    return trace, boundary, NormalizationPolicy(policy.mirror_equivalent, cycles)
+    return (
+        RawStrategyTrace("A", operations),
+        boundary,
+        NormalizationPolicy(policy.mirror_equivalent, cycles),
+    )
 
 
 def _cancel_r1(
@@ -369,32 +369,28 @@ def _periodic_fold(
     operations: tuple[StagedOperation, ...],
     cycles: tuple[tuple[ColorRole, ...], ...],
 ) -> tuple[tuple[StagedOperation, ...], int]:
-    if not cycles:
-        return operations, 0
+    """Fold only recurrence classes explicitly allowed by the policy."""
+
     result: list[StagedOperation] = []
     folds = 0
     index = 0
     while index < len(operations):
         folded = False
         for cycle in sorted(cycles, key=len, reverse=True):
-            if not cycle:
-                continue
             width = len(cycle)
-            if index + 2 * width > len(operations):
+            if width == 0 or index + 2 * width > len(operations):
                 continue
             frame = operations[index].frame
-            repeats = 0
             cursor = index
+            repeats = 0
             while cursor + width <= len(operations):
                 window = operations[cursor : cursor + width]
                 if any(item.frame != frame for item in window):
                     break
-                roles: list[ColorRole] = []
-                for item in window:
-                    if not isinstance(item.op, Extend):
-                        break
-                    roles.append(item.op.role)
-                if tuple(roles) != cycle:
+                if not all(isinstance(item.op, Extend) for item in window):
+                    break
+                roles = tuple(item.op.role for item in window if isinstance(item.op, Extend))
+                if roles != cycle:
                     break
                 repeats += 1
                 cursor += width
@@ -423,6 +419,8 @@ def _can_r3_swap(left: StagedOperation, right: StagedOperation) -> bool:
 def _r3_stage(
     operations: tuple[StagedOperation, ...],
 ) -> tuple[tuple[StagedOperation, ...], int]:
+    """Batch frames only across operations with disjoint role support."""
+
     items = list(operations)
     count = 0
     changed = True
@@ -443,8 +441,9 @@ def _r3_stage(
 
 def _mirror_op(operation: StagedOperation) -> StagedOperation:
     op = operation.op
+    mirrored: PrimitiveOp
     if isinstance(op, Cross):
-        mirrored: PrimitiveOp = Cross(op.left, op.right, -op.sign)
+        mirrored = Cross(op.left, op.right, -op.sign)
     else:
         mirrored = op
     return StagedOperation(operation.frame, mirrored)
@@ -466,9 +465,9 @@ def _choose_mirror(
         return boundary, operations
     mirrored_boundary = tuple(reversed(boundary))
     mirrored_operations = tuple(_mirror_op(item) for item in operations)
-    if _representation_key(mirrored_boundary, mirrored_operations) < _representation_key(
-        boundary, operations
-    ):
+    original_key = _representation_key(boundary, operations)
+    mirror_key = _representation_key(mirrored_boundary, mirrored_operations)
+    if mirror_key < original_key:
         return mirrored_boundary, mirrored_operations
     return boundary, operations
 
@@ -477,15 +476,12 @@ def normalize_strategy_tangle(
     tangle: StrategyTangle,
     policy: NormalizationPolicy = NormalizationPolicy(),
 ) -> tuple[StrategyNormalForm, StagingMetrics]:
-    """INFERENCE: deterministically stage/uncross one same-turn strategy tangle."""
+    """INFERENCE: deterministically stage/uncross one same-turn tangle."""
 
     trace, boundary, canonical_policy = _canonicalize_tangle(tangle, policy)
     operations = trace.operations
     raw_count = len(operations)
-    r1_total = 0
-    r2_total = 0
-    r3_total = 0
-    periodic_total = 0
+    r1_total = r2_total = r3_total = periodic_total = 0
 
     while True:
         before = operations
@@ -531,9 +527,7 @@ def staged_signature(normal: StrategyNormalForm) -> StagedStrategySignature:
         item.op.cycle for item in normal.operations if isinstance(item.op, Periodic)
     )
     introduced = tuple(
-        item.op.role
-        for item in normal.operations
-        if isinstance(item.op, IntroduceRole)
+        item.op.role for item in normal.operations if isinstance(item.op, IntroduceRole)
     )
     return StagedStrategySignature(
         anchor_form=normal.anchor,
