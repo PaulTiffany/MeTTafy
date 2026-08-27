@@ -12,17 +12,20 @@ from mettafy.four_color_dependency import (
 
 def clean_authority_graph() -> tuple[ProofEdge, ...]:
     return (
-        # INFERENCE: counterfactual machinery may support the open resolution theorem.
-        ProofEdge("CounterfactualTraversalLaw", "DerivedInferenceGeometry"),
-        ProofEdge("ContractExpansionInference", "DerivedInferenceGeometry"),
-        ProofEdge("NilpotentDesaturationInference", "DerivedInferenceGeometry"),
-        ProofEdge("DerivedInferenceGeometry", "EveryBlockedFocusResolvable"),
+        # INFERENCE: counterfactual machinery supports strategy-class completeness.
+        ProofEdge("CounterfactualTraversalLaw", "DerivedStrategyGeometry"),
+        ProofEdge("ContractExpansionInference", "DerivedStrategyGeometry"),
+        ProofEdge("NilpotentDesaturationInference", "DerivedStrategyGeometry"),
+        ProofEdge("RoleplayTranscript", "DerivedStrategyGeometry"),
+        ProofEdge("StrategySignature", "DerivedStrategyGeometry"),
+        ProofEdge("DerivedStrategyGeometry", "StrategyIRCompleteness"),
         ProofEdge("RealizedMapInspection", "InferenceSoundness"),
-        # BRIDGE: resolution and soundness are both required before authority exists.
-        ProofEdge("EveryBlockedFocusResolvable", "CertifiedInstantiationSoundness"),
-        ProofEdge("InferenceSoundness", "CertifiedInstantiationSoundness"),
-        # REALIZED: only certified instantiation plus the construction monotones complete.
-        ProofEdge("CertifiedInstantiationSoundness", "CompletedConstruction"),
+        # BRIDGE: complete strategy + sound inference yields one safe realized turn.
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        # REALIZED: induction begins safe and consumes one void per safe continuation.
+        ProofEdge("StrategySafeInitialState", "CompletedConstruction"),
+        ProofEdge("StrategySafeContinuation", "CompletedConstruction"),
         ProofEdge("VoidCountMonotone", "CompletedConstruction"),
         ProofEdge("InstantiationPreservesProperness", "CompletedConstruction"),
         ProofEdge("FiniteRealizedMap", "CompletedConstruction"),
@@ -44,39 +47,48 @@ def test_clean_world_model_dependency_graph() -> None:
     assert theorem_dependency_clean(edges)
 
 
-def test_imagined_state_cannot_directly_authorize_instantiation() -> None:
+def test_imagined_state_cannot_directly_authorize_safe_continuation() -> None:
     """NEGATIVE: imagined data requires an explicit inference/soundness bridge."""
 
     edges = clean_authority_graph() + (
-        ProofEdge("ImaginedState", "CertifiedInstantiationSoundness"),
+        ProofEdge("ImaginedState", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
 
-def test_counterfactual_data_may_feed_inference_before_the_bridge() -> None:
+def test_counterfactual_data_may_feed_strategy_completeness_before_bridge() -> None:
     """INFERENCE/BRIDGE: imagination is lawful upstream of an explicit theorem."""
 
     edges = (
-        ProofEdge("ImaginedState", "EveryBlockedFocusResolvable"),
-        ProofEdge("EveryBlockedFocusResolvable", "CertifiedInstantiationSoundness"),
-        ProofEdge("InferenceSoundness", "CertifiedInstantiationSoundness"),
+        ProofEdge("HypotheticalMap", "StrategyIRCompleteness"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
     )
     assert inference_dependency_clean(edges)
     assert authority_bridge_clean(edges)
 
 
-def test_predicted_response_cannot_be_the_certificate_payload() -> None:
+def test_predicted_response_cannot_be_safe_continuation_payload() -> None:
     edges = (
-        ProofEdge("EveryBlockedFocusResolvable", "CertifiedInstantiationSoundness"),
-        ProofEdge("InferenceSoundness", "CertifiedInstantiationSoundness"),
-        ProofEdge("PredictedResponse", "CertifiedInstantiationSoundness"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        ProofEdge("PredictedResponse", "StrategySafeContinuation"),
     )
     assert not authority_bridge_clean(edges)
 
 
-def test_realized_completion_requires_void_monotone_and_properness() -> None:
+def test_roleplay_transcript_cannot_directly_become_realized_authority() -> None:
     edges = (
-        ProofEdge("CertifiedInstantiationSoundness", "CompletedConstruction"),
+        ProofEdge("StrategyIRCompleteness", "StrategySafeContinuation"),
+        ProofEdge("InferenceSoundness", "StrategySafeContinuation"),
+        ProofEdge("RoleplayTranscript", "StrategySafeContinuation"),
+    )
+    assert not authority_bridge_clean(edges)
+
+
+def test_realized_completion_requires_initial_safety_void_monotone_and_properness() -> None:
+    edges = (
+        ProofEdge("StrategySafeContinuation", "CompletedConstruction"),
         ProofEdge("InstantiationPreservesProperness", "CompletedConstruction"),
         ProofEdge("FiniteRealizedMap", "CompletedConstruction"),
     )
@@ -98,18 +110,18 @@ def test_counterfactual_traversal_cannot_jump_directly_to_four_color_theorem() -
     assert not theorem_dependency_clean(edges)
 
 
-def test_held_out_authority_cannot_supply_blocked_focus_resolution() -> None:
+def test_held_out_authority_cannot_supply_strategy_completeness() -> None:
     edges = (
-        ProofEdge("HeldOutRocqAuthority", "EveryBlockedFocusResolvable"),
+        ProofEdge("HeldOutRocqAuthority", "StrategyIRCompleteness"),
     )
     assert not inference_dependency_clean(edges)
 
 
-def test_theorem_requires_the_open_inference_obligation() -> None:
+def test_theorem_requires_strategy_completeness() -> None:
     edges = tuple(
         edge
         for edge in clean_authority_graph()
-        if edge.premise != "EveryBlockedFocusResolvable"
-        and edge.conclusion != "EveryBlockedFocusResolvable"
+        if edge.premise != "StrategyIRCompleteness"
+        and edge.conclusion != "StrategyIRCompleteness"
     )
     assert not theorem_dependency_clean(edges)
