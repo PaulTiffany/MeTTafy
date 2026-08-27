@@ -71,7 +71,9 @@ theorem strategyForced_responseRank_one
     {responses : StrategyResponseQuotient}
     (forced : StrategyForced responses) :
     responseRank responses = 1 := by
-  rcases forced with ⟨response, rfl⟩
+  rcases forced with ⟨response, classesEq⟩
+  unfold responseRank
+  rw [classesEq]
   rfl
 
 /-- Every forcing step removes at least one live response class. -/
@@ -97,6 +99,7 @@ theorem strategyCheckmate_no_forcing
   intro step
   have zero : responseRank before.responses = 0 :=
     (strategyCheckmate_iff_responseRank_zero before.responses).1 mate
+  unfold StrategyForcingStep at step
   rw [zero] at step
   exact Nat.not_lt_zero _ step
 
@@ -113,7 +116,9 @@ theorem forcing_from_forced_reaches_checkmate
   have one : responseRank before.responses = 1 :=
     strategyForced_responseRank_one forced
   have belowOne : responseRank after.responses < 1 := by
-    simpa [one] using step
+    unfold StrategyForcingStep at step
+    rw [one] at step
+    exact step
   have zero : responseRank after.responses = 0 := by
     omega
   exact (strategyCheckmate_iff_responseRank_zero after.responses).2 zero
