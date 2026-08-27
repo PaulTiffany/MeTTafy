@@ -103,14 +103,17 @@ theorem imaginedColor_ne_anchor
   exact direction.2 collapsed
 
 /--
-Relative to one anchor, every distinct coloration has a unique nonzero V4
-imaginary direction.  This is the exact algebraic form of "three alternatives".
+Relative to one anchor, every distinct coloration has one unique nonzero V4
+imaginary direction.  Uniqueness is written explicitly to keep this kernel free
+of extra notation/import requirements.
 -/
 theorem distinct_imagined_color_has_unique_direction
     (anchor imagined : V4)
     (different : imagined ≠ anchor) :
-    ∃! direction : ImaginaryDirection,
-      imagined = imaginedColor anchor direction := by
+    ∃ direction : ImaginaryDirection,
+      imagined = imaginedColor anchor direction ∧
+      ∀ other : ImaginaryDirection,
+        imagined = imaginedColor anchor other → other = direction := by
   have anchorDifferent : anchor ≠ imagined := by
     intro equal
     exact different equal.symm
@@ -118,17 +121,16 @@ theorem distinct_imagined_color_has_unique_direction
     (difference_nonzero_iff_ne anchor imagined).2 anchorDifferent
   let witness : ImaginaryDirection :=
     ⟨difference anchor imagined, nonzeroDifference⟩
-  refine ⟨witness, ?_, ?_⟩
-  · exact (add_difference_left anchor imagined).symm
-  · intro other otherEq
-    apply Subtype.ext
-    have recovered : difference anchor imagined = other.1 := by
-      calc
-        difference anchor imagined =
-            difference anchor (imaginedColor anchor other) :=
-          congrArg (difference anchor) otherEq
-        _ = other.1 := difference_add_left_cancel anchor other.1
-    exact recovered.symm
+  refine ⟨witness, (add_difference_left anchor imagined).symm, ?_⟩
+  intro other otherEq
+  apply Subtype.ext
+  have recovered : difference anchor imagined = other.1 := by
+    calc
+      difference anchor imagined =
+          difference anchor (imaginedColor anchor other) :=
+        congrArg (difference anchor) otherEq
+      _ = other.1 := difference_add_left_cancel anchor other.1
+  exact recovered.symm
 
 /-- The three explicit imagined alternatives relative to one anchor. -/
 def imaginaryAlternatives (anchor : V4) : List V4 :=
@@ -188,8 +190,10 @@ def fuseDirection
 theorem distinct_directions_have_unique_third
     (left right : ImaginaryDirection)
     (different : left ≠ right) :
-    ∃! third : ImaginaryDirection,
-      add left.1 right.1 = third.1 := by
+    ∃ third : ImaginaryDirection,
+      add left.1 right.1 = third.1 ∧
+      ∀ other : ImaginaryDirection,
+        add left.1 right.1 = other.1 → other = third := by
   refine ⟨fuseDirection left right different, rfl, ?_⟩
   intro other equal
   apply Subtype.ext
@@ -202,8 +206,10 @@ outcomes: identity, or one of the three nonzero imaginary directions.
 theorem imaginary_word_has_small_algebraic_normal_form
     (word : List ImaginaryDirection) :
     netDirection word = V4.zero ∨
-      ∃! direction : ImaginaryDirection,
-        netDirection word = direction.1 := by
+      ∃ direction : ImaginaryDirection,
+        netDirection word = direction.1 ∧
+        ∀ other : ImaginaryDirection,
+          netDirection word = other.1 → other = direction := by
   by_cases zeroPhase : netDirection word = V4.zero
   · exact Or.inl zeroPhase
   · refine Or.inr ⟨⟨netDirection word, zeroPhase⟩, rfl, ?_⟩
