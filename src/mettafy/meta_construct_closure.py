@@ -48,15 +48,23 @@ class MetaConstructPrefix:
 
 @dataclass(frozen=True)
 class TwoFamilyCover:
-    """INFERENCE: witnesses that both named construct families were considered.
+    """INFERENCE: both named families considered for one realized obligation.
 
     ``exhaustive`` is deliberately supplied rather than inferred. The code can
     enumerate the research ontology; it cannot prove the planar classification
     theorem that connects that ontology to every admissible continuation.
     """
 
+    episode: InferenceEpisode
     prefixes: tuple[MetaConstructPrefix, ...]
     exhaustive: bool = False
+
+    def __post_init__(self) -> None:
+        realized_graph = dict(self.episode.realized.graph)
+        for prefix in self.prefixes:
+            for state in prefix.states:
+                if dict(state.coloring.graph) != realized_graph:
+                    raise ValueError("meta-construct prefix belongs to a different graph")
 
     @property
     def observed_families(self) -> frozenset[MetaConstructFamily]:
@@ -130,16 +138,28 @@ def realized_void_delta(end: LocalEnd) -> int:
 
 @dataclass(frozen=True)
 class ClosureObligation:
-    """Current independent Track-B closure boundary.
+    """Current independent Track-B closure boundary for one map and focus.
 
     Classification closure alone is not Four Color closure. A closed local proof
-    obligation additionally needs at least one sound actual-map void/end result.
-    This makes the missing theorem mechanically visible instead of promoting an
-    inference-only pattern catalogue into construction authority.
+    obligation additionally needs a sound actual-map void/end for this same
+    realized state and focus. Unrelated certificates cannot satisfy the ledger.
     """
 
     cover: TwoFamilyCover
     ends: tuple[LocalEnd, ...]
+
+    def __post_init__(self) -> None:
+        expected_map = self.cover.episode.realized
+        expected_focus = self.cover.episode.focus
+        for end in self.ends:
+            if isinstance(end, Restart):
+                same_map = end.episode.realized is expected_map
+                same_focus = end.episode.focus == expected_focus
+            else:
+                same_map = end.certificate.realized is expected_map
+                same_focus = end.certificate.focus == expected_focus
+            if not same_map or not same_focus:
+                raise ValueError("local end belongs to a different realized obligation")
 
     @property
     def has_certified_void_end(self) -> bool:
