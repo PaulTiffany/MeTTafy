@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from mettafy.active_inference_boundary import CertifiedInstantiation, InferenceEpisode, inspect
+from mettafy.active_inference_boundary import (
+    CertifiedInstantiation,
+    InferenceEpisode,
+    inspect,
+)
 from mettafy.color_construction import ConstructionState
 from mettafy.meta_construct_closure import (
     ClosureObligation,
