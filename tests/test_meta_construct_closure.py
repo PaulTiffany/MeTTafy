@@ -10,6 +10,7 @@ from mettafy.active_inference_boundary import (
 from mettafy.color_construction import ConstructionState
 from mettafy.meta_construct_closure import (
     ClosureObligation,
+    DecisionReachability,
     ImaginaryProjection,
     ImaginationBox,
     MetaConstructFamily,
@@ -17,6 +18,7 @@ from mettafy.meta_construct_closure import (
     TwoFamilyCover,
     end_as_restart,
     end_as_void,
+    end_from_decision,
     realized_void_delta,
 )
 
@@ -112,6 +114,91 @@ def test_imaginary_stuttering_does_not_become_construction_history() -> None:
     assert "v" not in realized.coloring
 
 
+def test_decision_reachability_is_an_auditable_if_then_chain() -> None:
+    realized = wheel_state((0, 1, 0, 1, 2))
+    projection = ImaginaryProjection(
+        box=ImaginationBox(realized=realized, focus="v"),
+        project=lambda witness: 3 if witness == "decide" else None,
+    )
+    allowed = {
+        ("seed", "if-red-team"),
+        ("if-red-team", "if-alternating"),
+        ("if-alternating", "decide"),
+    }
+    reachability = DecisionReachability(
+        projection=projection,
+        states=("seed", "if-red-team", "if-alternating", "decide"),
+        admissible_step=lambda before, after: (before, after) in allowed,
+    )
+
+    assert reachability.witnessed
+    certificate = reachability.compress()
+    assert certificate.valid
+    assert certificate.color == 3
+    assert certificate.realized is realized
+    assert "v" not in realized.coloring
+
+
+def test_decision_reachability_has_no_a_priori_chain_length_bound() -> None:
+    realized = wheel_state((0, 1, 0, 1, 2))
+    projection = ImaginaryProjection(
+        box=ImaginationBox(realized=realized, focus="v"),
+        project=lambda witness: 3 if witness == 10_000 else None,
+    )
+    reachability = DecisionReachability(
+        projection=projection,
+        states=tuple(range(10_001)),
+        admissible_step=lambda before, after: (
+            isinstance(before, int) and isinstance(after, int) and after == before + 1
+        ),
+    )
+
+    assert tuple(reachability.__dataclass_fields__) == (
+        "projection",
+        "states",
+        "admissible_step",
+    )
+    assert set(reachability.__dataclass_fields__).isdisjoint(
+        {"max_depth", "max_steps", "budget"}
+    )
+    assert reachability.witnessed
+    assert reachability.compress().color == 3
+
+
+def test_decision_reachability_fails_closed_on_broken_implication() -> None:
+    realized = wheel_state((0, 1, 0, 1, 2))
+    projection = ImaginaryProjection(
+        box=ImaginationBox(realized=realized, focus="v"),
+        project=lambda witness: 3 if witness == "decide" else None,
+    )
+    reachability = DecisionReachability(
+        projection=projection,
+        states=("seed", "unsupported-jump", "decide"),
+        admissible_step=lambda before, after: (before, after) == ("seed", "decide"),
+    )
+
+    assert not reachability.witnessed
+    with pytest.raises(ValueError, match="non-admissible step"):
+        reachability.compress()
+
+
+def test_decision_reachability_requires_a_deciding_endpoint() -> None:
+    realized = wheel_state((0, 1, 0, 1, 2))
+    projection = ImaginaryProjection(
+        box=ImaginationBox(realized=realized, focus="v"),
+        project=lambda _witness: None,
+    )
+    reachability = DecisionReachability(
+        projection=projection,
+        states=("seed", "still-thinking"),
+        admissible_step=lambda _before, _after: True,
+    )
+
+    assert reachability.witnessed
+    with pytest.raises(ValueError, match="does not end at a projected answer"):
+        reachability.compress()
+
+
 def test_no_projected_answer_remains_inside_imagination_box() -> None:
     realized = wheel_state((0, 1, 0, 2, 3))
     projection = ImaginaryProjection(
@@ -158,7 +245,7 @@ def test_classification_exhaustiveness_alone_does_not_create_authority() -> None
 
     assert cover.classification_closed
     assert not obligation.closed
-    assert obligation.missing == ("sound imagination-projection reachability",)
+    assert obligation.missing == ("admissible Decision Reachability chain",)
 
 
 def test_blocked_abacd_focus_cannot_be_promoted_to_void_end() -> None:
@@ -196,17 +283,20 @@ def test_unrelated_certificate_cannot_close_another_obligation() -> None:
         ClosureObligation(cover=cover, ends=(end_as_void(certificate),))
 
 
-def test_local_closure_requires_both_open_mathematical_obligations() -> None:
+def test_local_closure_uses_witnessed_decision_reachability() -> None:
     realized = wheel_state((0, 1, 0, 1, 2))
     cover = both_family_cover(realized, exhaustive=True)
     projection = ImaginaryProjection(
         box=ImaginationBox(realized=realized, focus="v"),
-        project=lambda _witness: 3,
+        project=lambda witness: 3 if witness == "answer" else None,
     )
-    certificate = projection.compress({"answer": "found inside the box"})
+    reachability = DecisionReachability(
+        projection=projection,
+        states=("observe", "if-this", "then-this", "answer"),
+        admissible_step=lambda _before, _after: True,
+    )
 
-    assert certificate is not None
-    obligation = ClosureObligation(cover=cover, ends=(end_as_void(certificate),))
+    obligation = ClosureObligation(cover=cover, ends=(end_from_decision(reachability),))
 
     assert obligation.closed
     assert obligation.missing == ()
