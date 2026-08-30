@@ -433,7 +433,9 @@ For every strategy-safe nonterminal realized map, there must exist one focus and
 one sound imagination interface containing a finite witnessed admissible chain to
 a deciding endpoint whose realized successor remains strategy-safe.
 
-The chain has no a-priori length bound. No inhabitant is supplied globally here.
+The transferable residue uses ordinary `Type`; local imagination remains fully
+universe-polymorphic. The chain has no a-priori length bound. No inhabitant is
+supplied globally here.
 -/
 def DecisionReachabilityComplete
     {Vertex : Type u} [DecidableEq Vertex]
@@ -442,7 +444,7 @@ def DecisionReachabilityComplete
     safe map →
     HasVoid map →
     ∃ (focus : Focus Vertex)
-      (box : ImaginationBox Vertex map focus)
+      (box : ImaginationBox.{u, 0} Vertex map focus)
       (projection : ImaginaryProjection box)
       (seed : box.Witness)
       (refines : box.Witness → box.Witness → Prop)
