@@ -101,6 +101,53 @@ class ImaginaryProjection:
 
 
 @dataclass(frozen=True)
+class DecisionReachability:
+    """WITNESS: one finite admissible `if-this-then-this` decision chain.
+
+    The chain is a transferable residue, not a search budget. There is no maximum
+    length field and no claim that imagination considered only these states. A
+    successful research episode may branch, restart, stutter, or change
+    representation before leaving this finite auditable spine.
+
+    `admissible_step(a, b)` is the caller-supplied refinement obligation between
+    adjacent witness states. Only the final state is projected. Even a valid
+    chain has zero construction authority until that endpoint survives the
+    projection's actual-map admissibility check.
+    """
+
+    projection: ImaginaryProjection
+    states: tuple[object, ...]
+    admissible_step: Callable[[object, object], bool]
+
+    def __post_init__(self) -> None:
+        if not self.states:
+            raise ValueError("Decision Reachability requires at least one witness state")
+
+    @property
+    def endpoint(self) -> object:
+        return self.states[-1]
+
+    @property
+    def witnessed(self) -> bool:
+        """Whether every adjacent implication/refinement step is admissible."""
+
+        return all(
+            self.admissible_step(before, after)
+            for before, after in zip(self.states, self.states[1:], strict=False)
+        )
+
+    def compress(self) -> CertifiedInstantiation:
+        """Collapse a witnessed deciding chain through the existing authority wall."""
+
+        if not self.witnessed:
+            raise ValueError("Decision Reachability chain contains a non-admissible step")
+        certificate = self.projection.compress(self.endpoint)
+        if certificate is None:
+            raise ValueError("Decision Reachability chain does not end at a projected answer")
+        return certificate
+
+
+@dataclass(frozen=True)
 class TwoFamilyCover:
     """INFERENCE: both named families considered for one realized obligation.
 
@@ -177,6 +224,12 @@ def end_as_void(certificate: CertifiedInstantiation) -> VoidEnd:
     return VoidEnd(certificate=certificate)
 
 
+def end_from_decision(reachability: DecisionReachability) -> VoidEnd:
+    """BRIDGE: a witnessed deciding chain may end only through its checked projection."""
+
+    return end_as_void(reachability.compress())
+
+
 def realized_void_delta(end: LocalEnd) -> int:
     """Measure construction-time progress, ignoring arbitrary test-time length.
 
@@ -231,5 +284,5 @@ class ClosureObligation:
         if not self.cover.exhaustive:
             missing.append("planar two-family exhaustiveness theorem")
         if not self.has_certified_void_end:
-            missing.append("sound imagination-projection reachability")
+            missing.append("admissible Decision Reachability chain")
         return tuple(missing)
