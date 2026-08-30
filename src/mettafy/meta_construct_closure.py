@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 
@@ -44,6 +45,59 @@ class MetaConstructPrefix:
         """Every finite prefix is allowed to terminate the current test branch."""
 
         return True
+
+
+@dataclass(frozen=True)
+class ImaginationBox:
+    """INFERENCE: open imaginary work bounded only by one authority target.
+
+    The box deliberately carries no path, depth, step budget, or finite-state
+    schema. An imaginary witness may be any caller-supplied Python object. The
+    only fixed boundary is the realized map/focus that any projected answer must
+    satisfy before it can acquire construction authority.
+
+    This is not a claim that a concrete program can execute an infinite amount
+    of work. It is an interface claim: theorem machinery does not impose a
+    search-depth bound merely to make counterfactual reasoning proof relevant.
+    """
+
+    realized: ConstructionState
+    focus: str
+
+    def __post_init__(self) -> None:
+        if self.focus not in self.realized.graph:
+            raise ValueError(f"unknown focus vertex {self.focus!r}")
+        if self.focus in self.realized.coloring:
+            raise ValueError("imagination focus must remain void in the realized map")
+
+
+@dataclass(frozen=True)
+class ImaginaryProjection:
+    """BRIDGE CANDIDATE: compress arbitrary imaginary structure to `V4 | None`.
+
+    `project` may inspect any caller-defined witness structure. A result of
+    `None` remains wholly imaginary. A proposed color is still powerless until
+    it validates as a `CertifiedInstantiation` on the unchanged realized map.
+    """
+
+    box: ImaginationBox
+    project: Callable[[object], int | None]
+
+    def compress(self, witness: object) -> CertifiedInstantiation | None:
+        color = self.project(witness)
+        if color is None:
+            return None
+        certificate = CertifiedInstantiation(
+            realized=self.box.realized,
+            focus=self.box.focus,
+            color=color,
+        )
+        if not certificate.valid:
+            raise ValueError(
+                "imaginary projection proposed a color that is not admissible "
+                "on the realized authority target"
+            )
+        return certificate
 
 
 @dataclass(frozen=True)
@@ -177,5 +231,5 @@ class ClosureObligation:
         if not self.cover.exhaustive:
             missing.append("planar two-family exhaustiveness theorem")
         if not self.has_certified_void_end:
-            missing.append("sound certified-instantiation reachability")
+            missing.append("sound imagination-projection reachability")
         return tuple(missing)
