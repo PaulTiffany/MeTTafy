@@ -10,8 +10,8 @@ from mettafy.active_inference_boundary import (
 from mettafy.color_construction import ConstructionState
 from mettafy.meta_construct_closure import (
     ClosureObligation,
-    ImaginationBox,
     ImaginaryProjection,
+    ImaginationBox,
     MetaConstructFamily,
     MetaConstructPrefix,
     TwoFamilyCover,
