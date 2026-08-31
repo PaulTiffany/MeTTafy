@@ -2,58 +2,74 @@
 
 These files are deliberately bounded formal witnesses for the independent Four Color research lane.
 
-- `FourColorCore.lean` — V4 palette algebra, fixed-region and hard-frontier separation, degree-five frontier facts, and atomic bichromatic turn preservation.
-- `C2ContactVoid.lean` — in-game contact/void semantics, Brown's embedded coarse interface, canonical `A B A C D` carrier incidence, and the reduction of clean-carrier existence to one explicit planar carrier-interaction premise.
-- `C2ForcedThird.lean` — the red-team forced-third law: fixing one lower/reference state leaves three nontrivial upward states, and any two distinct upward states uniquely determine the third by `r + x + y`.
-- `C2CrossCutAffordance.lean` — a bounded realized cross-cut affordance model. It records what follows from a supplied cut/escape bundle; it does not establish that actual planar geometry supplies a useful one-step escape.
+- `FourColorCore.lean` — V4 palette algebra, fixed-region and hard-frontier separation, degree-five frontier facts, boundary-edge V4 differences, and atomic bichromatic turn preservation.
+- `ImaginaryColorDirections.lean` — the step-3 decision surface: relative to any anchor coloration there are exactly three nonidentity V4 directions, i.e. `total colors - 1 = 3`; every distinct imagined coloration has one unique such direction, and arbitrarily long imaginary words normalize to identity or one of those three directions.
+- `C2ContactVoid.lean` — in-game contact/void semantics, Brown's embedded coarse interface, canonical `A B A C D` boundary/carrier incidence, and the contact-void reduction.
+- `C2ForcedThird.lean` — the forced-third law on the same three-direction surface: fixing one reference state leaves exactly three upward states, and any two distinct upward states uniquely determine the third by `r + x + y`.
+- `C2CrossCutAffordance.lean` — operational cross-cut semantics: restricting one upward opportunity forces escape to the unique third upward state once the cross-cut event is present.
 - `BrownAffordance.lean` — embedded-player relevance: Brown distinguishes occupancy (`void` versus `colored`) and is present in the game, but its coarse interface cannot reconstruct the color-dependent affordance profile, so it is not color-relevant to local play.
-- `RedTeamComposition.lean` — one-turn composition for the hard degree-five game: a proper one-site frontier rewrite either re-enters the same hard/A-B-A red-team normal form or removes the old seed color from the frontier and thereby opens a concrete focus-color opportunity. A successor that remains blocked therefore re-enters the same normal form. The separate finite-stop theorem remains conditional on the declared acted/void-blocked action surface; it is not a proof that actual Kempe play necessarily exhausts those actions.
-- `TestTimeActiveInference.lean` — test-time/receding-horizon control semantics. A current action is selected from the current realized state, exactly one successor is realized, and that actual successor is re-observed. The canonical `A B A C D -> A B D C D` witness proves that a proper repeated-color action can remain hard and blocked, so one-step reducibility is explicitly rejected. The remaining target is precommit strategy safety: every strategy-safe nonterminal realized map must admit one certified instantiation that remains strategy-safe.
-- `MetaConstructClosure.lean` — two-family closure, open imagination, and Decision Reachability. Arbitrary test-time reasoning leaves a finite admissible `if-this -> then-this` residue; `ProjectionSound` gates the deciding endpoint against the unchanged actual map; `compressDecision` erases the imaginary residue into one `CertifiedInstantiation`; and `decisionReachabilityComplete_implies_safe_instantiation` connects that transferable proof object to the existing precommit construction target. `PlanarTwoFamilyExhaustive` remains an explicit planar classification obligation.
-- `MapMakerPareto.lean` — SRMF-specialized MapMaker strategy algebra. The primitive Pareto frontier is: global overview; local neighbor/expansion imagination; interactive reaction/counter-play imagination; and blind draw. The first three generate Decision Reachability refinements and cannot write reality. Draw is the only write-capable primitive and has no perception/imagination capability. The four modes are pairwise non-dominating on their declared irreducible capability axes and jointly capability-complete. The stronger behavioral theorem that every admissible MapMaker strategy reduces to a composition of the four modes is named `MapMakerParetoComplete` and remains explicit rather than being inferred from the enum.
-- `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum. Compatible coherent primitives compose coherently; regrouping a composition tree preserves its game projection; and the existing conditional B/C/D void-stop theorem lifts into the generic surface semantics.
-- `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites. `TerminalResult` accepts only a `CompletedMap`, so partial maps and intermediate turns cannot be fed to the terminal verifier by type. The same map-maker may pause play to inspect the partial map; this is a mode boundary, not a permanent identity split.
+- `RedTeamComposition.lean` — one-turn composition for the hard degree-five game plus the finite step-3 stop law: two distinct upward states and their forced third exhaust the three-direction action surface; if all three have acted and void blocks replay, the local game is stopped. The five realized boundary slots participate in the same V4 surface; they do not add another decision dimension.
+- `TestTimeActiveInference.lean` — test-time/receding-horizon control semantics. Imaginary action is not construction history; only a certified actual-map choice crosses into realized construction.
+- `MetaConstructClosure.lean` — open imagination and Decision Reachability as a transferable audit residue. `ProjectionSound` gates an imagined endpoint against the unchanged actual map and `compressDecision` erases the imaginary residue into one `CertifiedInstantiation`.
+- `MapMakerPareto.lean` — the complete MapMaker operational product and its preserved order: `Do:Observe -> Imagine:Observe -> Imagine:Act* -> Do:Act`. The four primitive modes are exactly `Do/Imagine × Observe/Act`. Phase 3 is not an additional open completeness theorem: its decision surface is the already-banked three nonidentity V4 directions. Proper boundary-edge differences are nonzero V4 differences and therefore lie on that same surface. Any all-maps safe-successor package is named separately as realization closure rather than decision completeness.
+- `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum.
+- `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites; terminal inspection remains outside intermediate play.
 
 ## Current operational frame
 
-The MapMaker control alphabet is now explicitly separated into three precommit reasoning modes and one authority-crossing mode:
+The MapMaker strategy surface is the full product
 
 ```text
-overview
-  | local expansion
-  | counter-play
-  ... repeat / branch / restart in imagination as useful ...
-  -> finite Decision Reachability residue
-  -> sound projection
-  -> draw, with no perception during the write
-  -> re-observe the realized successor
+{Do, Imagine} × {Observe, Act}
 ```
 
-Equivalently, the transferable control word has the normal form:
+with the preserved order
 
 ```text
-(overview | local-expansion | counter-play)* ; draw
+1. Do: Observe
+2. Imagine: Observe
+3. Imagine: Act*
+4. Do: Act
 ```
 
-The star is not a search bound. Imagination may range freely inside the authority box. The finite word is the auditable residue retained after a deciding chain is found.
+or, using the implementation names,
 
-A hard successor is therefore a legitimate observation, not evidence that the realized action was invalid. The proof does **not** require every hard state to open in one move, nor does it require imaginary dynamics to descend monotonically.
+```text
+overview ; local-expansion ; counter-play* ; draw
+```
 
-The existing Python `ImmediateControlCertificate` / `ColorationControlSurface` already follows this receding-horizon discipline on graph-native Kempe controls: immediate access is derived from the current construction, one control is realized, and any later control is recomputed from the resulting state. Bounded path search remains an audit/falsification surface rather than a proof-relevant future route.
+Phase 3 is the decision-complete surface. For the four-color palette:
 
-## Current proof debt
+```text
+total colors - 1 = 3
+```
 
-These files do not claim a new proof of the Four Color Theorem. In particular:
+because a fixed reference/anchor removes the identity direction and leaves exactly the three nonzero V4 differences. `ImaginaryColorDirections.lean` proves the exact three-direction cover and uniqueness; `C2ForcedThird.lean` proves that two distinct upward directions force the unique third; `RedTeamComposition.lean` proves that those three exhaust the local upward action surface under the void-blocked stop rule.
 
-- clean carrier existence is weaker than one-step color freeing;
-- the canonical hard-to-hard witness mechanically blocks any silent promotion of a proper/clean current move into one-step reducibility;
-- test-time actionability alone is not global closure;
-- `DecisionReachabilityComplete` remains the strategy-level theorem target: every strategy-safe nonterminal realized state must have a finite admissible deciding residue whose sound projection yields a safe successor;
-- the current two-meta-construct candidate still owes the actual planar theorem that every relevant continuation classifies as red-team or alternating-pair;
-- `MapMakerParetoComplete` remains the behavioral reduction target: every admissible MapMaker strategy must be shown reducible, without loss of relevant capability/decision behavior, to compositions of overview, local expansion, counter-play, and blind draw;
-- capability coverage of the four declared axes is not by itself behavioral completeness;
-- no monotone progress scalar is assumed necessary;
-- no stored future route is admitted as proof state;
-- the construct grammar still does not prove that current primitives generate every planar map or that arbitrary map completion follows.
+The boundary is not outside this count. `FourColorCore.lean` represents each cyclic boundary contact by a V4 difference. On a proper boundary each adjacent pair differs, so each boundary-edge mode is nonzero and therefore belongs to the same three-direction decision surface. Five boundary locations can reuse those three directions; locations are not additional colors or additional decision dimensions.
 
-PR #68's stronger imagined-escape contract is not part of this authority surface: an imagined response may guide test-time choice, but it may not carry the missing success theorem as an assumption.
+Imagination may still branch, reverse, stutter, restart, or run arbitrarily far. The finite Decision Reachability chain is only the transferable record of one consequence chain inside phase 3. It does not create a new strategy phase and it does not enlarge the three-direction surface.
+
+The authority order remains:
+
+```text
+Do:Observe
+-> Imagine:Observe
+-> Imagine:Act* over the three-direction surface
+-> sound projection
+-> Do:Act with no perception during the write
+-> re-observe the realized successor
+```
+
+## Status discipline
+
+These witnesses remain separated by what they establish rather than by inventing duplicate completeness targets.
+
+- **Primitive strategy completeness is banked:** the four MapMaker modes uniquely cover the `Do/Imagine × Observe/Act` product.
+- **Step-3 decision completeness is banked:** the minimal shared V4 decision surface has exactly three nonidentity directions (`4 - 1`), including proper boundary-edge differences.
+- **Consequence exhaustion is banked:** pair + forced third exhausts the three upward states, and the existing acted/void-blocked theorem supplies the local stop condition.
+- **Decision Reachability is a transfer/audit representation, not another completeness obligation.**
+- **Construction authority remains separate:** only a sound actual-map `CertifiedInstantiation` can become `Do:Act`.
+- `SafeOrderedRealizationComplete` is the name for any global all-maps safe-realization package; it is deliberately not called decision completeness.
+
+No monotone law over imagination is required, and no stored future route is admitted as construction state.
