@@ -76,22 +76,32 @@ def modeOfCell : OperationalCell → MapMakerMode
   cases domain <;> cases operation <;> rfl
 
 /-- The primitive alphabet is equivalent to the complete 2 x 2 product. -/
-def mapMakerModeProductEquiv : MapMakerMode ≃ OperationalCell where
+def mapMakerModeProductEquiv : Equiv MapMakerMode OperationalCell where
   toFun := modeCell
   invFun := modeOfCell
   left_inv := modeOfCell_modeCell
   right_inv := modeCell_modeOfCell
+
+/-- The cell map is injective: two primitive names cannot occupy one product cell. -/
+theorem modeCell_injective : Function.Injective modeCell := by
+  intro lhs rhs same
+  calc
+    lhs = modeOfCell (modeCell lhs) := (modeOfCell_modeCell lhs).symm
+    _ = modeOfCell (modeCell rhs) := congrArg modeOfCell same
+    _ = rhs := modeOfCell_modeCell rhs
 
 /--
 Primitive Pareto completeness: every Do/Imagine x Observe/Act cell is represented
 by exactly one MapMaker mode. There is no fifth primitive operational cell.
 -/
 theorem MapMakerParetoComplete (cell : OperationalCell) :
-    ∃! mode : MapMakerMode, modeCell mode = cell := by
+    ∃ mode : MapMakerMode,
+      modeCell mode = cell ∧
+        ∀ other : MapMakerMode, modeCell other = cell → other = mode := by
   refine ⟨modeOfCell cell, modeCell_modeOfCell cell, ?_⟩
-  intro mode same
-  apply mapMakerModeProductEquiv.injective
-  simpa [mapMakerModeProductEquiv] using same.trans (modeCell_modeOfCell cell).symm
+  intro other same
+  apply modeCell_injective
+  exact same.trans (modeCell_modeOfCell cell).symm
 
 /-! ## Pareto capability surface -/
 
