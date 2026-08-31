@@ -17,10 +17,10 @@ The first three phases are test-time reasoning. The fourth is the sole authority
 crossing. The consequence chain in phase 3 may be arbitrarily long; a successful
 run leaves a finite auditable residue.
 
-This file now proves primitive operational completeness directly: the four modes
-are uniquely equivalent to Do/Imagine x Observe/Act. The remaining Four Color
-burden is downstream: every strategy-safe nonterminal realized state must admit
-an ordered phase-1/2/3 decision whose sound projection authorizes phase 4.
+This file proves primitive operational completeness directly: the four modes are
+exactly the Do/Imagine x Observe/Act product. The remaining Four Color burden is
+downstream: every strategy-safe nonterminal realized state must admit an ordered
+phase-1/2/3 decision whose sound projection authorizes phase 4.
 -/
 
 namespace MeTTafy.FourColor
@@ -75,12 +75,10 @@ def modeOfCell : OperationalCell → MapMakerMode
   rcases cell with ⟨domain, operation⟩
   cases domain <;> cases operation <;> rfl
 
-/-- The primitive alphabet is equivalent to the complete 2 x 2 product. -/
-def mapMakerModeProductEquiv : Equiv MapMakerMode OperationalCell where
-  toFun := modeCell
-  invFun := modeOfCell
-  left_inv := modeOfCell_modeCell
-  right_inv := modeCell_modeOfCell
+/-- Every product cell is occupied by a primitive mode. -/
+theorem modeCell_surjective (cell : OperationalCell) :
+    ∃ mode : MapMakerMode, modeCell mode = cell := by
+  exact ⟨modeOfCell cell, modeCell_modeOfCell cell⟩
 
 /-- The cell map is injective: two primitive names cannot occupy one product cell. -/
 theorem modeCell_injective : Function.Injective modeCell := by
@@ -250,9 +248,7 @@ theorem canonicalProgram_capability_complete
 
 /-! ## Ordered Decision Reachability -/
 
-/--
-A precommit refinement step is labelled by one of the three non-writing phases.
--/
+/-- A precommit refinement step is labelled by one of the three non-writing phases. -/
 abbrev PrecommitAdvance (Witness : Type v) :=
   Witness → Witness → PrecommitMode → Prop
 
