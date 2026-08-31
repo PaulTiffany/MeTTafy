@@ -5,17 +5,21 @@ import pytest
 from mettafy.color_construction import ConstructionState
 from mettafy.mapmaker_strategy import (
     CANONICAL_PARETO_PROGRAM,
-    MODE_CAPABILITIES,
-    PRECOMMIT_MODES,
     MapMakerCapability,
     MapMakerDecision,
     MapMakerMode,
+    MODE_CAPABILITIES,
+    PRECOMMIT_MODES,
     capability_complete,
     is_blind_draw_suffix,
     is_precommit_program,
     mode_dominates,
 )
-from mettafy.meta_construct_closure import DecisionReachability, ImaginaryProjection, ImaginationBox
+from mettafy.meta_construct_closure import (
+    DecisionReachability,
+    ImaginaryProjection,
+    ImaginationBox,
+)
 
 
 BOUNDARY = ("a", "b", "c", "d", "e")
