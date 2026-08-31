@@ -38,6 +38,16 @@ and a formal Four Color development in which:
 
 The commits immediately preceding the frozen base include the explicit proof-frontier reduction and phase-3 constraint-collapse witnesses.
 
+## Contemporaneous process record
+
+The following shared ChatGPT conversation is included as supporting provenance for the research chronology surrounding this snapshot:
+
+- https://chatgpt.com/share/6a950760-0f10-83e9-a535-4a36ae83a23a?ogimg=plain
+
+The conversation records contemporaneous discussion around the Four Color research lane, including the recognition of the Reidemeister/topology connection, the decision to preserve the current proof frontier, and the creation of this priority checkpoint.
+
+This external conversation is **process evidence, not mathematical authority**. The formal claims remain grounded in the repository files and commit ancestry. Availability or presentation of the external URL is controlled by its hosting service; a later archival package should preserve this reference and, where permitted, an immutable export or digest of the shared record.
+
 ## Status discipline
 
 This snapshot records a research frontier. It does **not**, merely by being timestamped or archived, assert that a complete proof of the Four Color Theorem has been established.
