@@ -1,4 +1,5 @@
 import examples.four_color.MetaConstructClosure
+import examples.four_color.ImaginaryColorDirections
 
 /-
 Copyright (c) 2026 Paul Carver Tiffany III.
@@ -14,13 +15,16 @@ The previous ordering is preserved as the complete operational 2 x 2 product:
 4. Do: Act           -- commit one certified state with no perception during the write.
 
 The first three phases are test-time reasoning. The fourth is the sole authority
-crossing. The consequence chain in phase 3 may be arbitrarily long; a successful
-run leaves a finite auditable residue.
+crossing. Phase 3 is the decision-completeness surface already banked elsewhere
+in this kernel: relative to any fixed V4 reference there are exactly `4 - 1 = 3`
+nonidentity directions. Proper boundary-edge differences are nonzero V4
+differences too, so the boundary participates in the same three-direction
+surface rather than adding another strategy dimension.
 
 This file proves primitive operational completeness directly: the four modes are
-exactly the Do/Imagine x Observe/Act product. The remaining Four Color burden is
-downstream: every strategy-safe nonterminal realized state must admit an ordered
-phase-1/2/3 decision whose sound projection authorizes phase 4.
+exactly the Do/Imagine x Observe/Act product. It also records the existing step-3
+decision-surface result at the MapMaker layer. Any later all-maps statement about
+sound realized successors is construction closure, not decision completeness.
 -/
 
 namespace MeTTafy.FourColor
@@ -246,7 +250,66 @@ theorem canonicalProgram_capability_complete
   | blindRealizedWrite =>
       exact ⟨.draw, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
 
-/-! ## Ordered Decision Reachability -/
+/-! ## Step 3: decision-surface completeness -/
+
+/--
+Step 3 does not need another reachability ontology. Relative to one fixed V4
+anchor, the only nonidentity decisions are the three nonzero V4 differences.
+This is exactly `total colors - 1 = 3` for the four-color palette.
+-/
+theorem step3_decision_surface_exactly_three :
+    ImaginaryDirection.all.length = 3 ∧
+    ImaginaryDirection.all.Nodup ∧
+      ∀ direction : ImaginaryDirection, direction ∈ ImaginaryDirection.all :=
+  ImaginaryDirection.exactly_three
+
+/-- Every distinct imagined color is represented by one unique step-3 direction. -/
+theorem step3_distinct_color_has_unique_direction
+    (anchor imagined : V4)
+    (different : imagined ≠ anchor) :
+    ∃ direction : ImaginaryDirection,
+      imagined = imaginedColor anchor direction ∧
+      ∀ other : ImaginaryDirection,
+        imagined = imaginedColor anchor other → other = direction :=
+  distinct_imagined_color_has_unique_direction anchor imagined different
+
+/--
+Proper realized boundaries use the same step-3 surface. Every one of the five
+cyclic boundary differences is nonzero; since `ImaginaryDirection` is exactly
+nonzero V4 and `ImaginaryDirection.mem_all` covers that type, boundary contact
+does not add a fourth decision direction.
+-/
+theorem proper_boundary_edge_modes_are_nonzero
+    (boundary : Boundary5)
+    (proper : ProperPentagon boundary) :
+    edgeMode0 boundary ≠ V4.zero ∧
+    edgeMode1 boundary ≠ V4.zero ∧
+    edgeMode2 boundary ≠ V4.zero ∧
+    edgeMode3 boundary ≠ V4.zero ∧
+    edgeMode4 boundary ≠ V4.zero := by
+  constructor
+  · exact (difference_nonzero_iff_ne boundary.c0 boundary.c1).2 proper.1
+  constructor
+  · exact (difference_nonzero_iff_ne boundary.c1 boundary.c2).2 proper.2.1
+  constructor
+  · exact (difference_nonzero_iff_ne boundary.c2 boundary.c3).2 proper.2.2.1
+  constructor
+  · exact (difference_nonzero_iff_ne boundary.c3 boundary.c4).2 proper.2.2.2.1
+  · exact (difference_nonzero_iff_ne boundary.c4 boundary.c0).2 proper.2.2.2.2
+
+/-
+The already-banked consequence laws now have their intended role:
+
+* `upward_states_exhausted_by_pair_and_forcedThird` proves that any two distinct
+  upward states plus their forced third exhaust the three-direction surface;
+* `all_three_upward_acted_and_void_blocked_stop_game` proves the corresponding
+  local stop once those three directions have acted and void blocks replay.
+
+Those are phase-3 decision completeness. They are not additional phases after
+counter-play.
+-/
+
+/-! ## Ordered Decision Reachability residue -/
 
 /-- A precommit refinement step is labelled by one of the three non-writing phases. -/
 abbrev PrecommitAdvance (Witness : Type v) :=
@@ -265,7 +328,9 @@ The exact preserved phase order as a transferable deciding residue:
 Do:Observe -> Imagine:Observe -> Imagine:Act* -> deciding endpoint.
 
 The phase-3 chain may have any finite length; `stay` represents zero counter-play
-steps when local imagined observation already decides the move.
+steps when local imagined observation already decides the move. The chain is a
+transfer record inside the already-complete three-direction decision surface;
+it is not a separate decision-completeness requirement.
 -/
 structure OrderedMapMakerDecision
     {Vertex : Type u}
@@ -371,16 +436,17 @@ theorem blindDraw_consumes_one_void
     voidCount roster (instantiate draw.certificate) = voidCount roster map - 1 := by
   exact voidCount_instantiate roster draw.certificate
 
-/-! ## Remaining Four Color completeness target -/
+/-! ## Construction closure, not decision completeness -/
 
 /--
-The remaining theorem is now stated only where the actual Four Color burden lies:
-every strategy-safe nonterminal realized state admits the preserved ordered
-phase-1/2/3 decision, with a sound projection whose phase-4 draw stays safe.
+This is deliberately named as realization closure. It is not phase-3 decision
+completeness: that is the three-direction `4 - 1` surface proved above.
 
-Primitive operational completeness is already proved above by the 2 x 2 product.
+`SafeOrderedRealizationComplete` packages the separate all-maps construction
+statement that every strategy-safe nonterminal realized state admits a sound
+ordered residue whose phase-4 draw remains strategy-safe.
 -/
-def OrderedMapMakerDecisionComplete
+def SafeOrderedRealizationComplete
     {Vertex : Type u} [DecidableEq Vertex]
     (safe : StrategySafePredicate Vertex) : Prop :=
   ∀ (map : RealizedMap Vertex),
@@ -396,14 +462,11 @@ def OrderedMapMakerDecisionComplete
       safe (instantiate (blindDrawFromOrderedDecision
         box projection sound seed advance decision).certificate)
 
-/--
-BRIDGE: proving ordered MapMaker decision completeness discharges the existing
-construction-level safe-instantiation obligation.
--/
-theorem orderedMapMakerDecisionComplete_implies_safe_instantiation
+/-- Safe ordered realization closure discharges the existing construction target. -/
+theorem safeOrderedRealizationComplete_implies_safe_instantiation
     {Vertex : Type u} [DecidableEq Vertex]
     (safe : StrategySafePredicate Vertex)
-    (complete : OrderedMapMakerDecisionComplete safe) :
+    (complete : SafeOrderedRealizationComplete safe) :
     EveryStrategySafeStateHasSafeInstantiation safe := by
   intro map safeMap hasVoid
   rcases complete map safeMap hasVoid with
