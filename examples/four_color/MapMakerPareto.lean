@@ -45,13 +45,21 @@ inductive MapMakerCapability where
   | blindRealizedWrite
   deriving DecidableEq, Repr
 
-/-- Primitive capability profile. Each primitive owns one irreducible axis. -/
-def HasModeCapability : MapMakerMode → MapMakerCapability → Prop
-  | .overview, .globalOverview => True
-  | .localExpansion, .localNeighborExpansion => True
-  | .counterPlay, .interactiveCounterPlay => True
-  | .draw, .blindRealizedWrite => True
-  | _, _ => False
+/-- Each primitive owns one irreducible capability axis. -/
+def primaryCapability : MapMakerMode → MapMakerCapability
+  | .overview => .globalOverview
+  | .localExpansion => .localNeighborExpansion
+  | .counterPlay => .interactiveCounterPlay
+  | .draw => .blindRealizedWrite
+
+/-- The primitive capability assignment is injective: no two modes own one axis. -/
+theorem primaryCapability_injective : Function.Injective primaryCapability := by
+  intro lhs rhs same
+  cases lhs <;> cases rhs <;> simp [primaryCapability] at same ⊢
+
+/-- Primitive capability profile. -/
+def HasModeCapability (mode : MapMakerMode) (capability : MapMakerCapability) : Prop :=
+  capability = primaryCapability mode
 
 /-- Weak Pareto dominance between primitive modes on the declared capability axes. -/
 def ModeDominates (lhs rhs : MapMakerMode) : Prop :=
@@ -60,7 +68,15 @@ def ModeDominates (lhs rhs : MapMakerMode) : Prop :=
 /-- No primitive mode dominates a distinct primitive mode. -/
 theorem modeDominates_iff_eq (lhs rhs : MapMakerMode) :
     ModeDominates lhs rhs ↔ lhs = rhs := by
-  cases lhs <;> cases rhs <;> simp [ModeDominates, HasModeCapability]
+  constructor
+  · intro dominates
+    apply primaryCapability_injective
+    have owned : HasModeCapability rhs (primaryCapability rhs) := rfl
+    exact (dominates (primaryCapability rhs) owned).symm
+  · intro same
+    subst same
+    intro capability owned
+    exact owned
 
 /-- The four primitive modes are therefore a Pareto antichain. -/
 theorem distinct_modes_are_pareto_incomparable
@@ -76,14 +92,20 @@ theorem distinct_modes_are_pareto_incomparable
 /-- Only draw owns realized-write capability. -/
 theorem draw_is_only_writer (mode : MapMakerMode) :
     HasModeCapability mode .blindRealizedWrite ↔ mode = .draw := by
-  cases mode <;> simp [HasModeCapability]
+  constructor
+  · intro writes
+    apply primaryCapability_injective
+    simpa [HasModeCapability, primaryCapability] using writes.symm
+  · intro same
+    subst same
+    rfl
 
 /-- Draw has no perception/imagination capability in the primitive profile. -/
 theorem draw_has_no_perception :
     ¬ HasModeCapability .draw .globalOverview ∧
     ¬ HasModeCapability .draw .localNeighborExpansion ∧
     ¬ HasModeCapability .draw .interactiveCounterPlay := by
-  simp [HasModeCapability]
+  simp [HasModeCapability, primaryCapability]
 
 /-- The three test-time modes cannot write the realized map. -/
 theorem nonDraw_modes_cannot_write
@@ -129,10 +151,14 @@ theorem canonicalProgram_capability_complete
     (capability : MapMakerCapability) :
     ProgramHasCapability canonicalParetoProgram capability := by
   cases capability with
-  | globalOverview => exact ⟨.overview, by simp [canonicalParetoProgram], by simp [HasModeCapability]⟩
-  | localNeighborExpansion => exact ⟨.localExpansion, by simp [canonicalParetoProgram], by simp [HasModeCapability]⟩
-  | interactiveCounterPlay => exact ⟨.counterPlay, by simp [canonicalParetoProgram], by simp [HasModeCapability]⟩
-  | blindRealizedWrite => exact ⟨.draw, by simp [canonicalParetoProgram], by simp [HasModeCapability]⟩
+  | globalOverview =>
+      exact ⟨.overview, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
+  | localNeighborExpansion =>
+      exact ⟨.localExpansion, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
+  | interactiveCounterPlay =>
+      exact ⟨.counterPlay, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
+  | blindRealizedWrite =>
+      exact ⟨.draw, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
 
 /--
 Capability-level Pareto completeness is mechanically banked: any strategy whose
