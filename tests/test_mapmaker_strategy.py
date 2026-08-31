@@ -21,7 +21,6 @@ from mettafy.meta_construct_closure import (
     ImaginationBox,
 )
 
-
 BOUNDARY = ("a", "b", "c", "d", "e")
 
 
