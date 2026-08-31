@@ -5,15 +5,15 @@ import pytest
 from mettafy.color_construction import ConstructionState
 from mettafy.mapmaker_strategy import (
     CANONICAL_PARETO_PROGRAM,
-    MODE_CAPABILITIES,
-    PRECOMMIT_MODES,
-    MapMakerCapability,
-    MapMakerDecision,
-    MapMakerMode,
     capability_complete,
     is_blind_draw_suffix,
     is_precommit_program,
+    MapMakerCapability,
+    MapMakerDecision,
+    MapMakerMode,
+    MODE_CAPABILITIES,
     mode_dominates,
+    PRECOMMIT_MODES,
 )
 from mettafy.meta_construct_closure import (
     DecisionReachability,
