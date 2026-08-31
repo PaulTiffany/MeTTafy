@@ -167,6 +167,15 @@ The current open research problem is the last relation: **general source-to-targ
 
 See [`certification/witness-registry-v1.json`](certification/witness-registry-v1.json) for the machine-readable witness ledger, [`docs/four-color-proof-surface.md`](docs/four-color-proof-surface.md) for the current Four Color falsification/research surface, and [`docs/four-color-proof-status.md`](docs/four-color-proof-status.md) for the preserved historical Track-B claim surface.
 
+## Research provenance checkpoints
+
+MeTTafy keeps **process provenance separate from mathematical authority**. Shared conversations can document when a research state was recognized, challenged, or preserved, but they do not establish theorem validity. Repository artifacts, checker results, and commit ancestry remain authoritative for technical claims.
+
+- [`examples/four_color/PRIORITY_SNAPSHOT_2026-08-31.md`](examples/four_color/PRIORITY_SNAPSHOT_2026-08-31.md) freezes the independent Four Color research frontier at base commit `767a305cc2b26e5068eddd57209b80b268ede4ea` and records its contemporaneous process thread.
+- [`examples/four_color/DESKTOP_RESEARCH_CHECKPOINT_2026-08-31.md`](examples/four_color/DESKTOP_RESEARCH_CHECKPOINT_2026-08-31.md) freezes the subsequent repository state at `9f35fabf7f12e271204f4a4aaf8f26017d541d8c` and records the contemporaneous GPT Desktop research-method discussion, including both the value and failure modes of persistent tool-mediated research.
+
+These records are append-only chronology: later work should cite or supersede a checkpoint rather than silently rewrite what the checkpoint says existed at its frozen base.
+
 ## Prior art and community
 
 MeTTafy exists because there is already a rich open-source ecosystem worth building on.
