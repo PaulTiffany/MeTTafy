@@ -13,6 +13,7 @@ These files are deliberately bounded formal witnesses for the independent Four C
 - `MetaConstructClosure.lean` — open imagination and Decision Reachability as a transferable audit residue. `ProjectionSound` gates an imagined endpoint against the unchanged actual map and `compressDecision` erases the imaginary residue into one `CertifiedInstantiation`.
 - `MapMakerPareto.lean` — the complete MapMaker operational product and its preserved order: `Do:Observe -> Imagine:Observe -> Imagine:Act* -> Do:Act`. The four primitive modes are exactly `Do/Imagine × Observe/Act`. Phase 3 is the decision-complete surface: the already-banked three nonidentity V4 directions.
 - `ProofFrontierReduction.lean` — composition-only theorem spine. It introduces no new premise: the ordered MapMaker product fixes phases 1, 2, and 4; all repeatable strategic variation is phase 3; every proper boundary contact lies on the same nonzero V4 surface; arbitrary retained imaginary traversal reduces to identity or one of the three directions; and pair + forced third exhausts the upward surface.
+- `Phase3ConstraintCollapse.lean` — constraint-collapse algebra inside phase 3. A fixed reference exposes exactly three nonidentity shifts; realized colored neighbors can only remove candidates from that surface, giving the `3 -> 2 -> 1 -> 0` collapse. Two distinct phase shifts interface by forcing the unique third. Three distinct realized neighbor colors force the fourth; all four block direct instantiation without creating a fourth imaginary direction.
 - `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum.
 - `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites; terminal inspection remains outside intermediate play.
 
@@ -65,6 +66,35 @@ mapMakerPareto_reduces_proof_frontier_to_step3
 
 It is deliberately a composition theorem over existing results. It adds no new completeness premise.
 
+## Phase-3 constraint collapse
+
+`Phase3ConstraintCollapse.lean` records why three is not merely a palette count. It is the maximal nonidentity imagination surface once one current/reference state is fixed.
+
+```text
+reference fixed
+-> 3 possible phase shifts
+-> one additional realized color excludes one shift: 2 remain
+-> a second additional realized color excludes another: 1 remains
+-> the third additional realized color exhausts the surface: 0 remain
+```
+
+Equivalently, realized information can only collapse the phase-3 possibility space:
+
+```text
+3 -> 2 -> 1 -> 0
+```
+
+The implementation connects this directly to `AdmissibleAt`: an admissible candidate must differ from every realized colored neighbor. Therefore one realized neighbor places the candidate on the existing three-direction surface; two distinct realized neighbor colors leave only a two-state residue; three distinct realized neighbor colors force the unique fourth palette state; and if that fourth state is also realized at the boundary, direct instantiation is impossible.
+
+Two distinct imaginary phase shifts do not open a new direction when they interface. Their V4 composition determines the unique third nonidentity direction. The interface closes the surface:
+
+```text
+x, y -> x + y = z
+{x, y, z} = V4 \ {0}
+```
+
+When direct placement collapses to zero because all four colors are represented around the void, phase 3 may continue as counter-play on surrounding relations. That continuation still uses the same three nonidentity V4 directions; obstruction does not create a fourth phase shift.
+
 ## Authority is implementation around the frontier
 
 The authority order remains:
@@ -87,7 +117,10 @@ Decision Reachability is an audit/transfer representation of one finite conseque
 - **Primitive operational completeness is banked:** the four modes uniquely cover `Do/Imagine × Observe/Act`.
 - **Proof-frontier reduction is banked:** in an ordered MapMaker residue, all repeatable strategic variation is phase 3.
 - **Step-3 decision completeness is banked:** the shared V4 surface has exactly three nonidentity directions (`4 - 1`).
-- **Boundary inclusion is banked:** every proper boundary-edge difference lies on that same surface.
+- **Constraint collapse is explicit:** realized neighbor colors remove possibilities from that fixed surface in the `3 -> 2 -> 1 -> 0` pattern.
+- **Three-color forcing is explicit on the realized map:** three distinct realized neighbor colors force the fourth admissible candidate.
+- **Four-color blockage is explicit:** if all four palette states occur around a void, no direct admissible instantiation exists; counter-play remains imaginary rather than creating another direction.
+- **Boundary inclusion is banked:** every proper boundary-edge difference lies on the same surface.
 - **Arbitrary retained imaginary traversal is algebraically compressed:** identity or one of the three directions.
 - **Consequence exhaustion is banked:** pair + forced third exhausts all upward states; acted + void-blocked stops the local surface.
 - **Authority remains separate:** only a sound actual-map certificate can become `Do:Act`.
