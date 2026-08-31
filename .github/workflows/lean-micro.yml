@@ -82,6 +82,7 @@ jobs:
           LEAN_PATH=. lean -o examples/four_color/TestTimeActiveInference.olean examples/four_color/TestTimeActiveInference.lean
           LEAN_PATH=. lean -o examples/four_color/MetaConstructClosure.olean examples/four_color/MetaConstructClosure.lean
           LEAN_PATH=. lean -o examples/four_color/MapMakerPareto.olean examples/four_color/MapMakerPareto.lean
+          LEAN_PATH=. lean -o examples/four_color/ProofFrontierReduction.olean examples/four_color/ProofFrontierReduction.lean
           LEAN_PATH=. lean -o examples/four_color/ReidemeisterStaging.olean examples/four_color/ReidemeisterStaging.lean
           LEAN_PATH=. lean -o examples/four_color/ColorReidemeisterUncrossing.olean examples/four_color/ColorReidemeisterUncrossing.lean
           LEAN_PATH=. lean -o examples/four_color/StrategyColorProjection.olean examples/four_color/StrategyColorProjection.lean
