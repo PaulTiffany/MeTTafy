@@ -41,6 +41,26 @@ def deciding_chain() -> closure.DecisionReachability:
     )
 
 
+def test_modes_are_exactly_do_imagine_x_observe_act() -> None:
+    assert mapmaker.operational_product_complete()
+    assert mapmaker.MODE_CELL == {
+        mapmaker.MapMakerMode.OVERVIEW: mapmaker.OperationalCell(
+            mapmaker.MapMakerDomain.DO, mapmaker.MapMakerOperation.OBSERVE
+        ),
+        mapmaker.MapMakerMode.LOCAL_EXPANSION: mapmaker.OperationalCell(
+            mapmaker.MapMakerDomain.IMAGINE, mapmaker.MapMakerOperation.OBSERVE
+        ),
+        mapmaker.MapMakerMode.COUNTER_PLAY: mapmaker.OperationalCell(
+            mapmaker.MapMakerDomain.IMAGINE, mapmaker.MapMakerOperation.ACT
+        ),
+        mapmaker.MapMakerMode.DRAW: mapmaker.OperationalCell(
+            mapmaker.MapMakerDomain.DO, mapmaker.MapMakerOperation.ACT
+        ),
+    }
+    for mode, cell in mapmaker.MODE_CELL.items():
+        assert mapmaker.mode_for_cell(cell) is mode
+
+
 def test_four_modes_are_pairwise_pareto_incomparable() -> None:
     for lhs in mapmaker.MapMakerMode:
         for rhs in mapmaker.MapMakerMode:
@@ -65,37 +85,73 @@ def test_draw_is_the_only_write_and_has_no_perception_capability() -> None:
         )
 
 
-def test_precommit_normal_form_excludes_draw() -> None:
+def test_precommit_order_is_do_observe_imagine_observe_imagine_act_star() -> None:
+    assert mapmaker.is_precommit_program(
+        (
+            mapmaker.MapMakerMode.OVERVIEW,
+            mapmaker.MapMakerMode.LOCAL_EXPANSION,
+        )
+    )
     assert mapmaker.is_precommit_program(
         (
             mapmaker.MapMakerMode.OVERVIEW,
             mapmaker.MapMakerMode.LOCAL_EXPANSION,
             mapmaker.MapMakerMode.COUNTER_PLAY,
+            mapmaker.MapMakerMode.COUNTER_PLAY,
+        )
+    )
+    assert not mapmaker.is_precommit_program(
+        (
+            mapmaker.MapMakerMode.LOCAL_EXPANSION,
+            mapmaker.MapMakerMode.OVERVIEW,
+        )
+    )
+    assert not mapmaker.is_precommit_program(
+        (
+            mapmaker.MapMakerMode.OVERVIEW,
+            mapmaker.MapMakerMode.COUNTER_PLAY,
             mapmaker.MapMakerMode.LOCAL_EXPANSION,
         )
     )
     assert not mapmaker.is_precommit_program(
-        (mapmaker.MapMakerMode.OVERVIEW, mapmaker.MapMakerMode.DRAW)
+        (
+            mapmaker.MapMakerMode.OVERVIEW,
+            mapmaker.MapMakerMode.LOCAL_EXPANSION,
+            mapmaker.MapMakerMode.DRAW,
+        )
     )
 
 
-def test_authority_crossing_normal_form_is_thought_star_then_draw() -> None:
-    assert mapmaker.is_blind_draw_suffix(
+def test_authority_crossing_normal_form_preserves_previous_ordering() -> None:
+    assert mapmaker.is_operational_normal_form(
+        (
+            mapmaker.MapMakerMode.OVERVIEW,
+            mapmaker.MapMakerMode.LOCAL_EXPANSION,
+            mapmaker.MapMakerMode.DRAW,
+        )
+    )
+    assert mapmaker.is_operational_normal_form(
         (
             mapmaker.MapMakerMode.OVERVIEW,
             mapmaker.MapMakerMode.LOCAL_EXPANSION,
             mapmaker.MapMakerMode.COUNTER_PLAY,
+            mapmaker.MapMakerMode.COUNTER_PLAY,
             mapmaker.MapMakerMode.DRAW,
         )
     )
-    assert mapmaker.is_blind_draw_suffix((mapmaker.MapMakerMode.DRAW,))
-    assert not mapmaker.is_blind_draw_suffix(
+    assert not mapmaker.is_operational_normal_form(
         (mapmaker.MapMakerMode.DRAW, mapmaker.MapMakerMode.OVERVIEW)
     )
-    assert not mapmaker.is_blind_draw_suffix((mapmaker.MapMakerMode.OVERVIEW,))
+    assert not mapmaker.is_operational_normal_form(
+        (
+            mapmaker.MapMakerMode.OVERVIEW,
+            mapmaker.MapMakerMode.COUNTER_PLAY,
+            mapmaker.MapMakerMode.DRAW,
+        )
+    )
 
 
-def test_mapmaker_decision_labels_the_if_then_spine_and_draws_once() -> None:
+def test_mapmaker_decision_labels_the_ordered_if_then_spine_and_draws_once() -> None:
     reachability = deciding_chain()
     decision = mapmaker.MapMakerDecision(
         reachability=reachability,
@@ -112,22 +168,22 @@ def test_mapmaker_decision_labels_the_if_then_spine_and_draws_once() -> None:
         mapmaker.MapMakerMode.COUNTER_PLAY,
         mapmaker.MapMakerMode.DRAW,
     )
-    assert mapmaker.is_blind_draw_suffix(decision.strategy_word())
+    assert mapmaker.is_operational_normal_form(decision.strategy_word())
     assert decision.certificate().color == 3
     assert decision.realized_void_delta() == 1
     assert decision.draw().coloring["v"] == 3
 
 
-def test_draw_cannot_appear_inside_decision_reachability_labels() -> None:
+def test_order_violation_cannot_enter_decision_residue() -> None:
     reachability = deciding_chain()
 
-    with pytest.raises(ValueError, match="cannot contain draw"):
+    with pytest.raises(ValueError, match="preserve Do:Observe"):
         mapmaker.MapMakerDecision(
             reachability=reachability,
             precommit_modes=(
                 mapmaker.MapMakerMode.OVERVIEW,
-                mapmaker.MapMakerMode.DRAW,
                 mapmaker.MapMakerMode.COUNTER_PLAY,
+                mapmaker.MapMakerMode.LOCAL_EXPANSION,
             ),
         )
 
@@ -138,11 +194,14 @@ def test_one_mode_label_is_required_per_if_then_step() -> None:
     with pytest.raises(ValueError, match="one precommit mode label"):
         mapmaker.MapMakerDecision(
             reachability=reachability,
-            precommit_modes=(mapmaker.MapMakerMode.OVERVIEW,),
+            precommit_modes=(
+                mapmaker.MapMakerMode.OVERVIEW,
+                mapmaker.MapMakerMode.LOCAL_EXPANSION,
+            ),
         )
 
 
-def test_unbounded_imagination_still_allows_long_transferable_mode_residue() -> None:
+def test_unbounded_imagination_still_allows_long_ordered_consequence_chain() -> None:
     realized = wheel_state((0, 1, 0, 1, 2))
     projection = closure.ImaginaryProjection(
         box=closure.ImaginationBox(realized=realized, focus="v"),
@@ -153,15 +212,14 @@ def test_unbounded_imagination_still_allows_long_transferable_mode_residue() -> 
         states=tuple(range(10_001)),
         admissible_step=lambda before, after: after == before + 1,
     )
-    modes = tuple(
-        mapmaker.MapMakerMode.LOCAL_EXPANSION
-        if index % 2 == 0
-        else mapmaker.MapMakerMode.COUNTER_PLAY
-        for index in range(10_000)
+    modes = (
+        mapmaker.MapMakerMode.OVERVIEW,
+        mapmaker.MapMakerMode.LOCAL_EXPANSION,
+        *(mapmaker.MapMakerMode.COUNTER_PLAY for _ in range(9_998)),
     )
 
     decision = mapmaker.MapMakerDecision(reachability=reachability, precommit_modes=modes)
 
-    assert mapmaker.is_blind_draw_suffix(decision.strategy_word())
+    assert mapmaker.is_operational_normal_form(decision.strategy_word())
     assert decision.certificate().color == 3
     assert decision.realized_void_delta() == 1

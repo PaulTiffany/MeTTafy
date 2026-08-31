@@ -8,6 +8,28 @@ from mettafy.color_construction import ConstructionState
 from mettafy.meta_construct_closure import DecisionReachability
 
 
+class MapMakerDomain(str, Enum):
+    """Whether a primitive operates on realized or imaginary state."""
+
+    DO = "do"
+    IMAGINE = "imagine"
+
+
+class MapMakerOperation(str, Enum):
+    """The primitive epistemic/control operation."""
+
+    OBSERVE = "observe"
+    ACT = "act"
+
+
+@dataclass(frozen=True)
+class OperationalCell:
+    """One cell of the complete Do/Imagine x Observe/Act product."""
+
+    domain: MapMakerDomain
+    operation: MapMakerOperation
+
+
 class MapMakerMode(str, Enum):
     """The four primitive MapMaker strategies."""
 
@@ -25,6 +47,17 @@ class MapMakerCapability(str, Enum):
     INTERACTIVE_COUNTER_PLAY = "interactive_counter_play"
     BLIND_REALIZED_WRITE = "blind_realized_write"
 
+
+MODE_CELL: dict[MapMakerMode, OperationalCell] = {
+    MapMakerMode.OVERVIEW: OperationalCell(MapMakerDomain.DO, MapMakerOperation.OBSERVE),
+    MapMakerMode.LOCAL_EXPANSION: OperationalCell(
+        MapMakerDomain.IMAGINE, MapMakerOperation.OBSERVE
+    ),
+    MapMakerMode.COUNTER_PLAY: OperationalCell(MapMakerDomain.IMAGINE, MapMakerOperation.ACT),
+    MapMakerMode.DRAW: OperationalCell(MapMakerDomain.DO, MapMakerOperation.ACT),
+}
+
+CELL_MODE: dict[OperationalCell, MapMakerMode] = {cell: mode for mode, cell in MODE_CELL.items()}
 
 MODE_CAPABILITIES: dict[MapMakerMode, frozenset[MapMakerCapability]] = {
     MapMakerMode.OVERVIEW: frozenset({MapMakerCapability.GLOBAL_OVERVIEW}),
@@ -49,6 +82,23 @@ PRECOMMIT_MODES = frozenset(
 )
 
 
+def mode_for_cell(cell: OperationalCell) -> MapMakerMode:
+    """Return the unique primitive implementing one operational product cell."""
+
+    return CELL_MODE[cell]
+
+
+def operational_product_complete() -> bool:
+    """The four modes are exactly the 2x2 Do/Imagine x Observe/Act product."""
+
+    expected = {
+        OperationalCell(domain, operation)
+        for domain in MapMakerDomain
+        for operation in MapMakerOperation
+    }
+    return set(MODE_CELL.values()) == expected and len(CELL_MODE) == len(expected)
+
+
 def mode_dominates(lhs: MapMakerMode, rhs: MapMakerMode) -> bool:
     """Weak capability dominance on the declared primitive axes."""
 
@@ -69,17 +119,29 @@ def capability_complete(program: tuple[MapMakerMode, ...]) -> bool:
 
 
 def is_precommit_program(program: tuple[MapMakerMode, ...]) -> bool:
-    """Precommit thought may use only non-writing modes."""
+    """The preserved precommit order is Do:Observe; Imagine:Observe; Imagine:Act*."""
 
-    return all(mode in PRECOMMIT_MODES for mode in program)
+    if len(program) < 2:
+        return False
+    if program[0] is not MapMakerMode.OVERVIEW:
+        return False
+    if program[1] is not MapMakerMode.LOCAL_EXPANSION:
+        return False
+    return all(mode is MapMakerMode.COUNTER_PLAY for mode in program[2:])
+
+
+def is_operational_normal_form(program: tuple[MapMakerMode, ...]) -> bool:
+    """Full MapMaker normal form: O ; L ; C* ; D."""
+
+    if len(program) < 3 or program[-1] is not MapMakerMode.DRAW:
+        return False
+    return is_precommit_program(program[:-1])
 
 
 def is_blind_draw_suffix(program: tuple[MapMakerMode, ...]) -> bool:
-    """A realized program may cross authority exactly once, at its final draw."""
+    """Compatibility name for the ordered authority-crossing normal form."""
 
-    if not program or program[-1] is not MapMakerMode.DRAW:
-        return False
-    return is_precommit_program(program[:-1])
+    return is_operational_normal_form(program)
 
 
 @dataclass(frozen=True)
@@ -87,9 +149,12 @@ class MapMakerDecision:
     """One transferable SRMF-style deciding residue plus a blind draw.
 
     The `DecisionReachability` chain contains the auditable "if this, then this"
-    spine. `precommit_modes` records only Overview / Local Expansion /
-    Counter-Play labels. Draw is intentionally absent until the chain has already
-    compressed through the actual-map authority check.
+    spine. Its labels preserve the operational product order:
+
+        Do:Observe ; Imagine:Observe ; Imagine:Act*
+
+    Draw is intentionally absent until the chain has already compressed through
+    the actual-map authority check, where it becomes the final Do:Act.
     """
 
     reachability: DecisionReachability
@@ -97,7 +162,9 @@ class MapMakerDecision:
 
     def __post_init__(self) -> None:
         if not is_precommit_program(self.precommit_modes):
-            raise ValueError("precommit reasoning cannot contain draw")
+            raise ValueError(
+                "precommit modes must preserve Do:Observe -> Imagine:Observe -> Imagine:Act*"
+            )
         expected_steps = max(len(self.reachability.states) - 1, 0)
         if len(self.precommit_modes) != expected_steps:
             raise ValueError("one precommit mode label is required per refinement step")
@@ -106,12 +173,12 @@ class MapMakerDecision:
         return self.reachability.compress()
 
     def strategy_word(self) -> tuple[MapMakerMode, ...]:
-        """The transferable control word has the normal form (O|L|C)* D."""
+        """The transferable control word has normal form O ; L ; C* ; D."""
 
         return (*self.precommit_modes, MapMakerMode.DRAW)
 
     def draw(self) -> ConstructionState:
-        """Realize without performing another perception step."""
+        """Do:Act: realize the certified choice without another perception step."""
 
         return instantiate(self.certificate())
 

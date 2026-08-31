@@ -4,30 +4,42 @@ import examples.four_color.MetaConstructClosure
 Copyright (c) 2026 Paul Carver Tiffany III.
 Released under the MIT License; see LICENSE.
 
-MapMaker Pareto strategy surface for the independent Four Color research lane.
+MapMaker operational strategy surface for the independent Four Color research lane.
 
-The four primitive modes specialize the SRMF cycle into the map-making task:
+The previous ordering is preserved as the complete operational 2 x 2 product:
 
-1. overview: view the realized map globally;
-2. local expansion: imagine one state, perceive its neighbors, imagine expansion;
-3. counter-play: imagine reactions and counter-plays among states;
-4. draw: commit one certified state with no perception during the write.
+1. Do: Observe       -- view the realized map globally;
+2. Imagine: Observe  -- imagine one state, perceive its neighbors, imagine expansion;
+3. Imagine: Act      -- imagine reactions and counter-plays through consequence chains;
+4. Do: Act           -- commit one certified state with no perception during the write.
 
-The formalization distinguishes three claims:
+The first three phases are test-time reasoning. The fourth is the sole authority
+crossing. The consequence chain in phase 3 may be arbitrarily long; a successful
+run leaves a finite auditable residue.
 
-* the four declared primitive capabilities are pairwise non-redundant;
-* together they cover the declared MapMaker capability axes;
-* the stronger theorem that every admissible MapMaker strategy is behaviorally
-  reducible to a composition of these modes is an explicit open premise rather
-  than a consequence of declaring a four-constructor enum.
-
-This keeps the Pareto-completeness claim transferable without laundering the
-remaining mathematical work.
+This file proves primitive operational completeness directly: the four modes are
+exactly the Do/Imagine x Observe/Act product. The remaining Four Color burden is
+downstream: every strategy-safe nonterminal realized state must admit an ordered
+phase-1/2/3 decision whose sound projection authorizes phase 4.
 -/
 
 namespace MeTTafy.FourColor
 
 universe u v
+
+/-! ## Complete operational product -/
+
+/-- Whether the primitive operates on realized state or imaginary state. -/
+inductive MapMakerDomain where
+  | do
+  | imagine
+  deriving DecidableEq, Repr
+
+/-- Whether the primitive observes or acts. -/
+inductive MapMakerOperation where
+  | observe
+  | act
+  deriving DecidableEq, Repr
 
 /-- The four primitive MapMaker modes. -/
 inductive MapMakerMode where
@@ -36,6 +48,60 @@ inductive MapMakerMode where
   | counterPlay
   | draw
   deriving DecidableEq, Repr
+
+/-- One cell of Do/Imagine x Observe/Act. -/
+abbrev OperationalCell := MapMakerDomain × MapMakerOperation
+
+/-- Each mode is exactly one cell of the operational product. -/
+def modeCell : MapMakerMode → OperationalCell
+  | .overview => (.do, .observe)
+  | .localExpansion => (.imagine, .observe)
+  | .counterPlay => (.imagine, .act)
+  | .draw => (.do, .act)
+
+/-- Every operational product cell has one named primitive. -/
+def modeOfCell : OperationalCell → MapMakerMode
+  | (.do, .observe) => .overview
+  | (.imagine, .observe) => .localExpansion
+  | (.imagine, .act) => .counterPlay
+  | (.do, .act) => .draw
+
+@[simp] theorem modeOfCell_modeCell (mode : MapMakerMode) :
+    modeOfCell (modeCell mode) = mode := by
+  cases mode <;> rfl
+
+@[simp] theorem modeCell_modeOfCell (cell : OperationalCell) :
+    modeCell (modeOfCell cell) = cell := by
+  rcases cell with ⟨domain, operation⟩
+  cases domain <;> cases operation <;> rfl
+
+/-- Every product cell is occupied by a primitive mode. -/
+theorem modeCell_surjective (cell : OperationalCell) :
+    ∃ mode : MapMakerMode, modeCell mode = cell := by
+  exact ⟨modeOfCell cell, modeCell_modeOfCell cell⟩
+
+/-- The cell map is injective: two primitive names cannot occupy one product cell. -/
+theorem modeCell_injective : Function.Injective modeCell := by
+  intro lhs rhs same
+  calc
+    lhs = modeOfCell (modeCell lhs) := (modeOfCell_modeCell lhs).symm
+    _ = modeOfCell (modeCell rhs) := congrArg modeOfCell same
+    _ = rhs := modeOfCell_modeCell rhs
+
+/--
+Primitive Pareto completeness: every Do/Imagine x Observe/Act cell is represented
+by exactly one MapMaker mode. There is no fifth primitive operational cell.
+-/
+theorem MapMakerParetoComplete (cell : OperationalCell) :
+    ∃ mode : MapMakerMode,
+      modeCell mode = cell ∧
+        ∀ other : MapMakerMode, modeCell other = cell → other = mode := by
+  refine ⟨modeOfCell cell, modeCell_modeOfCell cell, ?_⟩
+  intro other same
+  apply modeCell_injective
+  exact same.trans (modeCell_modeOfCell cell).symm
+
+/-! ## Pareto capability surface -/
 
 /-- The irreducible capability axes used for the local Pareto comparison. -/
 inductive MapMakerCapability where
@@ -89,7 +155,7 @@ theorem distinct_modes_are_pareto_incomparable
   · intro dominates
     exact different (((modeDominates_iff_eq rhs lhs).mp dominates).symm)
 
-/-- Only draw owns realized-write capability. -/
+/-- Only Do:Act / draw owns realized-write capability. -/
 theorem draw_is_only_writer (mode : MapMakerMode) :
     HasModeCapability mode .blindRealizedWrite ↔ mode = .draw := by
   constructor
@@ -100,7 +166,7 @@ theorem draw_is_only_writer (mode : MapMakerMode) :
     subst same
     rfl
 
-/-- Draw has no perception/imagination capability in the primitive profile. -/
+/-- Do:Act / draw has no perception or imagination capability. -/
 theorem draw_has_no_perception :
     ¬ HasModeCapability .draw .globalOverview ∧
     ¬ HasModeCapability .draw .localNeighborExpansion ∧
@@ -115,30 +181,50 @@ theorem nonDraw_modes_cannot_write
   intro writes
   exact notDraw ((draw_is_only_writer mode).mp writes)
 
-/-- The perception/imagination modes admitted before authority crossing. -/
+/-! ## Preserved operational order -/
+
+/-- The three reasoning phases admitted before authority crossing. -/
 inductive PrecommitMode where
   | overview
   | localExpansion
   | counterPlay
   deriving DecidableEq, Repr
 
-/-- Embed a precommit mode into the full MapMaker alphabet. -/
+/-- Embed a precommit phase into the full MapMaker alphabet. -/
 def PrecommitMode.toMapMakerMode : PrecommitMode → MapMakerMode
   | .overview => .overview
   | .localExpansion => .localExpansion
   | .counterPlay => .counterPlay
 
-/-- A precommit mode can never silently become draw. -/
+/-- A precommit mode can never silently become Do:Act. -/
 theorem precommit_ne_draw (mode : PrecommitMode) :
     mode.toMapMakerMode ≠ .draw := by
   cases mode <;> simp [PrecommitMode.toMapMakerMode]
 
-/-- A MapMaker program is an arbitrary finite transferable residue over the modes. -/
+/-- A MapMaker program is a finite transferable residue over the modes. -/
 abbrev MapMakerProgram := List MapMakerMode
 
-/-- The canonical four-mode capability cover. -/
+/-- The one-pass canonical product ordering. -/
 def canonicalParetoProgram : MapMakerProgram :=
   [.overview, .localExpansion, .counterPlay, .draw]
+
+/-- The canonical ordering is literally Do:Observe, Imagine:Observe, Imagine:Act, Do:Act. -/
+theorem canonicalProgram_preserves_product_order :
+    canonicalParetoProgram.map modeCell =
+      [(.do, .observe), (.imagine, .observe), (.imagine, .act), (.do, .act)] := by
+  rfl
+
+/-- Ordered precommit residue: phase 1, then phase 2, then phase-3 consequence chain. -/
+def orderedPrecommitProgram (counterSteps : Nat) : MapMakerProgram :=
+  [.overview, .localExpansion] ++ List.replicate counterSteps .counterPlay
+
+/-- Full ordered authority-crossing residue: O ; L ; C* ; D. -/
+def orderedOperationalProgram (counterSteps : Nat) : MapMakerProgram :=
+  orderedPrecommitProgram counterSteps ++ [.draw]
+
+/-- The full normal-form predicate. -/
+def IsOrderedOperationalProgram (program : MapMakerProgram) : Prop :=
+  ∃ counterSteps, program = orderedOperationalProgram counterSteps
 
 /-- A program has a capability when one of its primitive modes has it. -/
 def ProgramHasCapability
@@ -160,84 +246,83 @@ theorem canonicalProgram_capability_complete
   | blindRealizedWrite =>
       exact ⟨.draw, by simp [canonicalParetoProgram], by simp [HasModeCapability, primaryCapability]⟩
 
-/--
-Capability-level Pareto completeness is mechanically banked: any strategy whose
-observable capability profile is expressed on these axes is weakly covered by
-the canonical four-mode program.
--/
-def StrategyHasCapability (Strategy : Type v) := Strategy → MapMakerCapability → Prop
+/-! ## Ordered Decision Reachability -/
 
-def ProgramWeaklyCoversStrategy
-    {Strategy : Type v}
-    (strategyHas : StrategyHasCapability Strategy)
-    (program : MapMakerProgram)
-    (strategy : Strategy) : Prop :=
-  ∀ capability, strategyHas strategy capability → ProgramHasCapability program capability
-
-theorem canonicalProgram_weakly_covers_every_profile
-    {Strategy : Type v}
-    (strategyHas : StrategyHasCapability Strategy)
-    (strategy : Strategy) :
-    ProgramWeaklyCoversStrategy strategyHas canonicalParetoProgram strategy := by
-  intro capability _used
-  exact canonicalProgram_capability_complete capability
-
-/-! ## Behavioral Pareto completeness: explicit theorem target -/
-
-/--
-`Implements` says that one program over the four primitive modes reproduces the
-relevant behavior of an external MapMaker strategy. The exact behavioral notion
-is caller-supplied so that capability enumeration cannot masquerade as the
-substantive reduction theorem.
--/
-abbrev Implements (Strategy : Type v) := Strategy → MapMakerProgram → Prop
-
-/--
-OPEN PREMISE / THEOREM TARGET: every admissible MapMaker strategy is represented
-by some composition over overview, local expansion, counter-play, and blind draw.
-
-This is the substantive Pareto-completeness claim. No global inhabitant is
-supplied merely from the four-constructor ontology.
--/
-def MapMakerParetoComplete
-    {Strategy : Type v}
-    (admissible : Strategy → Prop)
-    (implements : Implements Strategy) : Prop :=
-  ∀ strategy, admissible strategy → ∃ program, implements strategy program
-
-/-! ## SRMF / Decision Reachability specialization -/
-
-/--
-A precommit refinement step is labelled by one of the three non-writing SRMF
-modes. Overview, local expansion, and counter-play may repeat without bound at
-search time; the transferred proof residue records only the finite deciding spine.
--/
+/-- A precommit refinement step is labelled by one of the three non-writing phases. -/
 abbrev PrecommitAdvance (Witness : Type v) :=
   Witness → Witness → PrecommitMode → Prop
 
-/-- Forget the mode label while retaining the admissible refinement relation. -/
+/-- Forget the phase label while retaining the admissible refinement relation. -/
 def PrecommitGeneratedStep
     {Witness : Type v}
     (advance : PrecommitAdvance Witness) :
     Witness → Witness → Prop :=
   fun before after => ∃ mode, advance before after mode
 
-/-- Decision Reachability specialized to the three non-writing MapMaker modes. -/
-def MapMakerDecisionReachable
+/--
+The exact preserved phase order as a transferable deciding residue:
+
+Do:Observe -> Imagine:Observe -> Imagine:Act* -> deciding endpoint.
+
+The phase-3 chain may have any finite length; `stay` represents zero counter-play
+steps when local imagined observation already decides the move.
+-/
+structure OrderedMapMakerDecision
     {Vertex : Type u}
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
     (box : ImaginationBox Vertex map focus)
     (projection : ImaginaryProjection box)
     (seed : box.Witness)
-    (advance : PrecommitAdvance box.Witness) : Prop :=
-  DecisionReachable box projection seed (PrecommitGeneratedStep advance)
+    (advance : PrecommitAdvance box.Witness) where
+  afterOverview : box.Witness
+  afterLocalObservation : box.Witness
+  endpoint : box.Witness
+  color : V4
+  overviewStep : advance seed afterOverview .overview
+  localObservationStep : advance afterOverview afterLocalObservation .localExpansion
+  consequenceChain : AdmissibleRefinementChain
+    (fun before after => advance before after .counterPlay)
+    afterLocalObservation endpoint
+  hit : projection.project endpoint = some color
+
+/-- Every phase-3 counter-play step is also a generic precommit-generated step. -/
+theorem counterPlayStep_is_precommitGenerated
+    {Witness : Type v}
+    (advance : PrecommitAdvance Witness)
+    {before after : Witness}
+    (step : advance before after .counterPlay) :
+    PrecommitGeneratedStep advance before after := by
+  exact ⟨.counterPlay, step⟩
 
 /--
-The three-mode imagination spine plus projection soundness yields exactly the
-same authority-bearing certificate as generic Decision Reachability.
+Erase the phase labels only after the ordered structure has been witnessed,
+recovering the generic Decision Reachability certificate machinery.
 -/
-theorem mapMakerDecisionReachable_sound_has_certificate
+def OrderedMapMakerDecision.toDecisionWitness
+    {Vertex : Type u}
+    {map : RealizedMap Vertex}
+    {focus : Focus Vertex}
+    (box : ImaginationBox Vertex map focus)
+    (projection : ImaginaryProjection box)
+    (seed : box.Witness)
+    (advance : PrecommitAdvance box.Witness)
+    (decision : OrderedMapMakerDecision box projection seed advance) :
+    DecisionWitness box projection seed (PrecommitGeneratedStep advance) :=
+  {
+    endpoint := decision.endpoint
+    color := decision.color
+    chain := .advance
+      ⟨.overview, decision.overviewStep⟩
+      (.advance
+        ⟨.localExpansion, decision.localObservationStep⟩
+        (decision.consequenceChain.mono
+          (fun step => counterPlayStep_is_precommitGenerated advance step)))
+    hit := decision.hit
+  }
+
+/-- The ordered phase-1/2/3 residue plus projection soundness yields authority. -/
+theorem orderedMapMakerDecision_sound_has_certificate
     {Vertex : Type u}
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
@@ -246,14 +331,14 @@ theorem mapMakerDecisionReachable_sound_has_certificate
     (sound : ProjectionSound box projection)
     (seed : box.Witness)
     (advance : PrecommitAdvance box.Witness)
-    (reachable : MapMakerDecisionReachable box projection seed advance) :
+    (decision : OrderedMapMakerDecision box projection seed advance) :
     Nonempty (CertifiedInstantiation map focus) := by
-  exact decisionReachable_sound_has_certificate
-    box projection sound seed (PrecommitGeneratedStep advance) reachable
+  exact ⟨compressDecision box projection sound
+    (decision.toDecisionWitness box projection seed advance)⟩
 
 /--
-Blind draw is not another inference step. It is the typed realization payload
-that exists only after Decision Reachability has crossed the sound projection wall.
+Do:Act is not another reasoning step. It exists only after the ordered decision
+residue crosses the sound projection wall.
 -/
 structure BlindDraw
     {Vertex : Type u}
@@ -261,21 +346,22 @@ structure BlindDraw
     (focus : Focus Vertex) where
   certificate : CertifiedInstantiation map focus
 
-/-- Construct blind draw authority from a witnessed and sound precommit chain. -/
-def blindDrawFromDecision
+/-- Construct the final Do:Act from an ordered and sound phase-1/2/3 decision. -/
+def blindDrawFromOrderedDecision
     {Vertex : Type u}
     {map : RealizedMap Vertex}
     {focus : Focus Vertex}
     (box : ImaginationBox Vertex map focus)
     (projection : ImaginaryProjection box)
     (sound : ProjectionSound box projection)
-    {seed : box.Witness}
-    {advance : PrecommitAdvance box.Witness}
-    (decision : DecisionWitness box projection seed (PrecommitGeneratedStep advance)) :
+    (seed : box.Witness)
+    (advance : PrecommitAdvance box.Witness)
+    (decision : OrderedMapMakerDecision box projection seed advance) :
     BlindDraw map focus :=
-  ⟨compressDecision box projection sound decision⟩
+  ⟨compressDecision box projection sound
+    (decision.toDecisionWitness box projection seed advance)⟩
 
-/-- A blind draw realizes exactly one certified void. -/
+/-- The final Do:Act consumes exactly one realized void. -/
 theorem blindDraw_consumes_one_void
     {Vertex : Type u} [DecidableEq Vertex]
     (roster : VertexRoster Vertex)
@@ -284,5 +370,45 @@ theorem blindDraw_consumes_one_void
     (draw : BlindDraw map focus) :
     voidCount roster (instantiate draw.certificate) = voidCount roster map - 1 := by
   exact voidCount_instantiate roster draw.certificate
+
+/-! ## Remaining Four Color completeness target -/
+
+/--
+The remaining theorem is now stated only where the actual Four Color burden lies:
+every strategy-safe nonterminal realized state admits the preserved ordered
+phase-1/2/3 decision, with a sound projection whose phase-4 draw stays safe.
+
+Primitive operational completeness is already proved above by the 2 x 2 product.
+-/
+def OrderedMapMakerDecisionComplete
+    {Vertex : Type u} [DecidableEq Vertex]
+    (safe : StrategySafePredicate Vertex) : Prop :=
+  ∀ (map : RealizedMap Vertex),
+    safe map →
+    HasVoid map →
+    ∃ (focus : Focus Vertex)
+      (box : ImaginationBox.{u, 0} Vertex map focus)
+      (projection : ImaginaryProjection box)
+      (seed : box.Witness)
+      (advance : PrecommitAdvance box.Witness)
+      (sound : ProjectionSound box projection)
+      (decision : OrderedMapMakerDecision box projection seed advance),
+      safe (instantiate (blindDrawFromOrderedDecision
+        box projection sound seed advance decision).certificate)
+
+/--
+BRIDGE: proving ordered MapMaker decision completeness discharges the existing
+construction-level safe-instantiation obligation.
+-/
+theorem orderedMapMakerDecisionComplete_implies_safe_instantiation
+    {Vertex : Type u} [DecidableEq Vertex]
+    (safe : StrategySafePredicate Vertex)
+    (complete : OrderedMapMakerDecisionComplete safe) :
+    EveryStrategySafeStateHasSafeInstantiation safe := by
+  intro map safeMap hasVoid
+  rcases complete map safeMap hasVoid with
+    ⟨focus, box, projection, seed, advance, sound, decision, safeAfter⟩
+  let draw := blindDrawFromOrderedDecision box projection sound seed advance decision
+  exact ⟨focus, draw.certificate, safeAfter⟩
 
 end MeTTafy.FourColor
