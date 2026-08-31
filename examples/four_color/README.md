@@ -11,13 +11,16 @@ These files are deliberately bounded formal witnesses for the independent Four C
 - `RedTeamComposition.lean` — one-turn composition for the hard degree-five game plus the finite step-3 stop law: two distinct upward states and their forced third exhaust the three-direction action surface; if all three have acted and void blocks replay, the local game is stopped. The five realized boundary slots participate in the same V4 surface; they do not add another decision dimension.
 - `TestTimeActiveInference.lean` — test-time/receding-horizon control semantics. Imaginary action is not construction history; only a certified actual-map choice crosses into realized construction.
 - `MetaConstructClosure.lean` — open imagination and Decision Reachability as a transferable audit residue. `ProjectionSound` gates an imagined endpoint against the unchanged actual map and `compressDecision` erases the imaginary residue into one `CertifiedInstantiation`.
-- `MapMakerPareto.lean` — the complete MapMaker operational product and its preserved order: `Do:Observe -> Imagine:Observe -> Imagine:Act* -> Do:Act`. The four primitive modes are exactly `Do/Imagine × Observe/Act`. Phase 3 is not an additional open completeness theorem: its decision surface is the already-banked three nonidentity V4 directions. Proper boundary-edge differences are nonzero V4 differences and therefore lie on that same surface. Any all-maps safe-successor package is named separately as realization closure rather than decision completeness.
+- `MapMakerPareto.lean` — the complete MapMaker operational product and its preserved order: `Do:Observe -> Imagine:Observe -> Imagine:Act* -> Do:Act`. The four primitive modes are exactly `Do/Imagine × Observe/Act`. Phase 3 is the decision-complete surface: the already-banked three nonidentity V4 directions.
+- `ProofFrontierReduction.lean` — composition-only theorem spine. It introduces no new premise: the ordered MapMaker product fixes phases 1, 2, and 4; all repeatable strategic variation is phase 3; every proper boundary contact lies on the same nonzero V4 surface; arbitrary retained imaginary traversal reduces to identity or one of the three directions; and pair + forced third exhausts the upward surface.
 - `ConstructGrammar.lean` — open game-theoretic composition grammar. Primitive construct and fact types are caller-supplied, so stripes, red-team patches, alternating structures, and future local constructs can enter as atoms without extending a closed picture enum.
 - `ConstructionTerminalFrame.lean` — separates construction from result inspection. A map-maker step can only instantiate one previously void site with a V4 state while preserving the other realized sites; terminal inspection remains outside intermediate play.
 
-## Current operational frame
+## Proof-frontier reduction
 
-The MapMaker strategy surface is the full product
+The novelty carried by the MapMaker formulation is a reduction, not another search procedure.
+
+The strategy surface is the full product
 
 ```text
 {Do, Imagine} × {Observe, Act}
@@ -32,44 +35,61 @@ with the preserved order
 4. Do: Act
 ```
 
-or, using the implementation names,
+or
 
 ```text
 overview ; local-expansion ; counter-play* ; draw
 ```
 
-Phase 3 is the decision-complete surface. For the four-color palette:
+`MapMakerParetoComplete` proves that these four modes uniquely cover the operational product. `ProofFrontierReduction.lean` then makes the downshift explicit: phases 1, 2, and 4 have fixed operational roles, so the only repeatable strategic part of an ordered residue is phase 3.
+
+For the four-color palette, phase 3 has the minimal shared surface
 
 ```text
-total colors - 1 = 3
+total colors - 1 = 4 - 1 = 3
 ```
 
-because a fixed reference/anchor removes the identity direction and leaves exactly the three nonzero V4 differences. `ImaginaryColorDirections.lean` proves the exact three-direction cover and uniqueness; `C2ForcedThird.lean` proves that two distinct upward directions force the unique third; `RedTeamComposition.lean` proves that those three exhaust the local upward action surface under the void-blocked stop rule.
+because a fixed reference/anchor removes the identity direction and leaves exactly the three nonzero V4 differences.
 
-The boundary is not outside this count. `FourColorCore.lean` represents each cyclic boundary contact by a V4 difference. On a proper boundary each adjacent pair differs, so each boundary-edge mode is nonzero and therefore belongs to the same three-direction decision surface. Five boundary locations can reuse those three directions; locations are not additional colors or additional decision dimensions.
+The boundary is inside this count, not beside it. Each proper boundary edge is a nonzero V4 difference, so five boundary locations reuse the same three directions. Location count is not decision dimension.
 
-Imagination may still branch, reverse, stutter, restart, or run arbitrarily far. The finite Decision Reachability chain is only the transferable record of one consequence chain inside phase 3. It does not create a new strategy phase and it does not enlarge the three-direction surface.
+Arbitrary sequential imagination does not enlarge the surface. A retained phase-3 word may be arbitrarily long, but `imaginary_word_has_small_algebraic_normal_form` proves its net V4 result is either identity or one of the three nonzero directions. This is compression of the transferable residue, not a bound on imagination itself.
+
+Finally, for any fixed reference, two distinct upward states determine the unique forced third and the three together exhaust every upward state. Under the existing acted/void-blocked rule, once those three have acted the local phase-3 game is stopped.
+
+The central theorem is:
+
+```text
+mapMakerPareto_reduces_proof_frontier_to_step3
+```
+
+It is deliberately a composition theorem over existing results. It adds no new completeness premise.
+
+## Authority is implementation around the frontier
 
 The authority order remains:
 
 ```text
 Do:Observe
 -> Imagine:Observe
--> Imagine:Act* over the three-direction surface
+-> Imagine:Act* on the three-direction surface
 -> sound projection
 -> Do:Act with no perception during the write
 -> re-observe the realized successor
 ```
 
+Decision Reachability is an audit/transfer representation of one finite consequence chain inside phase 3. It is not a second decision-completeness requirement.
+
+`CertifiedInstantiation`, `BlindDraw`, carrier constructions, projection functions, and particular cross-cut realizations are implementation or authority mechanisms around the reduced frontier. A specialized route can still owe a witness of its own geometric or projection interface; that does not create another strategic dimension or undo the MapMaker reduction.
+
 ## Status discipline
 
-These witnesses remain separated by what they establish rather than by inventing duplicate completeness targets.
-
-- **Primitive strategy completeness is banked:** the four MapMaker modes uniquely cover the `Do/Imagine × Observe/Act` product.
-- **Step-3 decision completeness is banked:** the minimal shared V4 decision surface has exactly three nonidentity directions (`4 - 1`), including proper boundary-edge differences.
-- **Consequence exhaustion is banked:** pair + forced third exhausts the three upward states, and the existing acted/void-blocked theorem supplies the local stop condition.
-- **Decision Reachability is a transfer/audit representation, not another completeness obligation.**
-- **Construction authority remains separate:** only a sound actual-map `CertifiedInstantiation` can become `Do:Act`.
-- `SafeOrderedRealizationComplete` is the name for any global all-maps safe-realization package; it is deliberately not called decision completeness.
+- **Primitive operational completeness is banked:** the four modes uniquely cover `Do/Imagine × Observe/Act`.
+- **Proof-frontier reduction is banked:** in an ordered MapMaker residue, all repeatable strategic variation is phase 3.
+- **Step-3 decision completeness is banked:** the shared V4 surface has exactly three nonidentity directions (`4 - 1`).
+- **Boundary inclusion is banked:** every proper boundary-edge difference lies on that same surface.
+- **Arbitrary retained imaginary traversal is algebraically compressed:** identity or one of the three directions.
+- **Consequence exhaustion is banked:** pair + forced third exhausts all upward states; acted + void-blocked stops the local surface.
+- **Authority remains separate:** only a sound actual-map certificate can become `Do:Act`.
 
 No monotone law over imagination is required, and no stored future route is admitted as construction state.
